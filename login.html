@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>VedSAAS • Login</title>
+  <link rel="icon" href="favicon.ico"/>
+  <style>
+    :root{
+      --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
+      --text:#fff; --muted:#b9bed1; --brand:#0078d4; --brand-2:#005ea2;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
+      background:var(--bg); color:var(--text);
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
+    }
+    .auth-bg{ position:fixed; inset:0; background:url('images/logopic.png') center/420px no-repeat; opacity:.06; pointer-events:none; z-index:0; }
+    .card{
+      position:relative; z-index:1; width:min(520px,94vw);
+      background:var(--card); border-radius:14px; padding:28px 24px;
+      box-shadow:0 12px 40px rgba(0,0,0,.45);
+    }
+    h1{font-size:26px; text-align:center; margin-bottom:6px}
+    .sub{color:var(--muted); text-align:center; font-size:14px; margin-bottom:18px}
+    label{display:block; font-size:13px; color:#cfd2e2; margin:10px 0 6px}
+    .ip{
+      width:100%; padding:12px 14px; border-radius:10px; border:none;
+      background:var(--ip); color:#fff; outline:none; font-size:15px; transition:.15s background;
+    }
+    .ip:focus{background:var(--ip-focus)}
+
+    .btn{
+      width:100%;
+      padding:12px 14px; border:none; cursor:pointer; border-radius:10px;
+      background:var(--brand); color:#fff; font-weight:600; font-size:15px;
+      box-shadow:0 3px 0 rgba(0,0,0,.25); transition:.15s transform,.15s background;
+      text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+    }
+    .btn:hover{background:var(--brand-2)}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+    .btn-secondary{background:#444}
+
+    .actions{display:flex; gap:10px; margin-top:14px}
+    /* fix: buttons share row neatly */
+    .actions .btn{width:auto; flex:1}
+
+    .note{margin-top:12px; text-align:center; color:var(--muted); font-size:13px}
+    .msg{min-height:18px; margin-top:10px; text-align:center; font-size:13px}
+    .ok{color:#b7ffb7} .err{color:#ffd7d7}
+    .footer{position:fixed; left:0; right:0; bottom:10px; text-align:center; color:#9aa0b6; font-size:12px}
+    @media (max-height:540px){ body{align-items:flex-start} .card{margin-top:30px} .footer{position:static; margin-top:14px} }
+  </style>
+</head>
+<body>
+  <div class="auth-bg"></div>
+
+  <div class="card" role="dialog" aria-labelledby="h1">
+    <h1 id="h1">Login</h1>
+    <p class="sub">Verify your Email and mobile number.</p>
+
+    <label for="identifier">Email / Mobile</label>
+    <input id="identifier" class="ip" type="text" placeholder="email@example.com  •  +91XXXXXXXXXX" autofocus/>
+
+    <!-- Actions: includes a prominent SIGNUP button -->
+    <div class="actions">
+      <a class="btn btn-secondary" href="register.html">Create Account</a>
+      <button id="send-btn" class="btn">Send OTP</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+    <p class="note">
+      New to VedSAAS? <a href="register.html" style="color:#76b7ff">Sign up here</a>. <br/>
+      Already have an account? Enter your email/phone and tap <strong>Send OTP</strong>.
+    </p>
+  </div>
+
+  <div class="footer">VedSAAS • Shashwatam Eco-Chie Creations LLP</div>
+
+<script>
+  // API base resolver
+  const API_BASE=(()=>{const F='http://127.0.0.1:8000';try{const o=location.origin||'';if(!o||o.startsWith('file://'))return F;if(o.includes(':3000'))return F;if(o.includes(':8000'))return o;return o.startsWith('http')?o:F;}catch{return F;}})();
+
+  // Already logged in? go home
+  try{ const tok=localStorage.getItem('token'); if(tok) location.replace('index.html'); }catch{}
+
+  const $=(id)=>document.getElementById(id);
+  const show=(t,ok=false)=>{ const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
+
+  async function sendOtp(){
+    const id = ($('identifier').value||'').trim();
+    if(!id) return show('Enter email or mobile');
+    $('send-btn').disabled=true; show('');
+    try{
+      const r = await fetch(API_BASE+'/api/send-otp',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ identifier:id })
+      });
+      const j = await r.json().catch(()=>({}));
+      if(j && j.ok){
+        try{ localStorage.setItem('pendingIdentifier', id); }catch{}
+        show('OTP sent. Redirecting…', true);
+        setTimeout(()=>{ location.href='verify.html?who='+encodeURIComponent(id)+'&sent=1'; }, 400);
+      }else{
+        show((j && j.error) || 'Failed to send OTP');
+      }
+    }catch(e){ show('Network error. Try again.'); }
+    finally{ $('send-btn').disabled=false; }
+  }
+
+  $('send-btn').addEventListener('click', sendOtp);
+  $('identifier').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); sendOtp(); }});
+</script>
+</body>
+</html>

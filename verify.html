@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>VedSAAS • Verify OTP</title>
+  <style>
+    :root{ --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f; --text:#fff; --brand:#0078d4; --brand-2:#005ea2; --muted:#b9bed1; --ok:#b7ffb7; --err:#ffd7d7; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .bg{position:fixed;inset:0;background:url('images/logopic.png') center/420px no-repeat;opacity:.06;pointer-events:none}
+    .card{position:relative;z-index:1;width:min(520px,94vw);background:var(--card);border-radius:14px;padding:26px 24px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+    h1{text-align:center;margin-bottom:8px}
+    .sub{color:var(--muted);text-align:center;font-size:14px;margin-bottom:14px}
+    label{display:block;font-size:13px;color:#cfd2e2;margin:8px 0 6px}
+    .ip{width:100%;padding:12px 14px;border-radius:10px;border:none;background:var(--ip);color:#fff;outline:none;font-size:16px}
+    .ip:focus{background:var(--ip-focus)}
+    .btn{width:100%;padding:12px 14px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-weight:600;margin-top:12px;cursor:pointer}
+    .btn:hover{background:var(--brand-2)}
+    .row{display:flex;gap:10px}
+    .msg{min-height:18px;margin-top:10px;text-align:center;font-size:13px}
+    .ok{color:var(--ok)} .err{color:var(--err)}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="card">
+    <h1>Verify OTP</h1>
+    <p id="who" class="sub"></p>
+
+    <label for="otp">Enter 6-digit OTP</label>
+    <input id="otp" class="ip" inputmode="numeric" maxlength="6" placeholder="••••••" autofocus/>
+
+    <div class="row">
+      <button id="verify" class="btn">Verify</button>
+      <button id="back" class="btn" style="background:#444">Back</button>
+    </div>
+
+    <p class="sub" id="resendLine">Didn’t receive? <a href="#" id="resend" style="color:#76b7ff">Resend</a> <span id="cool"></span></p>
+    <div id="msg" class="msg"></div>
+  </div>
+
+<script>
+  const API_BASE=(()=>{const F='http://127.0.0.1:8000';try{const o=location.origin||'';if(!o||o.startsWith('file://'))return F;if(o.includes(':3000'))return F;if(o.includes(':8000'))return o;return o.startsWith('http')?o:F;}catch{return F;}})();
+  const $=id=>document.getElementById(id);
+  const show=(t,ok=false)=>{ const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
+
+  // who are we verifying
+  const qs = new URLSearchParams(location.search);
+  const who = qs.get('who') || localStorage.getItem('pendingIdentifier') || '';
+  $('who').textContent = who ? ('For: '+who) : 'Identifier missing';
+
+  function cooldown(sec){
+    const c=$('cool'); $('resend').style.pointerEvents='none'; $('resend').style.opacity='.6';
+    let s=sec; c.textContent='('+s+'s)'; const t=setInterval(()=>{ s--; c.textContent=s>0?'('+s+'s)':''; if(s<=0){ clearInterval(t); $('resend').style.pointerEvents='auto'; $('resend').style.opacity='1'; }},1000);
+  }
+  if(qs.get('sent')==='1') cooldown(45);
+
+  $('back').onclick=()=>history.length>1?history.back():location.href='login.html';
+  $('resend').onclick=async (e)=>{ e.preventDefault(); if(!who) return; try{
+    const r=await fetch(API_BASE+'/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier:who})});
+    const j=await r.json(); if(j.ok){ show('OTP sent again', true); cooldown(45); } else show(j.error||'Failed to resend');
+  }catch{ show('Network error'); }};
+
+  async function postVerify(){
+    const code = ($('otp').value||'').trim();
+    if(code.length<4) return show('Enter full OTP');
+    $('verify').disabled=true; show('');
+    try{
+      const r = await fetch(API_BASE+'/api/verify-otp',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ identifier: who, otp: code })
+      });
+      const j = await r.json().catch(()=>({}));
+      if(!j || !j.ok || !j.token){ $('verify').disabled=false; return show(j?.error || 'Invalid OTP'); }
+
+      // Save token
+      localStorage.setItem('token', j.token);
+      show('Verified! Finishing setup…', true);
+
+      // Set display name if captured
+      const nm = localStorage.getItem('pendingName');
+      if(nm){
+        try{ await fetch(API_BASE+'/api/user/profile',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+j.token},body:JSON.stringify({name:nm})}); }catch{}
+      }
+
+      // Upload avatar if any
+      const av = localStorage.getItem('pendingAvatar');
+      if(av){
+        try{
+          const blob = await (await fetch(av)).blob();
+          const fd = new FormData(); fd.append('avatar', blob, 'avatar.png');
+          await fetch(API_BASE+'/api/user/avatar',{method:'POST',headers:{'Authorization':'Bearer '+j.token},body:fd});
+        }catch{}
+      }
+
+      // (Optional) stash DOB locally for profile screen until server adds field
+      const dob = localStorage.getItem('pendingDob'); if(dob){ localStorage.setItem('profile_dob', dob); }
+
+      // cleanup + go home
+      localStorage.removeItem('pendingAvatar'); localStorage.removeItem('pendingDob'); localStorage.removeItem('pendingName');
+      localStorage.removeItem('pendingIdentifier');
+      setTimeout(()=>location.href='index.html', 400);
+    }catch(e){ show('Network error'); $('verify').disabled=false; }
+  }
+  $('verify').onclick=postVerify;
+  $('otp').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); postVerify(); }});
+</script>
+</body>
+</html>

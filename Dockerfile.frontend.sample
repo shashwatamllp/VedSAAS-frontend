@@ -1,0 +1,46 @@
+# ---- build ----
+FROM node:20-alpine AS build
+WORKDIR /app
+# package.json & lock jaroor copy karo
+COPY package*.json ./
+RUN npm ci
+COPY . .
+# React/Vite etc. — adjust if script name alag ho
+RUN npm run build
+
+# ---- run (nginx) ----
+FROM nginx:alpine
+# Simple SPA + API proxy
+ARG BACKEND_HOST=vedsaas
+ARG BACKEND_PORT=8010
+
+# Nginx config with SPA fallback + /api proxy
+RUN printf 'server {\n\
+    listen 80;\n\
+    server_name _;\n\
+\n\
+    # Serve static\n\
+    root /usr/share/nginx/html;\n\
+    index index.html index.htm;\n\
+\n\
+    # Proxy /api -> backend\n\
+    location /api/ {\n\
+        proxy_pass http://'"$BACKEND_HOST"':'"$BACKEND_PORT"'/api/;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
+    # SPA fallback\n\
+    location / {\n\
+        try_files $uri /index.html;\n\
+    }\n\
+}\n' > /etc/nginx/conf.d/default.conf
+
+COPY --from=build /app/dist/ /usr/share/nginx/html/
+# ya agar CRA hai: COPY --from=build /app/build/ /usr/share/nginx/html/
+
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -q -O - http://127.0.0.1/ || exit 1
