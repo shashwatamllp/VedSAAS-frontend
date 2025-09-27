@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>VedSAAS</title>
 
-  <!-- If you want to force an absolute API base, set it here (optional) -->
-  <!-- <meta name="api-base" content="https://www.vedsaas.com"> -->
+  <!-- If you want to force an absolute API base (only if /api proxy not set), uncomment: -->
+  <!-- <meta name="api-base" content="http://13.203.176.31"> -->
 
   <link rel="icon" href="./favicon.ico"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
@@ -19,6 +19,9 @@
   </style>
 </head>
 <body>
+
+<!-- Backdrop for mobile slide-in sidebar -->
+<div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
 <noscript>
   <div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">
@@ -60,6 +63,11 @@
   <div class="main">
     <div class="rail">
       <div class="topbar">
+        <!-- Mobile hamburger -->
+        <button id="menu-toggle" class="menu-btn" aria-label="Open menu">
+          <i class="fas fa-bars"></i>
+        </button>
+
         <h1>VedSAAS</h1>
         <div class="top-controls">
           <div class="meta" id="meta-info">Local: 0 KB</div>
@@ -145,6 +153,16 @@
     // Safety: if some old JS toggles settings-panel, remove it anyway
     var sp = document.getElementById('settings-panel');
     if (sp) sp.setAttribute('aria-hidden','true');
+
+    // Mobile sidebar open/close
+    var mt = document.getElementById('menu-toggle');
+    var bd = document.getElementById('backdrop');
+    if (mt) mt.addEventListener('click', function () {
+      document.body.classList.toggle('sidebar-open');
+    });
+    if (bd) bd.addEventListener('click', function () {
+      document.body.classList.remove('sidebar-open');
+    });
   });
 </script>
 
@@ -153,4 +171,3 @@
 <script defer src="./app.js"></script>
 </body>
 </html>
-
