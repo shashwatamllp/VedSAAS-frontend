@@ -2,45 +2,86 @@ name: Deploy Frontend to AWS S3 + CloudFront
 
 on:
   push:
-    branches: [ main ]     # jab main branch par code push hoga tab chalega
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Sanity-check required secrets
+        run: |
+          fail=0
+          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION S3_BUCKET CF_DIST_ID; do
+            if [ -z "${{ secrets[$v] }}" ]; then
+              echo "::error title=Missing secret::$v is not set in repo Settings → Secrets → Actions"
+              fail=1
+            fi
+          done
+          if [ "$fail" -eq 1 ]; then exit 1; fi
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build frontend
-        env:
-          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
-        run: npm run build
+      - name: Install AWS CLI v2 (fresh)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y unzip curl
+          curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          sudo ./aws/install --update
+          aws --version
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region:            ${{ secrets.AWS_REGION }}
 
-      - name: Upload to S3
+      - name: WhoAmI (STS)
+        run: aws sts get-caller-identity
+
+      - name: Decide upload directory
+        id: builddir
         run: |
-          aws s3 sync ./dist "s3://${{ secrets.S3_BUCKET }}" \
-            --delete \
-            --cache-control "public, max-age=31536000, immutable" \
-            --exclude "index.html"
-          aws s3 cp ./dist/index.html "s3://${{ secrets.S3_BUCKET }}/index.html" \
-            --cache-control "no-cache, no-store, must-revalidate"
+          if [ -d dist ]; then DIR="dist";
+          elif [ -d build ]; then DIR="build";
+          else DIR="."; fi
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+          echo "Using DIR=$DIR"
 
-      - name: Invalidate CloudFront cache
+      - name: List files to be deployed (debug)
+        run: |
+          DIR="${{ steps.builddir.outputs.dir }}"
+          echo "First 30 entries in $DIR:"
+          ls -la "$DIR" | head -n 30
+
+      - name: Sync static files to S3 (immutable assets first)
+        run: |
+          set -e
+          DIR="${{ steps.builddir.outputs.dir }}"
+          # Sync everything except index.html to set long cache headers
+          aws s3 sync "$DIR" "s3://${{ secrets.S3_BUCKET }}" \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "index.html" \
+            --cache-control "public, max-age=31536000, immutable"
+
+          # Upload index.html with no-cache (SPA safe)
+          if [ -f "$DIR/index.html" ]; then
+            aws s3 cp "$DIR/index.html" "s3://${{ secrets.S3_BUCKET }}/index.html" \
+              --cache-control "no-cache, no-store, must-revalidate"
+          else
+            echo "::warning title=index.html missing::No index.html found in $DIR"
+          fi
+
+      - name: CloudFront Invalidate
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "${{ secrets.CF_DIST_ID }}" \
