@@ -4,170 +4,96 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>VedSAAS</title>
-
-  <!-- If you want to force an absolute API base (only if /api proxy not set), uncomment: -->
-  <!-- <meta name="api-base" content="http://13.203.176.31"> -->
-
+  <!-- Optional (only if /api proxy NOT set): <meta name="api-base" content="http://13.203.176.31"> -->
   <link rel="icon" href="./favicon.ico"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <link rel="stylesheet" href="./style.css"/>
-
-  <!-- HARD HIDE: make sure no Settings panel/link can show -->
   <style>
-    #settings-panel,
-    #settings-panel * { display:none!important; height:0!important; margin:0!important; padding:0!important; overflow:hidden!important; }
+    #settings-panel, #settings-panel *{display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
   </style>
 </head>
 <body>
+  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
-<!-- Backdrop for mobile slide-in sidebar -->
-<div id="backdrop" class="backdrop" aria-hidden="true"></div>
+  <noscript><div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">JavaScript required. Please enable JS.</div></noscript>
+  <div id="banner" class="banner"></div>
 
-<noscript>
-  <div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">
-    JavaScript required. Please enable JS.
-  </div>
-</noscript>
-
-<div id="banner" class="banner"></div>
-
-<!-- App visible by default -->
-<div id="app" class="container">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="title">Chat History</div>
-    <button class="new-topic-btn" id="new-topic">+ New Chat</button>
-    <div class="history-list" id="history-list"></div>
-
-    <div class="settings-summary">
-      <!-- Whole chip opens Settings page -->
-      <div id="settings-header" class="user-chip" title="Account & Settings" onclick="location.href='settings.html'">
-        <div id="settings-avatar" class="user-avatar">U</div>
-        <div id="settings-username" class="user-name">User</div>
-        <i id="settings-caret" class="fas fa-gear settings-caret"></i>
-      </div>
-
-      <!-- Hidden stub (so old JS listeners don't crash) -->
-      <div id="settings-panel" class="settings-panel">
-        <button id="dark-toggle"></button>
-        <button id="lang-toggle"></button>
-        <button id="export-topic"></button>
-        <button id="delete-topic"></button>
-        <button id="clear-all-chats"></button>
-        <button id="logout-btn"></button>
+  <div id="app" class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="title">Chat History</div>
+      <button class="new-topic-btn" id="new-topic">+ New Chat</button>
+      <div class="history-list" id="history-list"></div>
+      <div class="settings-summary">
+        <div id="settings-header" class="user-chip" title="Account & Settings" onclick="location.href='settings.html'">
+          <div id="settings-avatar" class="user-avatar">U</div>
+          <div id="settings-username" class="user-name">User</div>
+          <i class="fas fa-gear settings-caret"></i>
+        </div>
+        <div id="settings-panel" class="settings-panel"></div>
       </div>
     </div>
-  </div>
 
-  <!-- Main -->
-  <div class="main">
-    <div class="rail">
-      <div class="topbar">
-        <!-- Mobile hamburger -->
-        <button id="menu-toggle" class="menu-btn" aria-label="Open menu">
-          <i class="fas fa-bars"></i>
-        </button>
-
-        <h1>VedSAAS</h1>
-        <div class="top-controls">
-          <div class="meta" id="meta-info">Local: 0 KB</div>
-        </div>
-      </div>
-
-      <div class="content">
-        <!-- Landing (no Login/Settings buttons here) -->
-        <div id="landing" class="landing" style="display:flex;">
-          <div class="landing-card">
-            <div class="title">Start a new conversation</div>
-            <div class="hint">Ask anything. I’ll reply in your language.</div>
-            <div class="composer">
-              <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
-              <button id="landing-start" class="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
-            </div>
-            <div class="landing-actions">
-              <button id="landing-open-history" class="btn">Open Previous Chats</button>
-            </div>
+    <!-- Main -->
+    <div class="main">
+      <div class="rail">
+        <div class="topbar">
+          <button id="menu-toggle" class="menu-btn" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+          <h1>VedSAAS</h1>
+          <div class="top-controls">
+            <div class="meta" id="meta-info">Local: 0 KB</div>
           </div>
         </div>
 
-        <!-- Chat shell -->
-        <div id="chat-shell" style="display:none;flex:1;min-height:0;flex-direction:column;">
-          <div class="chat-area" id="chat-area"></div>
-          <div class="composer-wrap">
-            <div class="composer">
-              <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
-              <button id="send-btn" class="send-btn" title="Send" disabled><i class="fas fa-paper-plane"></i></button>
+        <div class="content">
+          <!-- Landing -->
+          <div id="landing" class="landing" style="display:flex;">
+            <div class="landing-card">
+              <div class="title">Start a new conversation</div>
+              <div class="hint">Ask anything. I’ll reply in your language.</div>
+              <div class="composer">
+                <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
+                <button id="landing-start" class="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
+              </div>
+              <div class="landing-actions" style="margin-top:12px">
+                <a class="btn" href="./login.html">Login</a>
+                <a class="btn" href="./register.html">Register</a>
+                <a class="btn" href="./settings.html">Settings</a>
+                <button id="landing-open-history" class="btn">Open Previous Chats</button>
+              </div>
             </div>
           </div>
-        </div>
-      </div> <!-- /content -->
-    </div> <!-- /rail -->
-  </div> <!-- /main -->
-</div> <!-- /app -->
 
-<!-- Minimal OTP overlay kept for future (hidden) -->
-<div id="auth-overlay" class="overlay" style="display:none;">
-  <div class="auth-box">
-    <div id="login-screen">
-      <h2>Login (OTP)</h2>
-      <form id="login-form" autocomplete="on">
-        <input id="login-identifier" placeholder="Email or Mobile"/>
-        <button id="login-send-otp" type="button">Send OTP</button>
-      </form>
-      <small>We’ll send OTP to your email/phone.</small>
-      <p style="color:#bbb;text-align:center;margin-top:8px;">Or use <a href="login.html" style="color:#1e90ff;">full login page</a></p>
-    </div>
+          <!-- Chat shell -->
+          <div id="chat-shell" style="display:none;flex:1;min-height:0;flex-direction:column;">
+            <div class="chat-area" id="chat-area"></div>
+            <div class="composer-wrap">
+              <div class="composer">
+                <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
+                <button id="send-btn" class="send-btn" title="Send" disabled><i class="fas fa-paper-plane"></i></button>
+              </div>
+            </div>
+          </div>
+        </div><!-- /content -->
+      </div><!-- /rail -->
+    </div><!-- /main -->
+  </div><!-- /app -->
 
-    <div id="verify-screen" style="display:none;">
-      <h2>Verify OTP</h2>
-      <form id="verify-form" autocomplete="one-time-code">
-        <input id="verify-identifier" placeholder="Email/Mobile"/>
-        <input id="verify-code" placeholder="Enter OTP" autocomplete="one-time-code"/>
-        <button id="verify-submit" type="submit">Verify</button>
-      </form>
-    </div>
-  </div>
-</div>
+  <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
-<button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
-
-<!-- Small boot helpers -->
-<script>
-  // Ensure app visible even if app.js errors
-  window.addEventListener('DOMContentLoaded', function () {
-    var app = document.getElementById('app');
-    if (app) app.style.display = 'flex';
-
-    // ENTER on landing textarea -> send (Shift+Enter = new line)
-    var li = document.getElementById('landing-input');
-    var btn = document.getElementById('landing-start');
-    if (li && btn) {
-      li.addEventListener('keydown', function(e){
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          btn.click();
-        }
-      });
-    }
-
-    // Safety: if some old JS toggles settings-panel, remove it anyway
-    var sp = document.getElementById('settings-panel');
-    if (sp) sp.setAttribute('aria-hidden','true');
-
-    // Mobile sidebar open/close
-    var mt = document.getElementById('menu-toggle');
-    var bd = document.getElementById('backdrop');
-    if (mt) mt.addEventListener('click', function () {
-      document.body.classList.toggle('sidebar-open');
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      var app = document.getElementById('app'); if (app) app.style.display = 'flex';
+      var li = document.getElementById('landing-input'); var btn = document.getElementById('landing-start');
+      if (li && btn) li.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); btn.click(); }});
+      var sp = document.getElementById('settings-panel'); if (sp) sp.setAttribute('aria-hidden','true');
+      var mt = document.getElementById('menu-toggle'); var bd = document.getElementById('backdrop');
+      if (mt) mt.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+      if (bd) bd.addEventListener('click', () => document.body.classList.remove('sidebar-open'));
     });
-    if (bd) bd.addEventListener('click', function () {
-      document.body.classList.remove('sidebar-open');
-    });
-  });
-</script>
+  </script>
 
-<!-- Load scripts after DOM -->
-<script defer src="./vedsaas-fixes.js"></script>
-<script defer src="./app.js"></script>
+  <script defer src="./vedsaas-fixes.js"></script>
+  <script defer src="./app.js"></script>
 </body>
 </html>
