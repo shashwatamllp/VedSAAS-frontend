@@ -2,18 +2,17 @@ name: Deploy Frontend to AWS S3 + CloudFront
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch: {}
-
-permissions:
-  contents: read
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
-    # Put secrets into env so bash can read them normally
     env:
+      # Force clear any accidental session token in runners/org secrets
+      AWS_SESSION_TOKEN: ""
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -21,29 +20,21 @@ jobs:
       CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # Simple, reliable check (no GitHub expressions inside bash loop)
-      - name: Verify required variables are present
-        run: |
-          set -e
-          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION S3_BUCKET CF_DIST_ID; do
-            if [ -z "${!v}" ]; then
-              echo "::error title=Missing secret::$v is empty"
-              exit 1
-            fi
-          done
-          echo "All required vars present."
+      # If you have no npm build, delete these two steps.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      - name: Install AWS CLI v2
+      - name: Install + Build (skip if no package.json)
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y unzip curl
-          curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
-          unzip -q awscliv2.zip
-          sudo ./aws/install --update
-          aws --version
+          if [ -f package.json ]; then
+            npm ci
+            if npm run | grep -q "build"; then npm run build; else echo "No build script"; fi
+          fi
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -52,47 +43,21 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: WhoAmI (STS)
-        run: aws sts get-caller-identity
-
-      - name: Decide upload directory
-        id: builddir
+      - name: Verify AWS identity (must PASS)
         run: |
-          if [ -d dist ]; then DIR="dist";
-          elif [ -d build ]; then DIR="build";
-          else DIR="."; fi
-          echo "dir=$DIR" >> $GITHUB_OUTPUT
-          echo "Using DIR=$DIR"
+          aws --version
+          aws sts get-caller-identity
 
-      - name: List files (debug)
+      - name: Check bucket access (must LIST)
+        run: aws s3 ls "s3://${S3_BUCKET}"
+
+      - name: Deploy to S3
         run: |
-          DIR="${{ steps.builddir.outputs.dir }}"
-          echo "Listing $DIR"
-          ls -la "$DIR" | head -n 50
-
-      - name: Test S3 access (list bucket)
-        run: aws s3 ls "s3://${{ env.S3_BUCKET }}" || true
-
-      - name: Sync static files to S3 (immutable assets first)
-        run: |
-          set -e
-          DIR="${{ steps.builddir.outputs.dir }}"
-          aws s3 sync "$DIR" "s3://${{ env.S3_BUCKET }}" \
-            --delete \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude "index.html" \
-            --cache-control "public, max-age=31536000, immutable"
-
-          if [ -f "$DIR/index.html" ]; then
-            aws s3 cp "$DIR/index.html" "s3://${{ env.S3_BUCKET }}/index.html" \
-              --cache-control "no-cache, no-store, must-revalidate"
-          else
-            echo "::warning title=index.html missing::No index.html found in $DIR"
-          fi
+          BUILD_DIR="dist"
+          if [ ! -d "$BUILD_DIR" ]; then BUILD_DIR="."; fi
+          echo "Syncing $BUILD_DIR -> s3://${S3_BUCKET}"
+          aws s3 sync "$BUILD_DIR" "s3://${S3_BUCKET}" --delete --exclude ".git/*"
 
       - name: CloudFront Invalidate
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id "${{ env.CF_DIST_ID }}" \
-            --paths "/*"
+        if: ${{ success() && env.CF_DIST_ID != '' }}
+        run: aws cloudfront create-invalidation --distribution-id "${CF_DIST_ID}" --paths "/*"
