@@ -1,4 +1,10 @@
-/* vedsaas-fixes.js — shared helpers for all pages */
+/* vedsaas-fixes.js
+ * VedSAAS production helpers:
+ * - API base resolve (window.API_BASE or <meta name="api-base">, else same-origin)
+ * - Safe fetch with timeout + small retry for 5xx/429/network
+ * - Auto JSON headers + stringify
+ * - Tiny /api/health banner
+ */
 (function () {
   function trimEndSlash(s){ return (s||'').replace(/\/+$/, ''); }
   function resolveApiBase() {
