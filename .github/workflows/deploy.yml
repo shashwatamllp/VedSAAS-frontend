@@ -12,26 +12,35 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    # Put secrets into env so bash can read them normally
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Sanity-check required secrets
+      # Simple, reliable check (no GitHub expressions inside bash loop)
+      - name: Verify required variables are present
         run: |
-          fail=0
+          set -e
           for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION S3_BUCKET CF_DIST_ID; do
-            if [ -z "${{ secrets[$v] }}" ]; then
-              echo "::error title=Missing secret::$v is not set in repo Settings → Secrets → Actions"
-              fail=1
+            if [ -z "${!v}" ]; then
+              echo "::error title=Missing secret::$v is empty"
+              exit 1
             fi
           done
-          if [ "$fail" -eq 1 ]; then exit 1; fi
+          echo "All required vars present."
 
-      - name: Install AWS CLI v2 (fresh)
+      - name: Install AWS CLI v2
         run: |
           sudo apt-get update -y
           sudo apt-get install -y unzip curl
-          curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
           unzip -q awscliv2.zip
           sudo ./aws/install --update
           aws --version
@@ -39,9 +48,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: WhoAmI (STS)
         run: aws sts get-caller-identity
@@ -55,27 +64,28 @@ jobs:
           echo "dir=$DIR" >> $GITHUB_OUTPUT
           echo "Using DIR=$DIR"
 
-      - name: List files to be deployed (debug)
+      - name: List files (debug)
         run: |
           DIR="${{ steps.builddir.outputs.dir }}"
-          echo "First 30 entries in $DIR:"
-          ls -la "$DIR" | head -n 30
+          echo "Listing $DIR"
+          ls -la "$DIR" | head -n 50
+
+      - name: Test S3 access (list bucket)
+        run: aws s3 ls "s3://${{ env.S3_BUCKET }}" || true
 
       - name: Sync static files to S3 (immutable assets first)
         run: |
           set -e
           DIR="${{ steps.builddir.outputs.dir }}"
-          # Sync everything except index.html to set long cache headers
-          aws s3 sync "$DIR" "s3://${{ secrets.S3_BUCKET }}" \
+          aws s3 sync "$DIR" "s3://${{ env.S3_BUCKET }}" \
             --delete \
             --exclude ".git/*" \
             --exclude ".github/*" \
             --exclude "index.html" \
             --cache-control "public, max-age=31536000, immutable"
 
-          # Upload index.html with no-cache (SPA safe)
           if [ -f "$DIR/index.html" ]; then
-            aws s3 cp "$DIR/index.html" "s3://${{ secrets.S3_BUCKET }}/index.html" \
+            aws s3 cp "$DIR/index.html" "s3://${{ env.S3_BUCKET }}/index.html" \
               --cache-control "no-cache, no-store, must-revalidate"
           else
             echo "::warning title=index.html missing::No index.html found in $DIR"
@@ -84,5 +94,5 @@ jobs:
       - name: CloudFront Invalidate
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id "${{ secrets.CF_DIST_ID }}" \
+            --distribution-id "${{ env.CF_DIST_ID }}" \
             --paths "/*"
