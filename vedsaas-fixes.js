@@ -1,17 +1,11 @@
-/* vedsaas-fixes.js
- * VedSAAS production helpers:
- * - API base resolve (window.API_BASE or <meta name="api-base">, else same-origin)
- * - Safe fetch with timeout + small retry for 5xx/429/network
- * - Auto JSON headers + stringify
- * - Tiny /api/health banner
- */
+/* vedsaas-fixes.js — shared prod helpers */
 (function () {
   function trimEndSlash(s){ return (s||'').replace(/\/+$/, ''); }
   function resolveApiBase() {
     if (typeof window.API_BASE === 'string' && window.API_BASE) return trimEndSlash(window.API_BASE);
     const meta = document.querySelector('meta[name="api-base"]');
     if (meta && meta.content) return trimEndSlash(meta.content);
-    return ''; // same-origin (expects /api/* reverse-proxied)
+    return ''; // same-origin: /api/* must be reverse-proxied
   }
   let API_BASE = resolveApiBase();
 
@@ -31,7 +25,6 @@
 
     const init = { ...opts };
     delete init.timeout; delete init.retries;
-
     init.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (init.body && typeof init.body === 'object' && !(init.body instanceof FormData)) {
       try { init.body = JSON.stringify(init.body); } catch {}
@@ -55,9 +48,7 @@
           const body = await res.text().catch(()=>'');
           throw new Error(`API ${res.status}: ${body || res.statusText}`);
         }
-      } catch (e) {
-        lastErr = e;
-      }
+      } catch (e) { lastErr = e; }
       attempt++;
       if (attempt <= retries) await new Promise(r => setTimeout(r, 300 + (attempt-1)*400));
     }
@@ -66,18 +57,15 @@
 
   async function healthBanner() {
     const el = document.getElementById('banner'); if (!el) return;
-    try { await apiFetch('/api/health', { method: 'GET', retries: 0, timeout: 6000 }); el.textContent='API OK'; el.className='banner ok'; }
-    catch (e) { el.textContent='API unreachable'; el.className='banner warn'; console.warn('[VedSAAS] health:', e.message||e); }
-    setTimeout(() => { el.textContent=''; el.className='banner'; }, 4000);
+    try { await apiFetch('/api/health', { method:'GET', retries:0, timeout:6000 });
+      el.textContent='API OK'; el.className='banner ok';
+    } catch (e) {
+      el.textContent='API unreachable'; el.className='banner warn'; console.warn('[VedSAAS] health:', e.message||e);
+    }
+    setTimeout(()=>{ el.textContent=''; el.className='banner'; }, 4000);
   }
-  if (document.readyState === 'complete') healthBanner();
-  else window.addEventListener('load', healthBanner);
+  if (document.readyState === 'complete') healthBanner(); else window.addEventListener('load', healthBanner);
 
-  // expose
-  window.VedSaas = {
-    getApiBase: () => API_BASE,
-    setApiBase: (b) => { API_BASE = trimEndSlash(b||''); },
-    apiFetch,
-  };
-  window.apiFetch = apiFetch; // convenience
+  window.apiFetch = apiFetch;
+  window.VedSaas = { apiFetch, getApiBase:()=>API_BASE, setApiBase:(b)=>{ API_BASE = trimEndSlash(b||''); } };
 })();
