@@ -5,18 +5,17 @@ on:
     branches: [ "main" ]
 
 permissions:
-  id-token: write   # OIDC ke liye zaroori
+  id-token: write
   contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # (Optional) Build step — agar React/Vite hai to rakho, warna hata do
+      # Optional build (only if React/Vite)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -28,34 +27,40 @@ jobs:
             npm ci
             if npm run | grep -q "build"; then npm run build; else echo "No build script"; fi
           else
-            echo "No package.json; skipping build"
+            echo "No package.json found, skipping build"
           fi
 
-      - name: Configure AWS credentials (OIDC)
+      - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region:     ${{ secrets.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Verify AWS identity
+      - name: Verify AWS Identity
         run: aws sts get-caller-identity
 
-      - name: Select deploy folder
-        id: pick
+      - name: Choose deploy directory
+        id: dir
         run: |
-          if [ -d "dist" ]; then echo "dir=dist" >> $GITHUB_OUTPUT; else echo "dir=." >> $GITHUB_OUTPUT; fi
+          if [ -d "dist" ]; then
+            echo "dir=dist" >> $GITHUB_OUTPUT
+          elif [ -d "build" ]; then
+            echo "dir=build" >> $GITHUB_OUTPUT
+          else
+            echo "dir=." >> $GITHUB_OUTPUT
+          fi
 
-      - name: Deploy to S3
+      - name: Upload to S3
         run: |
-          echo "Syncing ${{ steps.pick.outputs.dir }} -> s3://${{ secrets.S3_BUCKET }}"
-          aws s3 sync "${{ steps.pick.outputs.dir }}" "s3://${{ secrets.S3_BUCKET }}" \
+          echo "Deploying from ${{ steps.dir.outputs.dir }} to s3://${{ secrets.S3_BUCKET }}"
+          aws s3 sync "${{ steps.dir.outputs.dir }}" "s3://${{ secrets.S3_BUCKET }}" \
             --delete \
             --exclude ".git/*" \
             --exclude ".github/*" \
             --exclude "README.md" \
-            --exclude "Dockerfile.frontend.sample"
+            --exclude "Dockerfile*"
 
-      - name: Invalidate CloudFront
+      - name: Invalidate CloudFront cache
         if: ${{ success() && secrets.CF_DIST_ID != '' }}
         run: |
           aws cloudfront create-invalidation \
