@@ -4,26 +4,19 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  id-token: write   # OIDC ke liye zaroori
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    env:
-      # Force clear any accidental session token in runners/org secrets
-      AWS_SESSION_TOKEN: ""
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      S3_BUCKET: ${{ secrets.S3_BUCKET }}
-      CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # If you have no npm build, delete these two steps.
+      # (Optional) Build step — agar React/Vite hai to rakho, warna hata do
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -34,30 +27,37 @@ jobs:
           if [ -f package.json ]; then
             npm ci
             if npm run | grep -q "build"; then npm run build; else echo "No build script"; fi
+          else
+            echo "No package.json; skipping build"
           fi
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region:     ${{ secrets.AWS_REGION }}
 
-      - name: Verify AWS identity (must PASS)
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Select deploy folder
+        id: pick
         run: |
-          aws --version
-          aws sts get-caller-identity
-
-      - name: Check bucket access (must LIST)
-        run: aws s3 ls "s3://${S3_BUCKET}"
+          if [ -d "dist" ]; then echo "dir=dist" >> $GITHUB_OUTPUT; else echo "dir=." >> $GITHUB_OUTPUT; fi
 
       - name: Deploy to S3
         run: |
-          BUILD_DIR="dist"
-          if [ ! -d "$BUILD_DIR" ]; then BUILD_DIR="."; fi
-          echo "Syncing $BUILD_DIR -> s3://${S3_BUCKET}"
-          aws s3 sync "$BUILD_DIR" "s3://${S3_BUCKET}" --delete --exclude ".git/*"
+          echo "Syncing ${{ steps.pick.outputs.dir }} -> s3://${{ secrets.S3_BUCKET }}"
+          aws s3 sync "${{ steps.pick.outputs.dir }}" "s3://${{ secrets.S3_BUCKET }}" \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "README.md" \
+            --exclude "Dockerfile.frontend.sample"
 
-      - name: CloudFront Invalidate
-        if: ${{ success() && env.CF_DIST_ID != '' }}
-        run: aws cloudfront create-invalidation --distribution-id "${CF_DIST_ID}" --paths "/*"
+      - name: Invalidate CloudFront
+        if: ${{ success() && secrets.CF_DIST_ID != '' }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CF_DIST_ID }} \
+            --paths "/*"
