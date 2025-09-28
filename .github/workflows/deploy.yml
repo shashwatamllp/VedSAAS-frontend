@@ -11,6 +11,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,8 +62,14 @@ jobs:
             --exclude "Dockerfile*"
 
       - name: Invalidate CloudFront cache
-        if: ${{ success() && secrets.CF_DIST_ID != '' }}
+        if: success()
+        env:
+          CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
         run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CF_DIST_ID }} \
-            --paths "/*"
+          if [ -n "$CF_DIST_ID" ]; then
+            aws cloudfront create-invalidation \
+              --distribution-id "$CF_DIST_ID" \
+              --paths "/*"
+          else
+            echo "No CF_DIST_ID found, skipping cache invalidation"
+          fi
