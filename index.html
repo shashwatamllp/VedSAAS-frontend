@@ -4,12 +4,19 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>VedSAAS</title>
-  <!-- Optional (only if /api proxy NOT set): <meta name="api-base" content="http://13.203.176.31"> -->
+
+  <!-- 👇 choose ONE: use your API domain OR the IP.
+       domain (recommended): -->
+  <!-- <meta name="ved-api-base" content="https://api.vedsaas.com"> -->
+  <!-- IP (temporary): -->
+  <meta name="ved-api-base" content="http://13.203.176.31">
+
   <link rel="icon" href="./favicon.ico"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <link rel="stylesheet" href="./style.css"/>
   <style>
     #settings-panel, #settings-panel *{display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+    .to-bottom{position:fixed;right:16px;bottom:16px}
   </style>
 </head>
 <body>
@@ -18,7 +25,7 @@
   <noscript><div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">JavaScript required. Please enable JS.</div></noscript>
   <div id="banner" class="banner"></div>
 
-  <div id="app" class="container">
+  <div id="app" class="container" style="display:none">
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="title">Chat History</div>
@@ -83,16 +90,17 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', function () {
-      var app = document.getElementById('app'); if (app) app.style.display = 'flex';
-      var li = document.getElementById('landing-input'); var btn = document.getElementById('landing-start');
+      const app = document.getElementById('app'); if (app) app.style.display = 'flex';
+      const li = document.getElementById('landing-input'); const btn = document.getElementById('landing-start');
       if (li && btn) li.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); btn.click(); }});
-      var sp = document.getElementById('settings-panel'); if (sp) sp.setAttribute('aria-hidden','true');
-      var mt = document.getElementById('menu-toggle'); var bd = document.getElementById('backdrop');
+      const sp = document.getElementById('settings-panel'); if (sp) sp.setAttribute('aria-hidden','true');
+      const mt = document.getElementById('menu-toggle'); const bd = document.getElementById('backdrop');
       if (mt) mt.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
       if (bd) bd.addEventListener('click', () => document.body.classList.remove('sidebar-open'));
     });
   </script>
 
+  <!-- 👇 our API + UI wiring -->
   <script defer src="./vedsaas-fixes.js"></script>
   <script defer src="./app.js"></script>
 </body>
