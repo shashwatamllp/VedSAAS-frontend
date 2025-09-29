@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>VedSAAS</title>
 
-  <!-- 👇 choose ONE: use your API domain OR the IP.
-       domain (recommended): -->
-  <!-- <meta name="ved-api-base" content="https://api.vedsaas.com"> -->
-  <!-- IP (temporary): -->
-  <meta name="ved-api-base" content="http://13.203.176.31">
+  <!-- PRODUCTION: same-origin API.
+       CloudFront behavior `/api/*` must point to your backend.
+       (DON'T set ved-api-base meta in prod.) -->
 
   <link rel="icon" href="./favicon.ico"/>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <link rel="stylesheet" href="./style.css"/>
+
   <style>
     #settings-panel, #settings-panel *{display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
     .to-bottom{position:fixed;right:16px;bottom:16px}
@@ -100,7 +100,7 @@
     });
   </script>
 
-  <!-- 👇 our API + UI wiring -->
+  <!-- API + UI wiring (API_BASE is same-origin inside vedsaas-fixes.js) -->
   <script defer src="./vedsaas-fixes.js"></script>
   <script defer src="./app.js"></script>
 </body>
