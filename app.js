@@ -13,23 +13,24 @@ let token = localStorage.getItem("token") || null;
 
 function setToken(t) {
   token = t;
-  if (t) {
-    localStorage.setItem("token", t);
-  } else {
-    localStorage.removeItem("token");
-  }
+  if (t) localStorage.setItem("token", t);
+  else localStorage.removeItem("token");
 }
 window.setToken = setToken;
 
 /* ---- core fetch wrappers ---- */
 async function apiFetch(path, opts = {}) {
   // allow passing full URL; otherwise prefix with API_BASE
-  const url = /^https?:\/\//i.test(path) ? path : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  const url = /^https?:\/\//i.test(path)
+    ? path
+    : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+
   const headers = new Headers(opts.headers || {});
-  
+  if (!headers.has("Accept")) headers.set("Accept", "application/json");
+
   // JSON body convenience
   const hasBody = opts.body !== undefined && opts.body !== null;
-  if (hasBody && !(opts.body instanceof FormData)) {
+  if (hasBody && !(opts.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -38,13 +39,23 @@ async function apiFetch(path, opts = {}) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const resp = await fetch(url, {
-    method: opts.method || "GET",
-    headers,
-    body: hasBody && !(opts.body instanceof FormData) ? JSON.stringify(opts.body) : opts.body,
-    mode: "cors",
-    cache: "no-store",
-  });
+  // simple timeout (10s)
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(new Error("Request timeout")), opts.timeoutMs ?? 10000);
+
+  let resp;
+  try {
+    resp = await fetch(url, {
+      method: opts.method || "GET",
+      headers,
+      body: hasBody && !(opts.body instanceof FormData) ? JSON.stringify(opts.body) : opts.body,
+      mode: "cors",
+      cache: "no-store",
+      signal: ac.signal,
+    });
+  } finally {
+    clearTimeout(t);
+  }
 
   // throw for non-2xx with useful text/json
   if (!resp.ok) {
@@ -59,8 +70,7 @@ async function apiFetch(path, opts = {}) {
 
 // auth-aware wrapper
 async function authFetch(path, opts = {}, extra = {}) {
-  const merged = { ...opts, ...(extra || {}) };
-  return apiFetch(path, merged);
+  return apiFetch(path, { ...opts, ...(extra || {}) });
 }
 window.authFetch = authFetch;
 
@@ -76,12 +86,13 @@ window.authFetch = authFetch;
   }
 
   const toBottom = $("to-bottom");
-  if (toBottom) {
-    toBottom.onclick = () => scrollChatBottom(true);
-  }
+  if (toBottom) toBottom.onclick = () => scrollChatBottom(true);
 
   console.log("VedSAAS API base:", API_BASE);
   console.log("VedSAAS frontend loaded successfully ✅");
+
+  // expose a small helper for other scripts/console
+  window.VedAPI = { API_BASE, apiFetch, authFetch, setToken, sendChat };
 })();
 
 async function sendChat(text) {
