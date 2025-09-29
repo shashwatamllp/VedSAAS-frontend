@@ -3,15 +3,20 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta http-equiv="x-content-type-options" content="nosniff"/>
+  <meta name="referrer" content="strict-origin-when-cross-origin"/>
   <title>VedSAAS</title>
 
-  <!-- PRODUCTION: same-origin API.
-       CloudFront behavior `/api/*` must point to your backend.
-       (DON'T set ved-api-base meta in prod.) -->
+  <!-- PRODUCTION: same-origin API via CloudFront.
+       Behavior `/api/*` must route to your backend (ALB/EC2/API GW).
+       Do NOT add ved-api-base meta in prod. -->
 
   <link rel="icon" href="./favicon.ico"/>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        referrerpolicy="strict-origin-when-cross-origin"/>
   <link rel="stylesheet" href="./style.css"/>
 
   <style>
