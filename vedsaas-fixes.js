@@ -1,12 +1,15 @@
 /* ===== VedSAAS production wiring (API + minimal UI glue) ===== */
 const $ = (id) => document.getElementById(id);
 
-/* -------- API base resolution -------- */
-const API_BASE =
-  (window.__VED_API_BASE || "").replace(/\/$/, "") ||
-  (document.querySelector('meta[name="ved-api-base"]')?.content || "").replace(/\/$/, "") ||
-  (typeof process !== "undefined" ? (process.env.REACT_APP_API_BASE || "").replace(/\/$/, "") : "") ||
-  "http://13.203.176.31"; // fallback
+/* -------- API base resolution (PROD: same-origin by default) -------- */
+const API_BASE = (() => {
+  const explicit =
+    (window.__VED_API_BASE || "") ||
+    (document.querySelector('meta[name="ved-api-base"]')?.content || "") ||
+    (typeof process !== "undefined" ? (process.env.REACT_APP_API_BASE || "") : "");
+  // In prod we want same-origin unless explicitly set:
+  return explicit.replace(/\/$/, ""); // "" means same-origin
+})();
 
 /* -------- token handling -------- */
 let token = localStorage.getItem("token") || null;
@@ -18,11 +21,18 @@ window.setVedToken = function setVedToken(t){
 
 /* -------- core fetch wrapper -------- */
 async function apiFetch(path, opts = {}) {
-  const url = /^https?:\/\//i.test(path) ? path : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  // allow absolute URLs; otherwise prefix with API_BASE (may be "")
+  const url = /^https?:\/\//i.test(path)
+    ? path
+    : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+
   const headers = new Headers(opts.headers || {});
   const hasBody = opts.body !== undefined && opts.body !== null;
 
-  if (hasBody && !(opts.body instanceof FormData)) headers.set("Content-Type", "application/json");
+  if (hasBody && !(opts.body instanceof FormData)) {
+    if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  }
+  if (!headers.has("Accept")) headers.set("Accept", "application/json");
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
   const resp = await fetch(url, {
@@ -49,7 +59,7 @@ async function authFetch(path, opts = {}, extra = {}) {
 
 /* -------- minimal UI glue -------- */
 (function boot(){
-  console.log("VedSAAS API base:", API_BASE);
+  console.log("VedSAAS API base:", API_BASE || "(same-origin)");
 
   const landingBtn = $("landing-start");
   if (landingBtn) landingBtn.onclick = async () => {
