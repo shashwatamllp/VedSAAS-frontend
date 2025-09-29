@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VedSAAS • Signup</title>
-  <link rel="icon" href="favicon.ico"/>
+  <link rel="icon" href="/favicon.ico"/>
   <style>
     :root{
       --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
@@ -13,20 +13,17 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    /* page ko center + page level scroll off */
     body{
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
       background:var(--bg); color:var(--text);
       display:flex; align-items:center; justify-content:center;
       min-height:100vh; overflow:hidden;
     }
-    .auth-bg{ position:fixed; inset:0; background:url('images/logopic.png') center/520px no-repeat; opacity:.06; pointer-events:none; z-index:0; }
-
-    /* card: viewport ke andar fit; agar zyada content ho to card ke andar scroll */
+    .auth-bg{ position:fixed; inset:0; background:url('/images/logopic.png') center/520px no-repeat; opacity:.06; pointer-events:none; z-index:0; }
     .card{
       position:relative; z-index:1;
       width:min(1100px, 98vw);
-      max-height:92vh;  /* yahi key hai */
+      max-height:92vh;
       overflow:auto;
       scrollbar-gutter:stable;
       background:var(--card); border-radius:14px;
@@ -35,35 +32,24 @@
     }
     h1{font-size:26px; text-align:center; margin-bottom:4px}
     .sub{color:var(--muted); text-align:center; font-size:14px; margin-bottom:12px}
-
-    /* responsive 3-col grid */
     .grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:12px 14px}
     .span2{grid-column:span 2}
     .span3{grid-column:1 / -1}
-
     label{display:block; font-size:13px; color:#cfd2e2; margin:2px 0 6px}
     .ip{width:100%; padding:11px 12px; border-radius:10px; border:none; background:var(--ip); color:#fff; outline:none; font-size:15px; transition:.15s background}
     .ip:focus{background:var(--ip-focus)}
     input[type="date"]{color-scheme:dark}
-
     .avatar-row{display:grid; grid-template-columns: 64px 1fr; gap:12px; align-items:center}
     .avatar{width:56px; height:56px; border-radius:50%; background:#444 center/cover no-repeat}
     .hint{font-size:12px; color:var(--muted)}
-
     .actions{display:block; margin-top:6px}
     .btn{width:100%; padding:12px 14px; border:none; border-radius:10px; cursor:pointer; font-weight:600; color:#fff; background:var(--brand)}
     .btn:hover{background:var(--brand-2)}
-
     .msg{min-height:18px; margin-top:8px; text-align:center; font-size:13px}
     .ok{color:var(--ok)} .err{color:var(--err)}
-    .note{margin-top:8px; text-align:center; color:var(--muted); font-size:13px}
+    .note{margin-top:8px; text-align:center; color:#b5bbcf; font-size:13px}
     .footer{position:relative; text-align:center; color:#9aa0b6; font-size:12px; padding:8px 0 0}
-
-    /* thoda compact for short heights */
-    @media (max-height:700px){
-      h1{font-size:24px} .sub{font-size:13px}
-      .ip{padding:10px}
-    }
+    @media (max-height:700px){ h1{font-size:24px} .sub{font-size:13px} .ip{padding:10px} }
     @media (max-width:1020px){ .grid{grid-template-columns: repeat(2, 1fr)} .span2,.span3{grid-column:1 / -1} }
     @media (max-width:640px){ .grid{grid-template-columns: 1fr} }
   </style>
@@ -113,89 +99,119 @@
       </div>
 
       <div class="span3 actions">
-        <!-- Back removed as requested -->
         <button class="btn" id="submit" type="submit">Register</button>
       </div>
     </form>
 
     <div id="msg" class="msg"></div>
-    <p class="note">Already have an account? <a href="login.html" style="color:#76b7ff">Login</a></p>
+    <p class="note">Already have an account? <a href="/login.html" style="color:#76b7ff">Login</a></p>
     <div class="footer">VedSAAS by Shashwatam Eco-Chie Creations LLP</div>
   </div>
 
 <script>
-  // Always start at top (safety)
-  window.scrollTo(0,0);
+  // Same-origin through CloudFront (/api/* behavior); DON'T hardcode IP in prod
+  const API_BASE = "";
 
-  const API_BASE=(()=>{const F='http://127.0.0.1:8000';try{const o=location.origin||'';if(!o||o.startsWith('file://'))return F;if(o.includes(':3000'))return F;if(o.includes(':8000'))return o;return o.startsWith('http')?o:F;}catch{return F;}})();
-  const $=id=>document.getElementById(id);
-  const msg=(t,ok=false)=>{ const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
+  const $ = (id) => document.getElementById(id);
+  const show = (t, ok=false) => { const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
 
-  // avatar preview + keep for post-verify upload
-  let avatarDataURL=null;
-  $('avatar').addEventListener('change', (e)=>{
-    const f=e.target.files?.[0]; if(!f){ avatarDataURL=null; $('preview').style.backgroundImage='none'; return; }
-    if(f.size>1024*1024) { msg('Image too large (max 1 MB)'); e.target.value=''; return; }
+  // avatar preview
+  let avatarFile = null;
+  $('avatar').addEventListener('change', e=>{
+    const f = e.target.files?.[0] || null;
+    avatarFile = null;
+    if (!f) { $('preview').style.backgroundImage='none'; return; }
+    if (f.size > 1024*1024) { show('Image too large (max 1 MB)'); e.target.value=''; return; }
+    avatarFile = f;
     const rd=new FileReader();
-    rd.onload=()=>{ avatarDataURL=rd.result; $('preview').style.backgroundImage=`url('${avatarDataURL}')`; };
+    rd.onload=()=>{ $('preview').style.backgroundImage = `url('${rd.result}')`; };
     rd.readAsDataURL(f);
   });
 
-  function validEmail(v){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v); }
-  function validPhone(v){ return /^\+?\d{10,15}$/.test((v||'').replace(/\s/g,'')); }
+  const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v||"");
+  const validPhone = v => /^\+?\d{10,15}$/.test((v||"").replace(/\s/g,""));
+
+  async function apiJSON(path, body){
+    const r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const ct = r.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await r.json() : await r.text();
+    if (!r.ok) throw new Error(typeof data==='string'? data : (data.error || data.message || JSON.stringify(data)));
+    return data;
+  }
+  async function apiForm(path, formData){
+    const r = await fetch(path, { method:'POST', body: formData });
+    const ct = r.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await r.json() : await r.text();
+    if (!r.ok) throw new Error(typeof data==='string'? data : (data.error || data.message || JSON.stringify(data)));
+    return data;
+  }
 
   $('form').addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const name=($('name').value||'').trim();
-    const email=($('email').value||'').trim();
-    const mobile=($('mobile').value||'').trim();
-    const dob=($('dob').value||'').trim();
-    const pw=$('pw').value||'';
-    const cpw=$('cpw').value||'';
+    const name   = ($('name').value||'').trim();
+    const email  = ($('email').value||'').trim();
+    const mobile = ($('mobile').value||'').trim();
+    const dob    = ($('dob').value||'').trim();
+    const pw     = $('pw').value||'';
+    const cpw    = $('cpw').value||'';
 
-    if(!name) return msg('Name required');
-    if(!validEmail(email)) return msg('Valid email required');
-    if(!validPhone(mobile)) return msg('Valid mobile required (10–15 digits)');
-    if(!dob) return msg('DOB required');
-    if(pw.length<6) return msg('Password must be at least 6 chars');
-    if(pw!==cpw) return msg('Passwords do not match');
+    if (!name) return show('Name required');
+    if (!validEmail(email)) return show('Valid email required');
+    if (!validPhone(mobile)) return show('Valid mobile required (10–15 digits)');
+    if (!dob) return show('DOB required');
+    if (pw.length < 6) return show('Password must be at least 6 characters');
+    if (pw !== cpw) return show('Passwords do not match');
 
-    // Stash extras to complete after OTP verify
-    try{
-      localStorage.setItem('pendingIdentifier', email || mobile);
-      localStorage.setItem('pendingDob', dob);
-      localStorage.setItem('pendingName', name);
-      if(avatarDataURL) localStorage.setItem('pendingAvatar', avatarDataURL);
-    }catch{}
+    $('submit').disabled = true; show('');
 
-    // Register
-    $('submit').disabled=true; msg('');
-    try{
-      const r = await fetch(API_BASE+'/api/register',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ name, email, mobile, password: pw })
-      });
-      const j = await r.json().catch(()=>({}));
-      if(!j || !j.ok){ msg(j?.error || 'Registration failed'); $('submit').disabled=false; return; }
+    // Build multipart first (avatar-friendly)
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('email', email);
+    fd.append('mobile', mobile);
+    fd.append('dob', dob);
+    fd.append('password', pw);
+    if (avatarFile) fd.append('avatar', avatarFile);
 
-      // Send OTP
-      const ident = email || mobile;
-      const r2 = await fetch(API_BASE+'/api/send-otp',{
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ identifier: ident })
-      });
-      const j2 = await r2.json().catch(()=>({}));
-      if(j2 && j2.ok){
-        msg('OTP sent. Redirecting…', true);
-        setTimeout(()=>{ location.href='verify.html?who='+encodeURIComponent(ident)+'&sent=1'; }, 400);
-      }else{
-        msg(j2?.error || 'Could not send OTP');
-        $('submit').disabled=false;
+    try {
+      // Try primary route
+      try {
+        await apiForm(`${API_BASE}/api/auth/register`, fd);
+      } catch (e1) {
+        // Fallback #1: same route but JSON (in case backend rejects multipart)
+        try {
+          await apiJSON(`${API_BASE}/api/auth/register`, { name, email, mobile, dob, password: pw });
+        } catch (e2) {
+          // Fallback #2: alternate path
+          try {
+            await apiForm(`${API_BASE}/api/register`, fd);
+          } catch (e3) {
+            await apiJSON(`${API_BASE}/api/register`, { name, email, mobile, dob, password: pw });
+          }
+        }
       }
-    }catch{
-      msg('Network error. Try again.');
-      $('submit').disabled=false;
+
+      // Send OTP (email or phone)
+      const identifier = email || mobile;
+      try {
+        await apiJSON(`${API_BASE}/api/auth/send-otp`, { identifier });
+      } catch {
+        await apiJSON(`${API_BASE}/api/send-otp`, { identifier });
+      }
+
+      // Stash for post-verify flows (optional)
+      try {
+        localStorage.setItem('pendingIdentifier', identifier);
+        localStorage.setItem('pendingName', name);
+        localStorage.setItem('pendingDob', dob);
+      } catch {}
+
+      show('OTP sent. Redirecting…', true);
+      setTimeout(()=>{ location.href = `/verify.html?who=${encodeURIComponent(identifier)}&sent=1`; }, 600);
+    } catch (err) {
+      show('Registration failed: ' + (err?.message || err));
+      console.error('Register error:', err);
+      $('submit').disabled = false;
     }
   });
 </script>
