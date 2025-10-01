@@ -3,73 +3,53 @@ name: Deploy Frontend to AWS S3 + CloudFront
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - ".github/workflows/deploy.yml"
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  deploy:
+  deploy-frontend:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Optional build (only if React/Vite)
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install + Build (skip if no package.json)
+      - name: Install dependencies & Build
         run: |
           if [ -f package.json ]; then
             npm ci
-            if npm run | grep -q "build"; then npm run build; else echo "No build script"; fi
-          else
-            echo "No package.json found, skipping build"
+            npm run build || echo "⚠️ No build script found, skipping build"
           fi
 
-      - name: Configure AWS credentials using OIDC
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Verify AWS Identity
-        run: aws sts get-caller-identity
-
-      - name: Choose deploy directory
-        id: dir
-        run: |
-          if [ -d "dist" ]; then
-            echo "dir=dist" >> $GITHUB_OUTPUT
-          elif [ -d "build" ]; then
-            echo "dir=build" >> $GITHUB_OUTPUT
-          else
-            echo "dir=." >> $GITHUB_OUTPUT
-          fi
-
       - name: Upload to S3
         run: |
-          echo "Deploying from ${{ steps.dir.outputs.dir }} to s3://${{ secrets.S3_BUCKET }}"
-          aws s3 sync "${{ steps.dir.outputs.dir }}" "s3://${{ secrets.S3_BUCKET }}" \
-            --delete \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude "README.md" \
-            --exclude "Dockerfile*"
+          echo "🚀 Uploading to S3 bucket: ${{ secrets.S3_BUCKET }}"
+          aws s3 sync build/ "s3://${{ secrets.S3_BUCKET }}" --delete
 
-      - name: Invalidate CloudFront cache
+      - name: Invalidate CloudFront Cache
         if: success()
-        env:
-          CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
         run: |
-          if [ -n "$CF_DIST_ID" ]; then
-            aws cloudfront create-invalidation \
-              --distribution-id "$CF_DIST_ID" \
-              --paths "/*"
+          if [ -n "${{ secrets.CF_DIST_ID }}" ]; then
+            aws cloudfront create-invalidation --distribution-id "${{ secrets.CF_DIST_ID }}" --paths "/*"
+            echo "✅ CloudFront invalidation triggered."
           else
-            echo "No CF_DIST_ID found, skipping cache invalidation"
+            echo "⚠️ CF_DIST_ID not found; skipping cache invalidation."
           fi
