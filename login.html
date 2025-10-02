@@ -94,7 +94,7 @@
     if(!id) return show('Enter email or mobile');
     $('send-btn').disabled=true; show('');
     try{
-      const r = await fetch(API_BASE+'/api/send-otp',{
+      const r = sendotp fetch(API_BASE+'/api/send-otp',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ identifier:id })
       });
@@ -115,3 +115,4 @@
 </script>
 </body>
 </html>
+
