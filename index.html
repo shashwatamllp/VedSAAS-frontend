@@ -8,9 +8,8 @@
   <meta name="referrer" content="strict-origin-when-cross-origin"/>
   <title>VedSAAS</title>
 
-  <!-- PRODUCTION: same-origin API via CloudFront.
-       Behavior `/api/*` must route to your backend (ALB/EC2/API GW).
-       Do NOT add ved-api-base meta in prod. -->
+  <!-- In production, CloudFront should route /api/* to your backend.
+       Clients on www/vedsaas.com will call https://api.vedsaas.com automatically. -->
 
   <link rel="icon" href="./favicon.ico"/>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -22,13 +21,19 @@
   <style>
     #settings-panel, #settings-panel *{display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
     .to-bottom{position:fixed;right:16px;bottom:16px}
+
+    /* health banner colors */
+    .banner{padding:8px 12px;text-align:center;font-size:13px;display:none}
+    .banner.ok{display:block;background:#063;color:#c7ffd9;border-bottom:1px solid #055}
+    .banner.warn{display:block;background:#5a4600;color:#ffe9a8;border-bottom:1px solid #3d2f00}
+    .banner.err{display:block;background:#5a0000;color:#ffd7d7;border-bottom:1px solid #3d0000}
   </style>
 </head>
 <body>
   <div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
   <noscript><div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">JavaScript required. Please enable JS.</div></noscript>
-  <div id="banner" class="banner"></div>
+  <div id="banner" class="banner" role="status" aria-live="polite"></div>
 
   <div id="app" class="container" style="display:none">
     <!-- Sidebar -->
@@ -94,6 +99,21 @@
   <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
   <script>
+    // ------- API base resolver (shared behavior with login/verify) -------
+    (function(){
+      if (window.API_BASE) return; // respect pre-set value (e.g., vedsaas-fixes.js)
+      const h = (location.hostname || '').toLowerCase();
+      const origin = location.origin || '';
+      if (h.endsWith('vedsaas.com')) {
+        window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
+      } else if (origin.includes(':8010')) {
+        window.API_BASE = origin;
+      } else {
+        window.API_BASE = 'http://127.0.0.1:8010';
+      }
+    })();
+
+    // ------- Basic bootstrapping / UI glue -------
     window.addEventListener('DOMContentLoaded', function () {
       const app = document.getElementById('app'); if (app) app.style.display = 'flex';
       const li = document.getElementById('landing-input'); const btn = document.getElementById('landing-start');
@@ -102,10 +122,24 @@
       const mt = document.getElementById('menu-toggle'); const bd = document.getElementById('backdrop');
       if (mt) mt.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
       if (bd) bd.addEventListener('click', () => document.body.classList.remove('sidebar-open'));
+
+      // Health check banner
+      const banner = document.getElementById('banner');
+      const setBanner = (cls, msg) => { if(!banner) return; banner.className='banner '+cls; banner.textContent=msg; };
+      (async () => {
+        try {
+          const r = await fetch((window.API_BASE||'') + '/api/health', {cache:'no-store'});
+          if (!r.ok) return setBanner('warn', `API ${r.status} on /api/health`);
+          const j = await r.json().catch(()=>({}));
+          setBanner('ok', j && j.ok ? 'API OK' : 'API reachable');
+        } catch {
+          setBanner('err', 'API unreachable');
+        }
+      })();
     });
   </script>
 
-  <!-- API + UI wiring (API_BASE is same-origin inside vedsaas-fixes.js) -->
+  <!-- App wiring (kept as-is). If vedsaas-fixes.js defines API_BASE, it will win. -->
   <script defer src="./vedsaas-fixes.js"></script>
   <script defer src="./app.js"></script>
 </body>
