@@ -31,7 +31,6 @@
       background:var(--ip); color:#fff; outline:none; font-size:15px; transition:.15s background;
     }
     .ip:focus{background:var(--ip-focus)}
-
     .btn{
       width:100%;
       padding:12px 14px; border:none; cursor:pointer; border-radius:10px;
@@ -42,11 +41,8 @@
     .btn:hover{background:var(--brand-2)}
     .btn:disabled{opacity:.6; cursor:not-allowed}
     .btn-secondary{background:#444}
-
     .actions{display:flex; gap:10px; margin-top:14px}
-    /* fix: buttons share row neatly */
     .actions .btn{width:auto; flex:1}
-
     .note{margin-top:12px; text-align:center; color:var(--muted); font-size:13px}
     .msg{min-height:18px; margin-top:10px; text-align:center; font-size:13px}
     .ok{color:#b7ffb7} .err{color:#ffd7d7}
@@ -55,7 +51,7 @@
   </style>
 </head>
 <body>
-  <div class="auth-bg"></div>
+  <div class="auth-bg" aria-hidden="true"></div>
 
   <div class="card" role="dialog" aria-labelledby="h1">
     <h1 id="h1">Login</h1>
@@ -64,13 +60,12 @@
     <label for="identifier">Email / Mobile</label>
     <input id="identifier" class="ip" type="text" placeholder="email@example.com  •  +91XXXXXXXXXX" autofocus/>
 
-    <!-- Actions: includes a prominent SIGNUP button -->
     <div class="actions">
       <a class="btn btn-secondary" href="register.html">Create Account</a>
       <button id="send-btn" class="btn">Send OTP</button>
     </div>
 
-    <div id="msg" class="msg"></div>
+    <div id="msg" class="msg" role="status" aria-live="polite"></div>
     <p class="note">
       New to VedSAAS? <a href="register.html" style="color:#76b7ff">Sign up here</a>. <br/>
       Already have an account? Enter your email/phone and tap <strong>Send OTP</strong>.
@@ -80,38 +75,63 @@
   <div class="footer">VedSAAS • Shashwatam Eco-Chie Creations LLP</div>
 
 <script>
-  // API base resolver
-  const API_BASE=(()=>{const F='http://127.0.0.1:8000';try{const o=location.origin||'';if(!o||o.startsWith('file://'))return F;if(o.includes(':3000'))return F;if(o.includes(':8000'))return o;return o.startsWith('http')?o:F;}catch{return F;}})();
+  // Use dedicated API host in prod; localhost for dev.
+  const API_BASE = (location.hostname.endsWith('vedsaas.com'))
+    ? 'https://api.vedsaas.com'
+    : 'http://127.0.0.1:8010';
 
-  // Already logged in? go home
-  try{ const tok=localStorage.getItem('token'); if(tok) location.replace('index.html'); }catch{}
+  // If already logged in, bounce to home.
+  try {
+    const tok = localStorage.getItem('token');
+    if (tok) location.replace('index.html');
+  } catch {}
 
-  const $=(id)=>document.getElementById(id);
-  const show=(t,ok=false)=>{ const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
+  const $ = (id) => document.getElementById(id);
+  const show = (t, ok=false) => {
+    const m = $('msg');
+    m.className = 'msg ' + (ok ? 'ok' : 'err');
+    m.textContent = t || '';
+  };
 
   async function sendOtp(){
-    const id = ($('identifier').value||'').trim();
+    const id = ($('identifier').value || '').trim();
     if(!id) return show('Enter email or mobile');
-    $('send-btn').disabled=true; show('');
+
+    $('send-btn').disabled = true;
+    show('');
+
     try{
-      const r = sendotp fetch(API_BASE+'/api/send-otp',{
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ identifier:id })
+      const r = await fetch(API_BASE + '/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // send both keys so backend that expects either will accept it
+        body: JSON.stringify({ identifier: id, dest: id, channel: 'sms' })
       });
-      const j = await r.json().catch(()=>({}));
-      if(j && j.ok){
-        try{ localStorage.setItem('pendingIdentifier', id); }catch{}
+
+      // If CloudFront/Nginx returns HTML error, this still won’t throw—handle gracefully
+      const text = await r.text();
+      let j = {};
+      try { j = JSON.parse(text); } catch {}
+
+      if (r.ok && j && j.ok){
+        try { localStorage.setItem('pendingIdentifier', id); } catch {}
         show('OTP sent. Redirecting…', true);
-        setTimeout(()=>{ location.href='verify.html?who='+encodeURIComponent(id)+'&sent=1'; }, 400);
-      }else{
-        show((j && j.error) || 'Failed to send OTP');
+        setTimeout(()=>{ location.href = 'verify.html?who=' + encodeURIComponent(id) + '&sent=1'; }, 400);
+      } else {
+        const err = (j && (j.error || j.message)) || ('Failed to send OTP' + (text ? ' – ' + text.slice(0,80) : ''));
+        show(err);
       }
-    }catch(e){ show('Network error. Try again.'); }
-    finally{ $('send-btn').disabled=false; }
+    } catch (e){
+      show('Network error. Try again.');
+    } finally {
+      $('send-btn').disabled = false;
+    }
   }
 
   $('send-btn').addEventListener('click', sendOtp);
-  $('identifier').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); sendOtp(); }});
+  $('identifier').addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); sendOtp(); }
+  });
 </script>
 </body>
 </html>
