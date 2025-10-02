@@ -1,4 +1,4 @@
-/* ===== Production config (safe/speedy) ===== */
+ ===== Production config (safe/speedy) =====
 const $ = (id) => document.getElementById(id);
 
 // Resolve API base in this order: window flag → <meta> → env → default IP
@@ -110,3 +110,4 @@ function scrollChatBottom(smooth) {
   if (!el) return;
   el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
 }
+
