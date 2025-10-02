@@ -14,10 +14,12 @@
     html,body{height:100%}
     body{
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
-      background:var(--bg); color:var(--text);
-      display:flex; align-items:center; justify-content:center; overflow:hidden;
+      background:radial-gradient(1200px 600px at 50% -10%, #2a2a3b 0%, #1e1e2f 60%);
+      color:var(--text); display:flex; align-items:center; justify-content:center; overflow:hidden;
     }
+    /* If/when image ACL fixed, you can use it:
     .auth-bg{ position:fixed; inset:0; background:url('images/logopic.png') center/420px no-repeat; opacity:.06; pointer-events:none; z-index:0; }
+    */
     .card{
       position:relative; z-index:1; width:min(520px,94vw);
       background:var(--card); border-radius:14px; padding:28px 24px;
@@ -31,9 +33,9 @@
       background:var(--ip); color:#fff; outline:none; font-size:15px; transition:.15s background;
     }
     .ip:focus{background:var(--ip-focus)}
+    .actions{display:flex; gap:10px; margin-top:14px}
     .btn{
-      width:100%;
-      padding:12px 14px; border:none; cursor:pointer; border-radius:10px;
+      width:100%; padding:12px 14px; border:none; cursor:pointer; border-radius:10px;
       background:var(--brand); color:#fff; font-weight:600; font-size:15px;
       box-shadow:0 3px 0 rgba(0,0,0,.25); transition:.15s transform,.15s background;
       text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
@@ -41,17 +43,15 @@
     .btn:hover{background:var(--brand-2)}
     .btn:disabled{opacity:.6; cursor:not-allowed}
     .btn-secondary{background:#444}
-    .actions{display:flex; gap:10px; margin-top:14px}
-    .actions .btn{width:auto; flex:1}
-    .note{margin-top:12px; text-align:center; color:var(--muted); font-size:13px}
     .msg{min-height:18px; margin-top:10px; text-align:center; font-size:13px}
     .ok{color:#b7ffb7} .err{color:#ffd7d7}
+    .note{margin-top:12px; text-align:center; color:var(--muted); font-size:13px}
     .footer{position:fixed; left:0; right:0; bottom:10px; text-align:center; color:#9aa0b6; font-size:12px}
     @media (max-height:540px){ body{align-items:flex-start} .card{margin-top:30px} .footer{position:static; margin-top:14px} }
   </style>
 </head>
 <body>
-  <div class="auth-bg" aria-hidden="true"></div>
+  <!-- <div class="auth-bg"></div> -->
 
   <div class="card" role="dialog" aria-labelledby="h1">
     <h1 id="h1">Login</h1>
@@ -65,9 +65,9 @@
       <button id="send-btn" class="btn">Send OTP</button>
     </div>
 
-    <div id="msg" class="msg" role="status" aria-live="polite"></div>
+    <div id="msg" class="msg"></div>
     <p class="note">
-      New to VedSAAS? <a href="register.html" style="color:#76b7ff">Sign up here</a>. <br/>
+      New to VedSAAS? <a href="register.html" style="color:#76b7ff">Sign up here</a>.<br/>
       Already have an account? Enter your email/phone and tap <strong>Send OTP</strong>.
     </p>
   </div>
@@ -75,53 +75,57 @@
   <div class="footer">VedSAAS • Shashwatam Eco-Chie Creations LLP</div>
 
 <script>
-  // Use dedicated API host in prod; localhost for dev.
-  const API_BASE = (location.hostname.endsWith('vedsaas.com'))
-    ? 'https://api.vedsaas.com'
-    : 'http://127.0.0.1:8010';
+  // --- API base resolver ---
+  const API_BASE = (() => {
+    const h = (location.hostname || '').toLowerCase();
+    const origin = location.origin || '';
+    // If running on our domains:
+    if (h.endsWith('vedsaas.com')) {
+      // If we're already on api.vedsaas.com keep same-origin:
+      if (h === 'api.vedsaas.com') return origin;
+      // Any other (www/vedsaas.com) -> hit the API subdomain to avoid CloudFront/S3 502
+      return 'https://api.vedsaas.com';
+    }
+    // Local dev fallbacks:
+    if (origin.includes(':8010')) return origin;
+    return 'http://127.0.0.1:8010';
+  })();
 
-  // If already logged in, bounce to home.
-  try {
-    const tok = localStorage.getItem('token');
-    if (tok) location.replace('index.html');
-  } catch {}
+  // If already logged-in, bounce:
+  try { if (localStorage.getItem('token')) location.replace('index.html'); } catch {}
 
   const $ = (id) => document.getElementById(id);
-  const show = (t, ok=false) => {
-    const m = $('msg');
-    m.className = 'msg ' + (ok ? 'ok' : 'err');
-    m.textContent = t || '';
-  };
+  const show = (t, ok=false) => { const m = $('msg'); m.className = 'msg ' + (ok?'ok':'err'); m.textContent = t || ''; };
 
-  async function sendOtp(){
+  async function sendOtp() {
     const id = ($('identifier').value || '').trim();
-    if(!id) return show('Enter email or mobile');
+    if (!id) return show('Enter email or mobile');
+    $('send-btn').disabled = true; show('');
 
-    $('send-btn').disabled = true;
-    show('');
-
-    try{
+    try {
       const r = await fetch(API_BASE + '/api/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // send both keys so backend that expects either will accept it
-        body: JSON.stringify({ identifier: id, dest: id, channel: 'sms' })
+        body: JSON.stringify({ identifier: id })
       });
 
-      // If CloudFront/Nginx returns HTML error, this still won’t throw—handle gracefully
-      const text = await r.text();
-      let j = {};
-      try { j = JSON.parse(text); } catch {}
+      // Handle HTTP layer errors cleanly
+      if (!r.ok) {
+        const text = await r.text().catch(()=>'');
+        return show(`Failed to send OTP (${r.status}). ${text?.slice(0,120) || ''}`.trim());
+      }
 
-      if (r.ok && j && j.ok){
+      const j = await r.json().catch(() => ({}));
+      if (j && j.ok) {
         try { localStorage.setItem('pendingIdentifier', id); } catch {}
         show('OTP sent. Redirecting…', true);
-        setTimeout(()=>{ location.href = 'verify.html?who=' + encodeURIComponent(id) + '&sent=1'; }, 400);
+        setTimeout(() => {
+          location.href = 'verify.html?who=' + encodeURIComponent(id) + '&sent=1';
+        }, 400);
       } else {
-        const err = (j && (j.error || j.message)) || ('Failed to send OTP' + (text ? ' – ' + text.slice(0,80) : ''));
-        show(err);
+        show((j && j.error) || 'Failed to send OTP');
       }
-    } catch (e){
+    } catch (e) {
       show('Network error. Try again.');
     } finally {
       $('send-btn').disabled = false;
@@ -129,9 +133,7 @@
   }
 
   $('send-btn').addEventListener('click', sendOtp);
-  $('identifier').addEventListener('keydown', e=>{
-    if(e.key==='Enter'){ e.preventDefault(); sendOtp(); }
-  });
+  $('identifier').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendOtp(); }});
 </script>
 </body>
 </html>
