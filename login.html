@@ -75,23 +75,12 @@
   <div class="footer">VedSAAS • Shashwatam Eco-Chie Creations LLP</div>
 
 <script>
-  // --- API base resolver ---
-  const API_BASE = (() => {
-    const h = (location.hostname || '').toLowerCase();
-    const origin = location.origin || '';
-    // If running on our domains:
-    if (h.endsWith('vedsaas.com')) {
-      // If we're already on api.vedsaas.com keep same-origin:
-      if (h === 'api.vedsaas.com') return origin;
-      // Any other (www/vedsaas.com) -> hit the API subdomain to avoid CloudFront/S3 502
-      return 'https://api.vedsaas.com';
-    }
-    // Local dev fallbacks:
-    if (origin.includes(':8010')) return origin;
-    return 'http://127.0.0.1:8010';
-  })();
+  // ---- API base (pin to backend domain; local dev fallback) ----
+  const API_BASE = (location.hostname.endsWith('vedsaas.com'))
+    ? 'https://api.vedsaas.com'
+    : (location.origin.includes(':8010') ? location.origin : 'http://127.0.0.1:8010');
 
-  // If already logged-in, bounce:
+  // Already logged-in? bounce
   try { if (localStorage.getItem('token')) location.replace('index.html'); } catch {}
 
   const $ = (id) => document.getElementById(id);
@@ -103,15 +92,14 @@
     $('send-btn').disabled = true; show('');
 
     try {
-      const r = await fetch(API_BASE + '/api/send-otp', {
+      const r = await fetch(`${API_BASE}/api/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: id })
       });
 
-      // Handle HTTP layer errors cleanly
       if (!r.ok) {
-        const text = await r.text().catch(()=>'');
+        const text = await r.text().catch(()=> '');
         return show(`Failed to send OTP (${r.status}). ${text?.slice(0,120) || ''}`.trim());
       }
 
