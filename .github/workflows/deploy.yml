@@ -1,10 +1,8 @@
-# .github/workflows/deploy.yml
 name: Deploy Frontend to AWS S3 + CloudFront
 
 on:
   push:
     branches: [ "main" ]
-    # Re-run only when frontend-relevant files change
     paths:
       - "**/package.json"
       - "**/package-lock.json"
@@ -19,7 +17,6 @@ permissions:
   id-token: write
   contents: read
 
-# Prevent overlapping deploys to the same env
 concurrency:
   group: frontend-deploy
   cancel-in-progress: true
@@ -27,40 +24,24 @@ concurrency:
 jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Try to locate where the frontend actually lives.
-      # Priority: repo root → frontend/ → web/ → app/
       - name: Locate frontend directory
         id: locate
         shell: bash
         run: |
           set -euo pipefail
-          guess_dir() {
-            local d="$1"
-            [[ -f "$d/package.json" ]] && echo "$d" && return 0
-            return 1
-          }
-
-          DIR=""
           for CAND in "." "frontend" "web" "app"; do
-            if OUT=$(guess_dir "$CAND"); then
-              DIR="$OUT"
-              break
+            if [[ -f "$CAND/package.json" ]]; then
+              echo "front_dir=$CAND" >> "$GITHUB_OUTPUT"
+              echo "Found frontend at: $CAND"
+              exit 0
             fi
           done
-
-          if [[ -z "$DIR" ]]; then
-            echo "No package.json found in repo."
-            # Not a hard failure: we can still deploy a static folder like /public if present
-            echo "front_dir=" >> "$GITHUB_OUTPUT"
-          else
-            echo "Found frontend at: $DIR"
-            echo "front_dir=$DIR" >> "$GITHUB_OUTPUT"
-          fi
+          echo "front_dir=" >> "$GITHUB_OUTPUT"
+          echo "No package.json found; will try static /public or root."
 
       - name: Setup Node.js
         if: ${{ steps.locate.outputs.front_dir != '' }}
@@ -70,6 +51,12 @@ jobs:
           cache: npm
           cache-dependency-path: ${{ steps.locate.outputs.front_dir }}/package-lock.json
 
+      - name: Prepare env (Vite)
+        if: ${{ steps.locate.outputs.front_dir != '' }}
+        working-directory: ${{ steps.locate.outputs.front_dir }}
+        run: |
+          echo "VITE_API_BASE=${{ secrets.VITE_API_BASE }}" > .env
+
       - name: Install deps & Build
         if: ${{ steps.locate.outputs.front_dir != '' }}
         working-directory: ${{ steps.locate.outputs.front_dir }}
@@ -77,95 +64,63 @@ jobs:
         run: |
           set -euo pipefail
           npm ci
-          # If no "build" script, this will fail; show a friendly note instead
-          if npm run --silent | grep -qE 'build'; then
+          if npm run --silent | grep -qE '^  build'; then
             npm run build
           else
-            echo "⚠️ No 'build' script found in package.json; skipping build"
+            echo "⚠️ No 'build' script; skipping build"
           fi
 
-      # Figure out what directory to upload:
-      #   If a build happened, prefer ./dist or ./build from the frontend dir.
-      #   Otherwise, fallback to ./public (root) if it exists.
       - name: Resolve build output
         id: out
         shell: bash
         run: |
           set -euo pipefail
           FRONT="${{ steps.locate.outputs.front_dir }}"
-          CANDIDATES=()
-
-          if [[ -n "$FRONT" ]]; then
-            CANDIDATES+=("$FRONT/dist" "$FRONT/build" "$FRONT/out")
-          fi
-
-          # Fallbacks for static hosting when there's no Node build
-          CANDIDATES+=("public" ".")
-
+          CANDS=()
+          [[ -n "$FRONT" ]] && CANDS+=("$FRONT/dist" "$FRONT/build" "$FRONT/out")
+          CANDS+=("public" ".")
           PICK=""
-          for D in "${CANDIDATES[@]}"; do
-            if [[ -d "$D" ]]; then
-              # Must contain at least an index.html to be a static site root
-              if [[ -f "$D/index.html" ]] || [[ -n "$FRONT" && -d "$D" && "$D" != "." ]]; then
-                PICK="$D"
-                break
-              fi
+          for d in "${CANDS[@]}"; do
+            if [[ -d "$d" && ( -f "$d/index.html" || "$d" != "." ) ]]; then
+              PICK="$d"; break
             fi
           done
-
-          if [[ -z "$PICK" ]]; then
-            echo "❌ No distributable folder found (looked for dist/build/out/public)."
-            exit 1
-          fi
-
-          echo "Using artifact directory: $PICK"
+          [[ -z "$PICK" ]] && { echo "❌ No distributable folder"; exit 1; }
           echo "artifact=$PICK" >> "$GITHUB_OUTPUT"
+          echo "Using artifact: $PICK"
 
-      - name: Configure AWS credentials via OIDC
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Sanity check AWS + required secrets
-        shell: bash
+      - name: Sanity check AWS + secrets
         run: |
           set -euo pipefail
           aws sts get-caller-identity >/dev/null
-          if [[ -z "${{ secrets.S3_BUCKET }}" ]]; then
-            echo "❌ S3_BUCKET secret is missing"; exit 1
-          fi
-          echo "✅ AWS + secrets look OK"
+          [[ -z "${{ secrets.S3_BUCKET }}" ]] && { echo "S3_BUCKET missing"; exit 1; }
+          echo "OK"
 
-      - name: Upload to S3 (static site)
+      - name: Upload to S3
         env:
           BUCKET: ${{ secrets.S3_BUCKET }}
           SRC: ${{ steps.out.outputs.artifact }}
-        shell: bash
         run: |
           set -euo pipefail
-          echo "🚀 Uploading '$SRC' → s3://$BUCKET"
-          # Upload everything except index.html with long cache
-          aws s3 sync "$SRC" "s3://$BUCKET" \
-            --delete \
+          echo "Uploading '$SRC' → s3://$BUCKET"
+          aws s3 sync "$SRC" "s3://$BUCKET" --delete \
             --exclude "index.html" \
             --cache-control "public,max-age=31536000,immutable"
-
-          # Upload index.html with short cache so clients get new versions
           if [[ -f "$SRC/index.html" ]]; then
             aws s3 cp "$SRC/index.html" "s3://$BUCKET/index.html" \
               --cache-control "no-cache,no-store,must-revalidate,max-age=0"
           fi
-          echo "✅ S3 sync complete"
 
       - name: Invalidate CloudFront cache (optional)
-        if: ${{ success() && env.CF_DIST_ID != '' }}
-        env:
-          CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
-        shell: bash
+        if: ${{ success() && secrets.CF_DIST_ID != '' }}
         run: |
-          set -euo pipefail
           aws cloudfront create-invalidation \
-            --distribution-id "$CF_DIST_ID" \
+            --distribution-id "${{ secrets.CF_DIST_ID }}" \
             --paths "/*"
-          echo "✅ CloudFront invalidation triggered."
+          echo "CloudFront invalidation sent."
