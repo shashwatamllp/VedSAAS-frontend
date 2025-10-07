@@ -4,8 +4,12 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - "**/src/**"
-      - "**/public/**"
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.html"
       - "**/package.json"
       - ".github/workflows/deploy.yml"
 
@@ -17,60 +21,64 @@ jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
 
+    env:
+      NODE_VERSION: "20"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Find the folder that has package.json (e.g., frontend/, web/, app/, or repo root)
-      - name: Locate frontend directory
-        id: finddir
+      - name: Locate frontend directory (where package.json lives)
+        id: locate
         run: |
           set -euo pipefail
-          FRONTEND_DIR=""
-          # prefer common names first
-          for d in frontend web app client . ; do
-            [ -f "$d/package.json" ] && FRONTEND_DIR="$d" && break || true
-          done
-          # fallback: search anywhere
-          if [ -z "$FRONTEND_DIR" ]; then
-            hits=$(git ls-files | grep -E '(^|/)(package.json)$' || true)
-            for f in $hits; do
-              d=$(dirname "$f"); [ "$d" = "." ] && d="."
-              FRONTEND_DIR="$d"; break
-            done
+          # search up to 3 levels deep; adjust if needed
+          FRONTEND_DIR="$(find . -maxdepth 3 -type f -name package.json -not -path "*/node_modules/*" -printf '%h\n' | head -n1 || true)"
+          if [ -z "${FRONTEND_DIR}" ]; then
+            echo "No package.json found in repository."
+            exit 1
           fi
-          if [ -z "$FRONTEND_DIR" ]; then
-            echo "❌ No package.json found in repository."; exit 1
-          fi
-          echo "FRONTEND_DIR=$FRONTEND_DIR" >> "$GITHUB_ENV"
-          echo "✅ Using frontend dir: $FRONTEND_DIR"
-          [ "$FRONTEND_DIR" != "." ] && ls -la "$FRONTEND_DIR"
+          echo "Found package.json in: ${FRONTEND_DIR}"
+          echo "dir=${FRONTEND_DIR}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "${{ steps.locate.outputs.dir }}/package-lock.json"
 
       - name: Install deps & Build
-        working-directory: ${{ env.FRONTEND_DIR }}
+        working-directory: ${{ steps.locate.outputs.dir }}
         run: |
           set -euo pipefail
           npm ci
-          if npm run | grep -qE '^  build'; then
-            npm run build
-          else
-            echo "❌ No 'build' script in package.json"; exit 1
+          # safe build: if no build script, throw a helpful error
+          if ! npm run | grep -qE '^  build'; then
+            echo "No \"build\" script in package.json"
+            cat package.json
+            exit 1
           fi
-          # Detect build dir: dist > build > out
-          BUILD_DIR=""
-          for d in dist build out; do
-            [ -d "$d" ] && BUILD_DIR="$d" && break
-          done
-          [ -z "$BUILD_DIR" ] && { echo "❌ Build output not found (dist/build/out)."; ls -la; exit 1; }
-          echo "BUILD_DIR=$BUILD_DIR" >> "$GITHUB_ENV"
-          echo "✅ Build output: $BUILD_DIR"
+          npm run build
+
+      - name: Determine build output directory
+        id: outdir
+        run: |
+          set -euo pipefail
+          ROOT="${{ steps.locate.outputs.dir }}"
+          if [ -d "$ROOT/dist" ]; then
+            OUT="$ROOT/dist"
+          elif [ -d "$ROOT/build" ]; then
+            OUT="$ROOT/build"
+          elif [ -d "$ROOT/out" ]; then
+            OUT="$ROOT/out"
+          else
+            echo "Could not determine output folder (dist/build/out)."
+            ls -la "$ROOT"
+            exit 1
+          fi
+          echo "out=$OUT" >> "$GITHUB_OUTPUT"
+          echo "Using output: $OUT"
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -78,30 +86,18 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Sanity check AWS + required secrets
-        run: |
-          set -euo pipefail
-          : "${{ secrets.S3_BUCKET }}:?S3_BUCKET secret missing}"
-          aws sts get-caller-identity >/dev/null
-
       - name: Upload to S3
-        working-directory: ${{ env.FRONTEND_DIR }}
         run: |
           set -euo pipefail
-          echo "🚀 Uploading $BUILD_DIR -> s3://${{ secrets.S3_BUCKET }}"
-          aws s3 sync "$BUILD_DIR/" "s3://${{ secrets.S3_BUCKET }}" \
-            --delete \
-            --cache-control max-age=31536000,public \
-            --exclude "index.html"
-          aws s3 cp "$BUILD_DIR/index.html" "s3://${{ secrets.S3_BUCKET }}/index.html" \
-            --cache-control no-store,max-age=0
+          OUT="${{ steps.outdir.outputs.out }}"
+          BUCKET="${{ secrets.S3_BUCKET }}"
+          echo "🚀 Syncing $OUT -> s3://$BUCKET"
+          aws s3 sync "$OUT/" "s3://$BUCKET" --delete
 
-      - name: Invalidate CloudFront (optional)
-        if: success()
+      - name: Invalidate CloudFront cache (optional)
+        if: success() && secrets.CF_DIST_ID != ''
         run: |
-          if [ -n "${{ secrets.CF_DIST_ID }}" ]; then
-            aws cloudfront create-invalidation --distribution-id "${{ secrets.CF_DIST_ID }}" --paths "/*"
-            echo "✅ CloudFront invalidation triggered."
-          else
-            echo "⚠️ CF_DIST_ID not set; skipping."
-          fi
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.CF_DIST_ID }}" \
+            --paths "/*"
+          echo "✅ CloudFront invalidation triggered."
