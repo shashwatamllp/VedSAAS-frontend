@@ -7,6 +7,8 @@ on:
       - "src/**"
       - "public/**"
       - "package.json"
+      - "vite.config.*"
+      - "next.config.*"
       - ".github/workflows/deploy.yml"
 
 permissions:
@@ -18,38 +20,76 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      - name: Install dependencies & Build
+      - name: Install deps & Build
         run: |
-          if [ -f package.json ]; then
-            npm ci
-            npm run build || echo "⚠️ No build script found, skipping build"
+          set -euo pipefail
+          if [ ! -f package.json ]; then
+            echo "❌ package.json not found"; exit 1
+          fi
+          npm ci
+          if npm run | grep -qE '^  build'; then
+            npm run build
+          else
+            echo "❌ No 'build' script in package.json"; exit 1
           fi
 
-      - name: Configure AWS credentials via OIDC
+          # Detect build dir: dist/ (Vite) > build/ (CRA) > out/ (Next export)
+          BUILD_DIR=""
+          for d in dist build out; do
+            [ -d "$d" ] && BUILD_DIR="$d" && break
+          done
+          if [ -z "$BUILD_DIR" ]; then
+            echo "❌ Could not find build output (dist/ or build/ or out/)."; ls -la
+            exit 1
+          fi
+          echo "BUILD_DIR=$BUILD_DIR" >> "$GITHUB_ENV"
+          echo "✅ Build dir: $BUILD_DIR"
+
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Sanity check AWS + required secrets
+        run: |
+          set -euo pipefail
+          : "${AWS_REGION:?AWS_REGION secret missing}"
+          : "${{ secrets.S3_BUCKET }}:?S3_BUCKET secret missing"
+          aws sts get-caller-identity >/dev/null
+          aws s3 ls "s3://${{ secrets.S3_BUCKET }}" >/dev/null || {
+            echo "ℹ️ Bucket will be created (if permissions allow)."
+          }
+
       - name: Upload to S3
         run: |
-          echo "🚀 Uploading to S3 bucket: ${{ secrets.S3_BUCKET }}"
-          aws s3 sync build/ "s3://${{ secrets.S3_BUCKET }}" --delete
+          set -euo pipefail
+          echo "🚀 Uploading $BUILD_DIR -> s3://${{ secrets.S3_BUCKET }}"
+          aws s3 sync "$BUILD_DIR/" "s3://${{ secrets.S3_BUCKET }}" \
+            --delete \
+            --cache-control max-age=31536000,public \
+            --exclude "index.html"
+          # index.html no-cache for SPA routing
+          aws s3 cp "$BUILD_DIR/index.html" "s3://${{ secrets.S3_BUCKET }}/index.html" \
+            --cache-control no-store,max-age=0
 
-      - name: Invalidate CloudFront Cache
+      - name: Invalidate CloudFront (optional)
         if: success()
         run: |
           if [ -n "${{ secrets.CF_DIST_ID }}" ]; then
-            aws cloudfront create-invalidation --distribution-id "${{ secrets.CF_DIST_ID }}" --paths "/*"
+            aws cloudfront create-invalidation \
+              --distribution-id "${{ secrets.CF_DIST_ID }}" \
+              --paths "/*"
             echo "✅ CloudFront invalidation triggered."
           else
-            echo "⚠️ CF_DIST_ID not found; skipping cache invalidation."
+            echo "⚠️ CF_DIST_ID not set; skipping invalidation."
           fi
