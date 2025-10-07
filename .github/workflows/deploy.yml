@@ -4,11 +4,9 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - "src/**"
-      - "public/**"
-      - "package.json"
-      - "vite.config.*"
-      - "next.config.*"
+      - "**/src/**"
+      - "**/public/**"
+      - "**/package.json"
       - ".github/workflows/deploy.yml"
 
 permissions:
@@ -23,36 +21,56 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Find the folder that has package.json (e.g., frontend/, web/, app/, or repo root)
+      - name: Locate frontend directory
+        id: finddir
+        run: |
+          set -euo pipefail
+          FRONTEND_DIR=""
+          # prefer common names first
+          for d in frontend web app client . ; do
+            [ -f "$d/package.json" ] && FRONTEND_DIR="$d" && break || true
+          done
+          # fallback: search anywhere
+          if [ -z "$FRONTEND_DIR" ]; then
+            hits=$(git ls-files | grep -E '(^|/)(package.json)$' || true)
+            for f in $hits; do
+              d=$(dirname "$f"); [ "$d" = "." ] && d="."
+              FRONTEND_DIR="$d"; break
+            done
+          fi
+          if [ -z "$FRONTEND_DIR" ]; then
+            echo "❌ No package.json found in repository."; exit 1
+          fi
+          echo "FRONTEND_DIR=$FRONTEND_DIR" >> "$GITHUB_ENV"
+          echo "✅ Using frontend dir: $FRONTEND_DIR"
+          [ "$FRONTEND_DIR" != "." ] && ls -la "$FRONTEND_DIR"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
 
       - name: Install deps & Build
+        working-directory: ${{ env.FRONTEND_DIR }}
         run: |
           set -euo pipefail
-          if [ ! -f package.json ]; then
-            echo "❌ package.json not found"; exit 1
-          fi
           npm ci
           if npm run | grep -qE '^  build'; then
             npm run build
           else
             echo "❌ No 'build' script in package.json"; exit 1
           fi
-
-          # Detect build dir: dist/ (Vite) > build/ (CRA) > out/ (Next export)
+          # Detect build dir: dist > build > out
           BUILD_DIR=""
           for d in dist build out; do
             [ -d "$d" ] && BUILD_DIR="$d" && break
           done
-          if [ -z "$BUILD_DIR" ]; then
-            echo "❌ Could not find build output (dist/ or build/ or out/)."; ls -la
-            exit 1
-          fi
+          [ -z "$BUILD_DIR" ] && { echo "❌ Build output not found (dist/build/out)."; ls -la; exit 1; }
           echo "BUILD_DIR=$BUILD_DIR" >> "$GITHUB_ENV"
-          echo "✅ Build dir: $BUILD_DIR"
+          echo "✅ Build output: $BUILD_DIR"
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -63,14 +81,11 @@ jobs:
       - name: Sanity check AWS + required secrets
         run: |
           set -euo pipefail
-          : "${AWS_REGION:?AWS_REGION secret missing}"
-          : "${{ secrets.S3_BUCKET }}:?S3_BUCKET secret missing"
+          : "${{ secrets.S3_BUCKET }}:?S3_BUCKET secret missing}"
           aws sts get-caller-identity >/dev/null
-          aws s3 ls "s3://${{ secrets.S3_BUCKET }}" >/dev/null || {
-            echo "ℹ️ Bucket will be created (if permissions allow)."
-          }
 
       - name: Upload to S3
+        working-directory: ${{ env.FRONTEND_DIR }}
         run: |
           set -euo pipefail
           echo "🚀 Uploading $BUILD_DIR -> s3://${{ secrets.S3_BUCKET }}"
@@ -78,7 +93,6 @@ jobs:
             --delete \
             --cache-control max-age=31536000,public \
             --exclude "index.html"
-          # index.html no-cache for SPA routing
           aws s3 cp "$BUILD_DIR/index.html" "s3://${{ secrets.S3_BUCKET }}/index.html" \
             --cache-control no-store,max-age=0
 
@@ -86,10 +100,8 @@ jobs:
         if: success()
         run: |
           if [ -n "${{ secrets.CF_DIST_ID }}" ]; then
-            aws cloudfront create-invalidation \
-              --distribution-id "${{ secrets.CF_DIST_ID }}" \
-              --paths "/*"
+            aws cloudfront create-invalidation --distribution-id "${{ secrets.CF_DIST_ID }}" --paths "/*"
             echo "✅ CloudFront invalidation triggered."
           else
-            echo "⚠️ CF_DIST_ID not set; skipping invalidation."
+            echo "⚠️ CF_DIST_ID not set; skipping."
           fi
