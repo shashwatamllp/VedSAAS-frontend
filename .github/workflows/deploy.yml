@@ -1,126 +1,47 @@
-name: Deploy Frontend to AWS S3 + CloudFront
-
+name: Deploy Frontend to S3+CF
 on:
   push:
-    branches: [ "main" ]
-    paths:
-      - "**/package.json"
-      - "**/package-lock.json"
-      - "**/vite.config.*"
-      - "**/next.config.*"
-      - "**/webpack.config.*"
-      - "**/src/**"
-      - "**/public/**"
-      - ".github/workflows/deploy.yml"
+    branches: [main]
 
 permissions:
   id-token: write
   contents: read
 
-concurrency:
-  group: frontend-deploy
-  cancel-in-progress: true
-
 jobs:
-  deploy-frontend:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Locate frontend directory
-        id: locate
-        shell: bash
-        run: |
-          set -euo pipefail
-          for CAND in "." "frontend" "web" "app"; do
-            if [[ -f "$CAND/package.json" ]]; then
-              echo "front_dir=$CAND" >> "$GITHUB_OUTPUT"
-              echo "Found frontend at: $CAND"
-              exit 0
-            fi
-          done
-          echo "front_dir=" >> "$GITHUB_OUTPUT"
-          echo "No package.json found; will try static /public or root."
-
-      - name: Setup Node.js
-        if: ${{ steps.locate.outputs.front_dir != '' }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: ${{ steps.locate.outputs.front_dir }}/package-lock.json
 
-      - name: Prepare env (Vite)
-        if: ${{ steps.locate.outputs.front_dir != '' }}
-        working-directory: ${{ steps.locate.outputs.front_dir }}
+      - name: Build
         run: |
+          set -euo pipefail
           echo "VITE_API_BASE=${{ secrets.VITE_API_BASE }}" > .env
-
-      - name: Install deps & Build
-        if: ${{ steps.locate.outputs.front_dir != '' }}
-        working-directory: ${{ steps.locate.outputs.front_dir }}
-        shell: bash
-        run: |
-          set -euo pipefail
           npm ci
-          if npm run --silent | grep -qE '^  build'; then
-            npm run build
-          else
-            echo "⚠️ No 'build' script; skipping build"
-          fi
+          npm run build
+          echo "OUT=dist" >> $GITHUB_ENV
 
-      - name: Resolve build output
-        id: out
-        shell: bash
-        run: |
-          set -euo pipefail
-          FRONT="${{ steps.locate.outputs.front_dir }}"
-          CANDS=()
-          [[ -n "$FRONT" ]] && CANDS+=("$FRONT/dist" "$FRONT/build" "$FRONT/out")
-          CANDS+=("public" ".")
-          PICK=""
-          for d in "${CANDS[@]}"; do
-            if [[ -d "$d" && ( -f "$d/index.html" || "$d" != "." ) ]]; then
-              PICK="$d"; break
-            fi
-          done
-          [[ -z "$PICK" ]] && { echo "❌ No distributable folder"; exit 1; }
-          echo "artifact=$PICK" >> "$GITHUB_OUTPUT"
-          echo "Using artifact: $PICK"
-
-      - name: Configure AWS credentials (OIDC)
+      - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Sanity check AWS + secrets
-        run: |
-          set -euo pipefail
-          aws sts get-caller-identity >/dev/null
-          [[ -z "${{ secrets.S3_BUCKET }}" ]] && { echo "S3_BUCKET missing"; exit 1; }
-          echo "OK"
-
       - name: Upload to S3
         env:
           BUCKET: ${{ secrets.S3_BUCKET }}
-          SRC: ${{ steps.out.outputs.artifact }}
         run: |
           set -euo pipefail
-          echo "Uploading '$SRC' → s3://$BUCKET"
-          aws s3 sync "$SRC" "s3://$BUCKET" --delete \
-            --exclude "index.html" \
-            --cache-control "public,max-age=31536000,immutable"
-          if [[ -f "$SRC/index.html" ]]; then
-            aws s3 cp "$SRC/index.html" "s3://$BUCKET/index.html" \
-              --cache-control "no-cache,no-store,must-revalidate,max-age=0"
-          fi
+          aws s3 sync "$OUT" "s3://$BUCKET" --delete \
+            --exclude "index.html" --cache-control "public,max-age=31536000,immutable"
+          aws s3 cp "$OUT/index.html" "s3://$BUCKET/index.html" \
+            --cache-control "no-cache,no-store,must-revalidate,max-age=0"
 
-      - name: Invalidate CloudFront cache (optional)
+      - name: Invalidate CloudFront
         if: ${{ success() && secrets.CF_DIST_ID != '' }}
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id "${{ secrets.CF_DIST_ID }}" \
-            --paths "/*"
-          echo "CloudFront invalidation sent."
+        run: aws cloudfront create-invalidation \
+          --distribution-id "${{ secrets.CF_DIST_ID }}" --paths "/*"
