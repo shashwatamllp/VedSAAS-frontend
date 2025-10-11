@@ -1,0 +1,38 @@
+# ये list बदलोगे = नए pages auto-generate
+subdomains:
+  - key: gurukul
+    title: Gurukul
+    emoji: "🧘"
+    blurb: NCERT-aligned learning with cultural context.
+  - key: krishi
+    title: Krishi
+    emoji: "🌾"
+    blurb: Farmer-first guidance with local info.
+  - key: guardian
+    title: Guardian
+    emoji: "🛡"
+    blurb: Safe-by-default filters and family controls.
+  - key: ai
+    title: AI
+    emoji: "🤖"
+    blurb: Core AI workspace and tools.
+  - key: kb
+    title: Knowledge Base
+    emoji: "📚"
+    blurb: Docs, FAQs and how-tos.
+  - key: dev
+    title: Developer
+    emoji: "🧑‍💻"
+    blurb: Dev docs, API and examples.
+  - key: auth
+    title: Auth
+    emoji: "🔐"
+    blurb: Accounts & authentication.
+  - key: status
+    title: Status
+    emoji: "📈"
+    blurb: Live service status.
+  - key: console
+    title: Console
+    emoji: "🛰"
+    blurb: Central portal (you’re here).
