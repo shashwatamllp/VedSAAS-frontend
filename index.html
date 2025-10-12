@@ -1,28 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <meta http-equiv="x-content-type-options" content="nosniff"/>
-  <meta name="referrer" content="strict-origin-when-cross-origin"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="x-content-type-options" content="nosniff" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="ved-api-base" content="https://api.vedsaas.com" />
   <title>VedSAAS</title>
 
-  <!-- In production, CloudFront should route /api/* to your backend.
-       Clients on www/vedsaas.com will call https://api.vedsaas.com automatically. -->
-
-  <link rel="icon" href="./favicon.ico"/>
+  <!-- CloudFront should route /api/* to backend; UI calls https://api.vedsaas.com -->
+  <link rel="icon" href="./favicon.ico" />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        referrerpolicy="strict-origin-when-cross-origin"/>
-  <link rel="stylesheet" href="./style.css"/>
+        referrerpolicy="strict-origin-when-cross-origin" />
+  <link rel="stylesheet" href="./style.css" />
 
   <style>
     #settings-panel, #settings-panel *{display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
     .to-bottom{position:fixed;right:16px;bottom:16px}
-
-    /* health banner colors */
     .banner{padding:8px 12px;text-align:center;font-size:13px;display:none}
     .banner.ok{display:block;background:#063;color:#c7ffd9;border-bottom:1px solid #055}
     .banner.warn{display:block;background:#5a4600;color:#ffe9a8;border-bottom:1px solid #3d2f00}
@@ -37,40 +34,40 @@
 
   <div id="app" class="container" style="display:none">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <aside class="sidebar" aria-label="Conversation history">
       <div class="title">Chat History</div>
       <button class="new-topic-btn" id="new-topic">+ New Chat</button>
       <div class="history-list" id="history-list"></div>
       <div class="settings-summary">
-        <div id="settings-header" class="user-chip" title="Account & Settings" onclick="location.href='settings.html'">
-          <div id="settings-avatar" class="user-avatar">U</div>
+        <button id="settings-header" class="user-chip" title="Account & Settings" onclick="location.href='settings.html'">
+          <div id="settings-avatar" class="user-avatar" aria-hidden="true">U</div>
           <div id="settings-username" class="user-name">User</div>
-          <i class="fas fa-gear settings-caret"></i>
-        </div>
-        <div id="settings-panel" class="settings-panel"></div>
+          <i class="fas fa-gear settings-caret" aria-hidden="true"></i>
+        </button>
+        <div id="settings-panel" class="settings-panel" aria-hidden="true"></div>
       </div>
-    </div>
+    </aside>
 
     <!-- Main -->
-    <div class="main">
+    <main class="main">
       <div class="rail">
-        <div class="topbar">
+        <header class="topbar">
           <button id="menu-toggle" class="menu-btn" aria-label="Open menu"><i class="fas fa-bars"></i></button>
           <h1>VedSAAS</h1>
           <div class="top-controls">
             <div class="meta" id="meta-info">Local: 0 KB</div>
           </div>
-        </div>
+        </header>
 
-        <div class="content">
+        <section class="content">
           <!-- Landing -->
-          <div id="landing" class="landing" style="display:flex;">
+          <section id="landing" class="landing" style="display:flex;">
             <div class="landing-card">
               <div class="title">Start a new conversation</div>
               <div class="hint">Ask anything. I’ll reply in your language.</div>
               <div class="composer">
                 <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
-                <button id="landing-start" class="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
+                <button id="landing-start" class="send-btn" title="Send" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
               </div>
               <div class="landing-actions" style="margin-top:12px">
                 <a class="btn" href="./login.html">Login</a>
@@ -79,34 +76,39 @@
                 <button id="landing-open-history" class="btn">Open Previous Chats</button>
               </div>
             </div>
-          </div>
+          </section>
 
           <!-- Chat shell -->
-          <div id="chat-shell" style="display:none;flex:1;min-height:0;flex-direction:column;">
+          <section id="chat-shell" style="display:none;flex:1;min-height:0;flex-direction:column;">
             <div class="chat-area" id="chat-area"></div>
             <div class="composer-wrap">
               <div class="composer">
                 <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
-                <button id="send-btn" class="send-btn" title="Send" disabled><i class="fas fa-paper-plane"></i></button>
+                <button id="send-btn" class="send-btn" title="Send" aria-label="Send" disabled>
+                  <i class="fas fa-paper-plane"></i>
+                </button>
               </div>
             </div>
-          </div>
-        </div><!-- /content -->
+          </section>
+        </section><!-- /content -->
       </div><!-- /rail -->
-    </div><!-- /main -->
+    </main><!-- /main -->
   </div><!-- /app -->
 
   <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
   <script>
-    // ------- API base resolver (shared behavior with login/verify) -------
+    // ------- API base resolver (respects meta + env + local dev) -------
     (function(){
-      if (window.API_BASE) return; // respect pre-set value (e.g., vedsaas-fixes.js)
+      if (window.API_BASE) return;
+      const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
       const h = (location.hostname || '').toLowerCase();
       const origin = location.origin || '';
-      if (h.endsWith('vedsaas.com')) {
+      if (metaBase) {
+        window.API_BASE = metaBase.replace(/\/$/, '');
+      } else if (h.endsWith('vedsaas.com')) {
         window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
-      } else if (origin.includes(':8010')) {
+      } else if (/:(8010|8011|8012)\b/.test(origin)) {
         window.API_BASE = origin;
       } else {
         window.API_BASE = 'http://127.0.0.1:8010';
@@ -139,7 +141,7 @@
     });
   </script>
 
-  <!-- App wiring (kept as-is). If vedsaas-fixes.js defines API_BASE, it will win. -->
+  <!-- App wiring -->
   <script defer src="./vedsaas-fixes.js"></script>
   <script defer src="./app.js"></script>
 </body>
