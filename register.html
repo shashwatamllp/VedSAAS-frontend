@@ -110,7 +110,10 @@
   </div>
 
 <script>
-  // ---------- API base resolver (same logic as index) ----------
+  // ---------- TEMP: force API to avoid CF routing issues while debugging ----------
+  window.API_BASE = 'https://api.vedsaas.com';
+
+  // ---------- API base resolver (kept for future; ignored because of line above) ----------
   (function(){
     if (window.API_BASE) return;
     const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
@@ -141,23 +144,35 @@
   const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v||"");
   const validPhone = v => /^\+?\d{10,15}$/.test((v||"").replace(/\s/g,""));
 
+  async function parseResponse(r){
+    const ct = r.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await r.json().catch(()=> ({})) : await r.text().catch(()=> '');
+    return { ct, data };
+  }
+
+  function friendlyError(r, dataStr){
+    // CloudFront "only cacheable requests" 403 → clearer message
+    if (r.status === 403 && /cacheable requests|cloudfront/i.test(dataStr||'')) {
+      return 'Blocked by CDN: POST reached static S3 behavior. Check CloudFront /api/* behavior.';
+    }
+    return `HTTP ${r.status} ${r.statusText}${dataStr ? ': ' + dataStr : ''}`;
+  }
+
   async function apiJSON(url, body){
     const r = await fetch(url, {
       method:'POST',
       headers:{'Content-Type':'application/json','Accept':'application/json'},
       body: JSON.stringify(body),
-      mode:'cors', cache:'no-store'
+      mode:'cors', cache:'no-store', credentials:'omit'
     });
-    const ct = r.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await r.json() : await r.text();
-    if (!r.ok) throw new Error(typeof data==='string'? data : (data.error || data.message || JSON.stringify(data)));
+    const { data } = await parseResponse(r);
+    if (!r.ok) throw new Error(typeof data==='string' ? friendlyError(r, data) : (data.error || data.message || friendlyError(r)));
     return data;
   }
   async function apiForm(url, formData){
-    const r = await fetch(url, { method:'POST', body: formData, mode:'cors', cache:'no-store' });
-    const ct = r.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await r.json() : await r.text();
-    if (!r.ok) throw new Error(typeof data==='string'? data : (data.error || data.message || JSON.stringify(data)));
+    const r = await fetch(url, { method:'POST', body: formData, mode:'cors', cache:'no-store', credentials:'omit' });
+    const { data } = await parseResponse(r);
+    if (!r.ok) throw new Error(typeof data==='string' ? friendlyError(r, data) : (data.error || data.message || friendlyError(r)));
     return data;
   }
 
