@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="ved-api-base" content="https://api.vedsaas.com"/>
   <title>VedSAAS • Signup</title>
-  <link rel="icon" href="/favicon.ico"/>
+  <link rel="icon" href="./favicon.ico"/>
   <style>
     :root{
       --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
@@ -19,7 +20,7 @@
       display:flex; align-items:center; justify-content:center;
       min-height:100vh; overflow:hidden;
     }
-    .auth-bg{ position:fixed; inset:0; background:url('/images/logopic.png') center/520px no-repeat; opacity:.06; pointer-events:none; z-index:0; }
+    .auth-bg{ position:fixed; inset:0; background:url('./images/logopic.png') center/520px no-repeat; opacity:.06; pointer-events:none; z-index:0; }
     .card{
       position:relative; z-index:1;
       width:min(1100px, 98vw);
@@ -61,28 +62,28 @@
     <h1>Signup with VedSAAS</h1>
     <p class="sub">Signup with VedSAAS India's First AI.</p>
 
-    <form id="form" class="grid" autocomplete="off" novalidate>
+    <form id="register-form" class="grid" autocomplete="off" novalidate>
       <div class="span3">
         <label for="name">Full Name</label>
-        <input id="name" class="ip" placeholder="Your full name" required/>
+        <input id="name" name="name" class="ip" placeholder="Your full name" required/>
       </div>
 
       <div>
         <label for="email">Email</label>
-        <input id="email" class="ip" type="email" placeholder="email@example.com" required/>
+        <input id="email" name="email" class="ip" type="email" placeholder="email@example.com" required/>
       </div>
       <div>
         <label for="mobile">Mobile</label>
-        <input id="mobile" class="ip" type="tel" placeholder="+91XXXXXXXXXX" required/>
+        <input id="mobile" name="mobile" class="ip" type="tel" placeholder="+91XXXXXXXXXX" required/>
       </div>
       <div>
         <label for="dob">Date of Birth</label>
-        <input id="dob" class="ip" type="date" required/>
+        <input id="dob" name="dob" class="ip" type="date" required/>
       </div>
 
       <div>
         <label for="pw">Password</label>
-        <input id="pw" class="ip" type="password" placeholder="Create password" required/>
+        <input id="pw" name="password" class="ip" type="password" placeholder="Create password" required/>
       </div>
       <div>
         <label for="cpw">Confirm</label>
@@ -93,7 +94,7 @@
         <div id="preview" class="avatar"></div>
         <div>
           <label for="avatar">Profile picture</label>
-          <input id="avatar" class="ip" type="file" accept="image/*"/>
+          <input id="avatar" name="avatar" class="ip" type="file" accept="image/*"/>
           <div class="hint">Max 1 MB • Square image looks best</div>
         </div>
       </div>
@@ -104,13 +105,22 @@
     </form>
 
     <div id="msg" class="msg"></div>
-    <p class="note">Already have an account? <a href="/login.html" style="color:#76b7ff">Login</a></p>
+    <p class="note">Already have an account? <a href="./login.html" style="color:#76b7ff">Login</a></p>
     <div class="footer">VedSAAS by Shashwatam Eco-Chie Creations LLP</div>
   </div>
 
 <script>
-  // Same-origin through CloudFront (/api/* behavior); DON'T hardcode IP in prod
-  const API_BASE = "";
+  // ---------- API base resolver (same logic as index) ----------
+  (function(){
+    if (window.API_BASE) return;
+    const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
+    const h = (location.hostname || '').toLowerCase();
+    const origin = location.origin || '';
+    if (metaBase) window.API_BASE = metaBase.replace(/\/$/, '');
+    else if (h.endsWith('vedsaas.com')) window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
+    else if (/:(8010|8011|8012)\b/.test(origin)) window.API_BASE = origin;
+    else window.API_BASE = 'http://127.0.0.1:8010';
+  })();
 
   const $ = (id) => document.getElementById(id);
   const show = (t, ok=false) => { const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
@@ -131,22 +141,27 @@
   const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v||"");
   const validPhone = v => /^\+?\d{10,15}$/.test((v||"").replace(/\s/g,""));
 
-  async function apiJSON(path, body){
-    const r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  async function apiJSON(url, body){
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify(body),
+      mode:'cors', cache:'no-store'
+    });
     const ct = r.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await r.json() : await r.text();
     if (!r.ok) throw new Error(typeof data==='string'? data : (data.error || data.message || JSON.stringify(data)));
     return data;
   }
-  async function apiForm(path, formData){
-    const r = await fetch(path, { method:'POST', body: formData });
+  async function apiForm(url, formData){
+    const r = await fetch(url, { method:'POST', body: formData, mode:'cors', cache:'no-store' });
     const ct = r.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await r.json() : await r.text();
     if (!r.ok) throw new Error(typeof data==='string'? data : (data.error || data.message || JSON.stringify(data)));
     return data;
   }
 
-  $('form').addEventListener('submit', async (e)=>{
+  $('register-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const name   = ($('name').value||'').trim();
     const email  = ($('email').value||'').trim();
@@ -173,20 +188,22 @@
     fd.append('password', pw);
     if (avatarFile) fd.append('avatar', avatarFile);
 
+    const base = window.API_BASE || '';
+
     try {
       // Try primary route
       try {
-        await apiForm(`${API_BASE}/api/auth/register`, fd);
+        await apiForm(`${base}/api/auth/register`, fd);
       } catch (e1) {
-        // Fallback #1: same route but JSON (in case backend rejects multipart)
+        // Fallback #1: same route but JSON
         try {
-          await apiJSON(`${API_BASE}/api/auth/register`, { name, email, mobile, dob, password: pw });
+          await apiJSON(`${base}/api/auth/register`, { name, email, mobile, dob, password: pw });
         } catch (e2) {
           // Fallback #2: alternate path
           try {
-            await apiForm(`${API_BASE}/api/register`, fd);
+            await apiForm(`${base}/api/register`, fd);
           } catch (e3) {
-            await apiJSON(`${API_BASE}/api/register`, { name, email, mobile, dob, password: pw });
+            await apiJSON(`${base}/api/register`, { name, email, mobile, dob, password: pw });
           }
         }
       }
@@ -194,9 +211,9 @@
       // Send OTP (email or phone)
       const identifier = email || mobile;
       try {
-        await apiJSON(`${API_BASE}/api/auth/send-otp`, { identifier });
+        await apiJSON(`${base}/api/auth/send-otp`, { identifier });
       } catch {
-        await apiJSON(`${API_BASE}/api/send-otp`, { identifier });
+        await apiJSON(`${base}/api/send-otp`, { identifier });
       }
 
       // Stash for post-verify flows (optional)
@@ -207,7 +224,7 @@
       } catch {}
 
       show('OTP sent. Redirecting…', true);
-      setTimeout(()=>{ location.href = `/verify.html?who=${encodeURIComponent(identifier)}&sent=1`; }, 600);
+      setTimeout(()=>{ location.href = `./verify.html?who=${encodeURIComponent(identifier)}&sent=1`; }, 600);
     } catch (err) {
       show('Registration failed: ' + (err?.message || err));
       console.error('Register error:', err);
