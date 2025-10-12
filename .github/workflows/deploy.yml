@@ -1,7 +1,9 @@
 name: Deploy Static Frontend to S3+CF
+
 on:
   push:
-    branches: [main]
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -18,19 +20,47 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: VedSAAS-Frontend-${{ github.run_id }}
 
-      - name: Upload /public to S3
+      - name: Detect build folder (public or repo root)
+        id: detect
+        run: |
+          if [ -d "public" ]; then
+            echo "out=public" >> $GITHUB_OUTPUT
+          else
+            echo "out=." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync static assets to S3 (long cache)
         env:
           BUCKET: ${{ secrets.S3_BUCKET }}
+          OUT: ${{ steps.detect.outputs.out }}
         run: |
           set -euo pipefail
-          OUT=public
-          aws s3 sync "$OUT" "s3://$BUCKET" --delete \
-            --exclude "index.html" --cache-control "public,max-age=31536000,immutable"
+          aws s3 sync "$OUT" "s3://$BUCKET" \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "Dockerfile*" \
+            --exclude "README.md" \
+            --exclude "serve_frontend.py" \
+            --exclude "index.html" \
+            --cache-control "public,max-age=31536000,immutable" \
+            --metadata-directive "REPLACE"
+
+      - name: Upload index.html with no-cache
+        env:
+          BUCKET: ${{ secrets.S3_BUCKET }}
+          OUT: ${{ steps.detect.outputs.out }}
+        run: |
+          set -euo pipefail
           aws s3 cp "$OUT/index.html" "s3://$BUCKET/index.html" \
-            --cache-control "no-cache,no-store,must-revalidate,max-age=0"
+            --cache-control "no-cache,no-store,must-revalidate,max-age=0" \
+            --metadata-directive "REPLACE" || true
 
       - name: Invalidate CloudFront
         if: ${{ success() && secrets.CF_DIST_ID != '' }}
-        run: aws cloudfront create-invalidation \
-          --distribution-id "${{ secrets.CF_DIST_ID }}" --paths "/*"
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.CF_DIST_ID }}" \
+            --paths "/*"
