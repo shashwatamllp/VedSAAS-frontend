@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="ved-api-base" content="https://api.vedsaas.com"/>
   <title>VedSAAS • Login</title>
-  <link rel="icon" href="favicon.ico"/>
+  <link rel="icon" href="./favicon.ico"/>
   <style>
     :root{
       --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
@@ -17,9 +18,7 @@
       background:radial-gradient(1200px 600px at 50% -10%, #2a2a3b 0%, #1e1e2f 60%);
       color:var(--text); display:flex; align-items:center; justify-content:center; overflow:hidden;
     }
-    /* If/when image ACL fixed, you can use it:
-    .auth-bg{ position:fixed; inset:0; background:url('images/logopic.png') center/420px no-repeat; opacity:.06; pointer-events:none; z-index:0; }
-    */
+    /* When image path ACL fixed, use: .auth-bg{ position:fixed; inset:0; background:url('./images/logopic.png') center/420px no-repeat; opacity:.06; pointer-events:none; z-index:0; } */
     .card{
       position:relative; z-index:1; width:min(520px,94vw);
       background:var(--card); border-radius:14px; padding:28px 24px;
@@ -28,10 +27,7 @@
     h1{font-size:26px; text-align:center; margin-bottom:6px}
     .sub{color:var(--muted); text-align:center; font-size:14px; margin-bottom:18px}
     label{display:block; font-size:13px; color:#cfd2e2; margin:10px 0 6px}
-    .ip{
-      width:100%; padding:12px 14px; border-radius:10px; border:none;
-      background:var(--ip); color:#fff; outline:none; font-size:15px; transition:.15s background;
-    }
+    .ip{width:100%; padding:12px 14px; border-radius:10px; border:none; background:var(--ip); color:#fff; outline:none; font-size:15px; transition:.15s background}
     .ip:focus{background:var(--ip-focus)}
     .actions{display:flex; gap:10px; margin-top:14px}
     .btn{
@@ -55,19 +51,19 @@
 
   <div class="card" role="dialog" aria-labelledby="h1">
     <h1 id="h1">Login</h1>
-    <p class="sub">Verify your Email and mobile number.</p>
+    <p class="sub">Verify your Email or Mobile number.</p>
 
     <label for="identifier">Email / Mobile</label>
     <input id="identifier" class="ip" type="text" placeholder="email@example.com  •  +91XXXXXXXXXX" autofocus/>
 
     <div class="actions">
-      <a class="btn btn-secondary" href="register.html">Create Account</a>
+      <a class="btn btn-secondary" href="./register.html">Create Account</a>
       <button id="send-btn" class="btn">Send OTP</button>
     </div>
 
     <div id="msg" class="msg"></div>
     <p class="note">
-      New to VedSAAS? <a href="register.html" style="color:#76b7ff">Sign up here</a>.<br/>
+      New to VedSAAS? <a href="./register.html" style="color:#76b7ff">Sign up here</a>.<br/>
       Already have an account? Enter your email/phone and tap <strong>Send OTP</strong>.
     </p>
   </div>
@@ -75,46 +71,66 @@
   <div class="footer">VedSAAS • Shashwatam Eco-Chie Creations LLP</div>
 
 <script>
-  // ---- API base (pin to backend domain; local dev fallback) ----
-  const API_BASE = (location.hostname.endsWith('vedsaas.com'))
-    ? 'https://api.vedsaas.com'
-    : (location.origin.includes(':8010') ? location.origin : 'http://127.0.0.1:8010');
+  // ---- API base resolver (meta -> vedsaas.com -> local dev) ----
+  (function(){
+    if (window.API_BASE) return;
+    const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
+    const h = (location.hostname || '').toLowerCase();
+    const origin = location.origin || '';
+    if (metaBase) window.API_BASE = metaBase.replace(/\/$/, '');
+    else if (h.endsWith('vedsaas.com')) window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
+    else if (/:(8010|8011|8012)\b/.test(origin)) window.API_BASE = origin;
+    else window.API_BASE = 'http://127.0.0.1:8010';
+  })();
 
   // Already logged-in? bounce
-  try { if (localStorage.getItem('token')) location.replace('index.html'); } catch {}
+  try { if (localStorage.getItem('token')) location.replace('./index.html'); } catch {}
 
   const $ = (id) => document.getElementById(id);
   const show = (t, ok=false) => { const m = $('msg'); m.className = 'msg ' + (ok?'ok':'err'); m.textContent = t || ''; };
 
+  function friendlyError(r, bodyText){
+    if (r.status === 403 && /cacheable requests|cloudfront/i.test(bodyText||'')) {
+      return 'Blocked by CDN: POST hit static S3 behavior. Check CloudFront /api/* routing.';
+    }
+    return `HTTP ${r.status} ${r.statusText}${bodyText ? ': ' + bodyText : ''}`;
+  }
+
   async function sendOtp() {
     const id = ($('identifier').value || '').trim();
     if (!id) return show('Enter email or mobile');
-    $('send-btn').disabled = true; show('');
 
+    $('send-btn').disabled = true; show('');
     try {
-      const r = await fetch(`${API_BASE}/api/send-otp`, {
+      const resp = await fetch(`${window.API_BASE}/api/send-otp`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: id })
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ identifier: id }),
+        mode: 'cors',
+        cache: 'no-store',
+        credentials: 'omit'
       });
 
-      if (!r.ok) {
-        const text = await r.text().catch(()=> '');
-        return show(`Failed to send OTP (${r.status}). ${text?.slice(0,120) || ''}`.trim());
+      const ct = resp.headers.get('content-type') || '';
+      const body = ct.includes('application/json') ? await resp.json().catch(()=> ({})) : await resp.text().catch(()=> '');
+
+      if (!resp.ok) {
+        const msg = typeof body === 'string' ? friendlyError(resp, body.slice(0,200)) : (body.error || friendlyError(resp));
+        return show(msg);
       }
 
-      const j = await r.json().catch(() => ({}));
-      if (j && j.ok) {
-        try { localStorage.setItem('pendingIdentifier', id); } catch {}
-        show('OTP sent. Redirecting…', true);
-        setTimeout(() => {
-          location.href = 'verify.html?who=' + encodeURIComponent(id) + '&sent=1';
-        }, 400);
-      } else {
-        show((j && j.error) || 'Failed to send OTP');
+      if (!body || (body.ok !== undefined && !body.ok)) {
+        return show((body && body.error) || 'Failed to send OTP');
       }
+
+      try { localStorage.setItem('pendingIdentifier', id); } catch {}
+      show('OTP sent. Redirecting…', true);
+      setTimeout(() => {
+        location.href = `./verify.html?who=${encodeURIComponent(id)}&sent=1`;
+      }, 400);
     } catch (e) {
       show('Network error. Try again.');
+      console.error('send-otp error:', e);
     } finally {
       $('send-btn').disabled = false;
     }
