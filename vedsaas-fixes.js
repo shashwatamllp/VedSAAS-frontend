@@ -1,18 +1,26 @@
+<!-- vedsaas-fixes.js (UPDATED, ready to paste) -->
+<script>
 /* ===== VedSAAS Production Config (HTTPS Safe) ===== */
 "use strict";
 
 const $ = (id) => document.getElementById(id);
 
-// Decide API base: prod → https://api.vedsaas.com, else local dev
+// Decide API base
 const API_BASE = (() => {
-  const h = window.location.hostname;
+  const h = window.location.hostname.toLowerCase();
   if (h.endsWith("vedsaas.com")) return "https://api.vedsaas.com";
-  // prefer 8012 (your gunicorn bind); change to 8010 if your local proxy expects it
+  // prefer 8012 (gunicorn bind)
   return "http://127.0.0.1:8012";
 })();
 
-let token = localStorage.getItem("token") || null;
+// ⚠️ TEMP: frontend-injected API key so protected routes (e.g., /api/chat) work.
+// Replace with your real key. Prefer moving this to Nginx (proxy_set_header X-API-Key "...").
+const API_KEY =
+  window.location.hostname.toLowerCase().endsWith("vedsaas.com")
+    ? "SUPER_LONG_RANDOM_KEY" // <-- put your real VED_API_KEY here
+    : ""; // local may not need it if backend unset
 
+let token = localStorage.getItem("token") || null;
 function setVedToken(t) {
   token = t || null;
   if (token) localStorage.setItem("token", token);
@@ -20,13 +28,20 @@ function setVedToken(t) {
 }
 window.setVedToken = setVedToken;
 
+function niceHttpError(resp, bodyText) {
+  if (resp.status === 403 && /cloudfront|cacheable requests/i.test(bodyText || "")) {
+    return "Blocked by CDN: request hit static behavior. Check CloudFront /api/* behavior.";
+  }
+  if (resp.status === 401) return "Unauthorized";
+  return `HTTP ${resp.status}${resp.statusText ? " " + resp.statusText : ""}${bodyText ? ": " + bodyText : ""}`;
+}
+
 async function apiFetch(path, opts = {}) {
-  // Build absolute URL
+  // Absolute URL
   const url = /^https?:\/\//i.test(path)
     ? path
     : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
 
-  // Headers/body handling
   const headers = new Headers(opts.headers || {});
   const hasBody = Object.prototype.hasOwnProperty.call(opts, "body");
   const isFormData = hasBody && opts.body instanceof FormData;
@@ -36,6 +51,10 @@ async function apiFetch(path, opts = {}) {
   }
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
+  }
+  // 👉 add API key for protected routes
+  if (API_KEY && !headers.has("X-API-Key")) {
+    headers.set("X-API-Key", API_KEY);
   }
 
   const resp = await fetch(url, {
@@ -48,9 +67,9 @@ async function apiFetch(path, opts = {}) {
   });
 
   if (!resp.ok) {
-    let msg = "";
-    try { msg = await resp.text(); } catch {}
-    throw new Error(`HTTP ${resp.status}${msg ? `: ${msg}` : ""}`);
+    let txt = "";
+    try { txt = await resp.text(); } catch {}
+    throw new Error(niceHttpError(resp, txt));
   }
 
   const ct = resp.headers.get("content-type") || "";
@@ -75,16 +94,25 @@ function scrollChatBottom(smooth) {
 
 async function sendChat(text) {
   try {
+    if (!text) return;
     renderMessage("user", text);
+
     const res = await apiFetch("/api/chat", {
       method: "POST",
-      body: { message: text },
+      // send both fields for compatibility
+      body: { msg: text, message: text },
     });
-    renderMessage("assistant", (res && res.reply) || JSON.stringify(res));
+
+    const reply =
+      (res && (res.reply || res.message || res.text)) ||
+      (typeof res === "string" ? res : JSON.stringify(res));
+
+    renderMessage("assistant", reply);
     scrollChatBottom(true);
   } catch (e) {
     console.error("Chat error:", e);
-    renderMessage("system", "⚠️ Server error. Please try again.");
+    const msg = (e && e.message) || "Server error";
+    renderMessage("system", "⚠️ " + msg);
   }
 }
 
@@ -99,8 +127,9 @@ async function sendChat(text) {
     if (val) await sendChat(val);
   };
 
-  // Optional: show a tiny “API OK” badge if health works
+  // Health badge
   apiFetch("/api/health")
     .then(() => { const b = $("api-ok-badge"); if (b) b.style.display = "inline-flex"; })
     .catch(() => {});
 })();
+</script>
