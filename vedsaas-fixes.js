@@ -1,4 +1,4 @@
-<!-- vedsaas-fixes.js (UPDATED, ready to paste) -->
+<!-- vedsaas-fixes.js (FINAL) -->
 <script>
 /* ===== VedSAAS Production Config (HTTPS Safe) ===== */
 "use strict";
@@ -7,19 +7,18 @@ const $ = (id) => document.getElementById(id);
 
 // Decide API base
 const API_BASE = (() => {
-  const h = window.location.hostname.toLowerCase();
+  const h = (window.location.hostname || "").toLowerCase();
   if (h.endsWith("vedsaas.com")) return "https://api.vedsaas.com";
-  // prefer 8012 (gunicorn bind)
-  return "http://127.0.0.1:8012";
+  return "http://127.0.0.1:8012"; // local dev/gunicorn
 })();
 
-// ⚠️ TEMP: frontend-injected API key so protected routes (e.g., /api/chat) work.
-// Replace with your real key. Prefer moving this to Nginx (proxy_set_header X-API-Key "...").
-const API_KEY =
-  window.location.hostname.toLowerCase().endsWith("vedsaas.com")
-    ? "SUPER_LONG_RANDOM_KEY" // <-- put your real VED_API_KEY here
-    : ""; // local may not need it if backend unset
+// TEMP: frontend-injected API key so protected routes (e.g., /api/chat) work.
+// ⚠️ Put your REAL VED_API_KEY below; later move this to Nginx proxy_set_header.
+const API_KEY = (window.location.hostname || "").toLowerCase().endsWith("vedsaas.com")
+  ? "SUPER_LONG_RANDOM_KEY" // <-- replace with real key
+  : "";
 
+// Optional bearer (if you later issue JWTs)
 let token = localStorage.getItem("token") || null;
 function setVedToken(t) {
   token = t || null;
@@ -28,31 +27,32 @@ function setVedToken(t) {
 }
 window.setVedToken = setVedToken;
 
+// ----- HTTP helper -----
 function niceHttpError(resp, bodyText) {
-  if (resp.status === 403 && /cloudfront|cacheable requests/i.test(bodyText || "")) {
-    return "Blocked by CDN: request hit static behavior. Check CloudFront /api/* behavior.";
+  const txt = bodyText || "";
+  if (resp.status === 403 && /cloudfront|cacheable requests/i.test(txt)) {
+    return "Blocked by CDN: request hit static behavior (/api/* must route to api.vedsaas.com origin).";
   }
   if (resp.status === 401) return "Unauthorized";
-  return `HTTP ${resp.status}${resp.statusText ? " " + resp.statusText : ""}${bodyText ? ": " + bodyText : ""}`;
+  return `HTTP ${resp.status}${resp.statusText ? " " + resp.statusText : ""}${txt ? ": " + txt : ""}`;
 }
 
 async function apiFetch(path, opts = {}) {
-  // Absolute URL
   const url = /^https?:\/\//i.test(path)
     ? path
     : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
 
   const headers = new Headers(opts.headers || {});
   const hasBody = Object.prototype.hasOwnProperty.call(opts, "body");
-  const isFormData = hasBody && opts.body instanceof FormData;
+  const isForm = hasBody && (opts.body instanceof FormData);
 
-  if (hasBody && !isFormData && !headers.has("Content-Type")) {
+  if (hasBody && !isForm && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  // 👉 add API key for protected routes
+  // Add API key header only if we have one (server can also inject independently)
   if (API_KEY && !headers.has("X-API-Key")) {
     headers.set("X-API-Key", API_KEY);
   }
@@ -60,7 +60,7 @@ async function apiFetch(path, opts = {}) {
   const resp = await fetch(url, {
     method: opts.method || "GET",
     headers,
-    body: hasBody && !isFormData ? JSON.stringify(opts.body) : opts.body,
+    body: hasBody && !isForm ? JSON.stringify(opts.body) : opts.body,
     mode: "cors",
     cache: "no-store",
     credentials: "omit",
@@ -76,7 +76,7 @@ async function apiFetch(path, opts = {}) {
   return ct.includes("application/json") ? resp.json() : resp.text();
 }
 
-// --- Chat helpers -----------------------------------------------------------
+// ----- Chat UI helpers -----
 function renderMessage(role, content) {
   const area = $("chat-area");
   if (!area) return;
@@ -93,14 +93,16 @@ function scrollChatBottom(smooth) {
 }
 
 async function sendChat(text) {
+  if (!text) return;
+  const btn = $("landing-start");
+  btn && (btn.disabled = true);
+
   try {
-    if (!text) return;
     renderMessage("user", text);
 
     const res = await apiFetch("/api/chat", {
       method: "POST",
-      // send both fields for compatibility
-      body: { msg: text, message: text },
+      body: { msg: text, message: text }, // both for compatibility
     });
 
     const reply =
@@ -111,21 +113,33 @@ async function sendChat(text) {
     scrollChatBottom(true);
   } catch (e) {
     console.error("Chat error:", e);
-    const msg = (e && e.message) || "Server error";
-    renderMessage("system", "⚠️ " + msg);
+    renderMessage("system", "⚠️ " + (e?.message || "Server error"));
+  } finally {
+    btn && (btn.disabled = false);
   }
 }
 
-// --- Boot -------------------------------------------------------------------
+// ----- Boot -----
 (function boot() {
   console.log("VedSAAS frontend ✅");
   console.log("VedSAAS API base:", API_BASE);
 
   const btn = $("landing-start");
+  const ip = $("landing-input");
+
   if (btn) btn.onclick = async () => {
-    const val = $("landing-input")?.value?.trim();
+    const val = ip?.value?.trim();
     if (val) await sendChat(val);
   };
+  // Enter-to-send
+  if (ip) {
+    ip.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey) {
+        ev.preventDefault();
+        btn?.click();
+      }
+    });
+  }
 
   // Health badge
   apiFetch("/api/health")
