@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VedSAAS • Signup</title>
   <link rel="icon" href="./favicon.ico"/>
+
+  <!-- 🔐 Provide API key here (or put it in localStorage.VED_API_KEY) -->
+  <meta name="ved-api-key" content="super-long-random">
+
   <style>
     :root{
       --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
@@ -64,29 +68,29 @@
     <form id="register-form" class="grid" autocomplete="off" novalidate>
       <div class="span3">
         <label for="name">Full Name</label>
-        <input id="name" name="name" class="ip" placeholder="Your full name" required/>
+        <input id="name" name="name" class="ip" placeholder="Your full name" required autocomplete="name"/>
       </div>
 
       <div>
         <label for="email">Email</label>
-        <input id="email" name="email" class="ip" type="email" placeholder="email@example.com" required/>
+        <input id="email" name="email" class="ip" type="email" placeholder="email@example.com" required autocomplete="email"/>
       </div>
       <div>
         <label for="mobile">Mobile</label>
-        <input id="mobile" name="mobile" class="ip" type="tel" placeholder="+91XXXXXXXXXX" required/>
+        <input id="mobile" name="mobile" class="ip" type="tel" placeholder="+91XXXXXXXXXX" required autocomplete="tel"/>
       </div>
       <div>
         <label for="dob">Date of Birth</label>
-        <input id="dob" name="dob" class="ip" type="date" required/>
+        <input id="dob" name="dob" class="ip" type="date" required autocomplete="bday"/>
       </div>
 
       <div>
         <label for="pw">Password</label>
-        <input id="pw" name="password" class="ip" type="password" placeholder="Create password" required/>
+        <input id="pw" name="password" class="ip" type="password" placeholder="Create password" required autocomplete="new-password"/>
       </div>
       <div>
         <label for="cpw">Confirm</label>
-        <input id="cpw" class="ip" type="password" placeholder="Re-enter password" required/>
+        <input id="cpw" class="ip" type="password" placeholder="Re-enter password" required autocomplete="new-password"/>
       </div>
 
       <div class="span3 avatar-row">
@@ -109,21 +113,25 @@
   </div>
 
 <script>
-  // ---------- TEMP: force API to avoid CF routing issues while debugging ----------
+  // --------------------------------------------
+  // API base (pinned for prod)
+  // --------------------------------------------
   window.API_BASE = 'https://api.vedsaas.com';
 
-  // ---------- API base resolver (kept for future; ignored because of line above) ----------
-  (function(){
-    if (window.API_BASE) return;
-    const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
-    const h = (location.hostname || '').toLowerCase();
-    const origin = location.origin || '';
-    if (metaBase) window.API_BASE = metaBase.replace(/\/$/, '');
-    else if (h.endsWith('vedsaas.com')) window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
-    else if (/:(8010|8011|8012)\b/.test(origin)) window.API_BASE = origin;
-    else window.API_BASE = 'http://127.0.0.1:8010';
+  // --------------------------------------------
+  // API key source
+  // --------------------------------------------
+  (function primeKey(){
+    const metaKey = document.querySelector('meta[name="ved-api-key"]')?.content || '';
+    if (metaKey && !localStorage.getItem('VED_API_KEY')) {
+      localStorage.setItem('VED_API_KEY', metaKey);
+    }
   })();
+  const getApiKey = () => localStorage.getItem('VED_API_KEY') || '';
 
+  // --------------------------------------------
+  // tiny helpers
+  // --------------------------------------------
   const $ = (id) => document.getElementById(id);
   const show = (t, ok=false) => { const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
 
@@ -148,19 +156,24 @@
     const data = ct.includes('application/json') ? await r.json().catch(()=> ({})) : await r.text().catch(()=> '');
     return { ct, data };
   }
-
   function friendlyError(r, dataStr){
-    // CloudFront "only cacheable requests" 403 → clearer message
     if (r.status === 403 && /cacheable requests|cloudfront/i.test(dataStr||'')) {
       return 'Blocked by CDN: POST reached static S3 behavior. Check CloudFront /api/* behavior.';
     }
     return `HTTP ${r.status} ${r.statusText}${dataStr ? ': ' + dataStr : ''}`;
   }
 
+  // --------------------------------------------
+  // API wrappers — now always send X-API-Key
+  // --------------------------------------------
   async function apiJSON(url, body){
     const r = await fetch(url, {
       method:'POST',
-      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      headers:{
+        'Accept':'application/json',
+        'Content-Type':'application/json',
+        'X-API-Key': getApiKey(),
+      },
       body: JSON.stringify(body),
       mode:'cors', cache:'no-store', credentials:'omit'
     });
@@ -169,12 +182,20 @@
     return data;
   }
   async function apiForm(url, formData){
-    const r = await fetch(url, { method:'POST', body: formData, mode:'cors', cache:'no-store', credentials:'omit' });
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{ 'X-API-Key': getApiKey() },
+      body: formData,
+      mode:'cors', cache:'no-store', credentials:'omit'
+    });
     const { data } = await parseResponse(r);
     if (!r.ok) throw new Error(typeof data==='string' ? friendlyError(r, data) : (data.error || data.message || friendlyError(r)));
     return data;
   }
 
+  // --------------------------------------------
+  // Submit
+  // --------------------------------------------
   $('register-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const name   = ($('name').value||'').trim();
@@ -191,9 +212,16 @@
     if (pw.length < 6) return show('Password must be at least 6 characters');
     if (pw !== cpw) return show('Passwords do not match');
 
-    $('submit').disabled = true; show('');
+    const haveKey = !!getApiKey();
+    if (!haveKey) {
+      // keep it obvious in UI when key missing
+      return show('API key missing. Please configure it.', false);
+    }
 
-    // Build multipart first (avatar-friendly)
+    $('submit').disabled = true; show('');
+    const base = window.API_BASE || '';
+
+    // Build multipart (avatar-friendly)
     const fd = new FormData();
     fd.append('name', name);
     fd.append('email', email);
@@ -202,18 +230,16 @@
     fd.append('password', pw);
     if (avatarFile) fd.append('avatar', avatarFile);
 
-    const base = window.API_BASE || '';
-
     try {
-      // Try primary route
+      // Primary route
       try {
         await apiForm(`${base}/api/auth/register`, fd);
       } catch (e1) {
-        // Fallback #1: same route but JSON
+        // JSON fallback same endpoint
         try {
           await apiJSON(`${base}/api/auth/register`, { name, email, mobile, dob, password: pw });
         } catch (e2) {
-          // Fallback #2: alternate path
+          // Alt paths
           try {
             await apiForm(`${base}/api/register`, fd);
           } catch (e3) {
@@ -222,7 +248,7 @@
         }
       }
 
-      // Send OTP (email or phone)
+      // Send OTP
       const identifier = email || mobile;
       try {
         await apiJSON(`${base}/api/auth/send-otp`, { identifier });
@@ -230,7 +256,7 @@
         await apiJSON(`${base}/api/send-otp`, { identifier });
       }
 
-      // Stash for post-verify flows (optional)
+      // Stash a few bits for next screen
       try {
         localStorage.setItem('pendingIdentifier', identifier);
         localStorage.setItem('pendingName', name);
@@ -248,4 +274,3 @@
 </script>
 </body>
 </html>
-
