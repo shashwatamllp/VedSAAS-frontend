@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta http-equiv="x-content-type-options" content="nosniff" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <!-- Forces API base; vedsaas-fixes.js will honor this -->
   <meta name="ved-api-base" content="https://api.vedsaas.com" />
+
   <title>VedSAAS</title>
 
-  <!-- CloudFront should route /api/* to backend; UI calls https://api.vedsaas.com -->
+  <!-- Static assets over CDN -->
   <link rel="icon" href="./favicon.ico" />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="stylesheet"
@@ -18,9 +19,9 @@
   <link rel="stylesheet" href="./style.css" />
 
   <style>
-    #settings-panel, #settings-panel *{display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
-    .to-bottom{position:fixed;right:16px;bottom:16px}
-    .banner{padding:8px 12px;text-align:center;font-size:13px;display:none}
+    #settings-panel, #settings-panel * { display:none!important; height:0!important; margin:0!important; padding:0!important; overflow:hidden!important }
+    .to-bottom { position:fixed; right:16px; bottom:16px }
+    .banner { padding:8px 12px; text-align:center; font-size:13px; display:none }
     .banner.ok{display:block;background:#063;color:#c7ffd9;border-bottom:1px solid #055}
     .banner.warn{display:block;background:#5a4600;color:#ffe9a8;border-bottom:1px solid #3d2f00}
     .banner.err{display:block;background:#5a0000;color:#ffd7d7;border-bottom:1px solid #3d0000}
@@ -141,8 +142,8 @@
     });
   </script>
 
-  <!-- App wiring -->
-  <script defer src="./vedsaas-fixes.js"></script>
-  <script defer src="./app.js"></script>
+  <!-- Load fixes first (pure JS file), then your app logic -->
+  <script defer src="./vedsaas-fixes.js" referrerpolicy="no-referrer"></script>
+  <script defer src="./app.js" referrerpolicy="no-referrer"></script>
 </body>
 </html>
