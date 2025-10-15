@@ -1,5 +1,3 @@
-<!-- vedsaas-fixes.js (FINAL) -->
-<script>
 /* ===== VedSAAS Production Config (HTTPS Safe) ===== */
 "use strict";
 
@@ -12,10 +10,11 @@ const API_BASE = (() => {
   return "http://127.0.0.1:8012"; // local dev/gunicorn
 })();
 
-// TEMP: frontend-injected API key so protected routes (e.g., /api/chat) work.
-// ⚠️ Put your REAL VED_API_KEY below; later move this to Nginx proxy_set_header.
+// TEMP: frontend-injected API key so protected routes work.
+// ⚠️ Replace only if you’re okay exposing it client-side.
+// Better: inject X-API-Key in nginx/CloudFront and leave this empty.
 const API_KEY = (window.location.hostname || "").toLowerCase().endsWith("vedsaas.com")
-  ? "SUPER_LONG_RANDOM_KEY" // <-- replace with real key
+  ? "" // keep empty if nginx adds the header
   : "";
 
 // Optional bearer (if you later issue JWTs)
@@ -52,7 +51,6 @@ async function apiFetch(path, opts = {}) {
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  // Add API key header only if we have one (server can also inject independently)
   if (API_KEY && !headers.has("X-API-Key")) {
     headers.set("X-API-Key", API_KEY);
   }
@@ -102,7 +100,7 @@ async function sendChat(text) {
 
     const res = await apiFetch("/api/chat", {
       method: "POST",
-      body: { msg: text, message: text }, // both for compatibility
+      body: { msg: text, message: text },
     });
 
     const reply =
@@ -131,7 +129,6 @@ async function sendChat(text) {
     const val = ip?.value?.trim();
     if (val) await sendChat(val);
   };
-  // Enter-to-send
   if (ip) {
     ip.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" && !ev.shiftKey) {
@@ -141,9 +138,7 @@ async function sendChat(text) {
     });
   }
 
-  // Health badge
   apiFetch("/api/health")
     .then(() => { const b = $("api-ok-badge"); if (b) b.style.display = "inline-flex"; })
     .catch(() => {});
 })();
-</script>
