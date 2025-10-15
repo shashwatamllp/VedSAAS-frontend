@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta http-equiv="x-content-type-options" content="nosniff" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <!-- Forces API base; vedsaas-fixes.js will honor this -->
+
+  <!-- Forces API base; vedsaas-fixes.js/app.js will read this -->
   <meta name="ved-api-base" content="https://api.vedsaas.com" />
 
   <title>VedSAAS</title>
 
-  <!-- Static assets over CDN -->
+  <!-- Static assets (no images referenced to avoid S3 ACL 403s) -->
   <link rel="icon" href="./favicon.ico" />
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="stylesheet"
@@ -19,21 +20,29 @@
   <link rel="stylesheet" href="./style.css" />
 
   <style>
+    /* Minimal inline safety so page isn’t bare if style.css 403s */
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; background:#0e0f14; color:#e9edf4; }
+    .container{display:none; min-height:100dvh}
+    .to-bottom{position:fixed; right:16px; bottom:16px}
+    .banner{padding:8px 12px; text-align:center; font-size:13px; display:none}
+    .banner.ok{display:block; background:#063; color:#c7ffd9; border-bottom:1px solid #055}
+    .banner.warn{display:block; background:#5a4600; color:#ffe9a8; border-bottom:1px solid #3d2f00}
+    .banner.err{display:block; background:#5a0000; color:#ffd7d7; border-bottom:1px solid #3d0000}
     #settings-panel, #settings-panel * { display:none!important; height:0!important; margin:0!important; padding:0!important; overflow:hidden!important }
-    .to-bottom { position:fixed; right:16px; bottom:16px }
-    .banner { padding:8px 12px; text-align:center; font-size:13px; display:none }
-    .banner.ok{display:block;background:#063;color:#c7ffd9;border-bottom:1px solid #055}
-    .banner.warn{display:block;background:#5a4600;color:#ffe9a8;border-bottom:1px solid #3d2f00}
-    .banner.err{display:block;background:#5a0000;color:#ffd7d7;border-bottom:1px solid #3d0000}
   </style>
 </head>
 <body>
   <div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
-  <noscript><div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">JavaScript required. Please enable JS.</div></noscript>
+  <noscript>
+    <div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">
+      JavaScript required. Please enable JS.
+    </div>
+  </noscript>
   <div id="banner" class="banner" role="status" aria-live="polite"></div>
 
-  <div id="app" class="container" style="display:none">
+  <div id="app" class="container">
     <!-- Sidebar -->
     <aside class="sidebar" aria-label="Conversation history">
       <div class="title">Chat History</div>
@@ -68,7 +77,9 @@
               <div class="hint">Ask anything. I’ll reply in your language.</div>
               <div class="composer">
                 <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
-                <button id="landing-start" class="send-btn" title="Send" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
+                <button id="landing-start" class="send-btn" title="Send" aria-label="Send">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
               </div>
               <div class="landing-actions" style="margin-top:12px">
                 <a class="btn" href="./login.html">Login</a>
@@ -99,8 +110,8 @@
   <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
   <script>
-    // ------- API base resolver (respects meta + env + local dev) -------
-    (function(){
+    // ------- API base resolver (meta > vedsaas.com > local dev) -------
+    (function () {
       if (window.API_BASE) return;
       const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
       const h = (location.hostname || '').toLowerCase();
@@ -119,21 +130,28 @@
     // ------- Basic bootstrapping / UI glue -------
     window.addEventListener('DOMContentLoaded', function () {
       const app = document.getElementById('app'); if (app) app.style.display = 'flex';
-      const li = document.getElementById('landing-input'); const btn = document.getElementById('landing-start');
-      if (li && btn) li.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); btn.click(); }});
-      const sp = document.getElementById('settings-panel'); if (sp) sp.setAttribute('aria-hidden','true');
-      const mt = document.getElementById('menu-toggle'); const bd = document.getElementById('backdrop');
+
+      const li = document.getElementById('landing-input');
+      const btn = document.getElementById('landing-start');
+      if (li && btn) li.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); btn.click(); }
+      });
+
+      const sp = document.getElementById('settings-panel'); if (sp) sp.setAttribute('aria-hidden', 'true');
+
+      const mt = document.getElementById('menu-toggle');
+      const bd = document.getElementById('backdrop');
       if (mt) mt.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
       if (bd) bd.addEventListener('click', () => document.body.classList.remove('sidebar-open'));
 
       // Health check banner
       const banner = document.getElementById('banner');
-      const setBanner = (cls, msg) => { if(!banner) return; banner.className='banner '+cls; banner.textContent=msg; };
+      const setBanner = (cls, msg) => { if (!banner) return; banner.className = 'banner ' + cls; banner.textContent = msg; };
       (async () => {
         try {
-          const r = await fetch((window.API_BASE||'') + '/api/health', {cache:'no-store'});
+          const r = await fetch((window.API_BASE || '') + '/api/health', { cache: 'no-store', mode: 'cors' });
           if (!r.ok) return setBanner('warn', `API ${r.status} on /api/health`);
-          const j = await r.json().catch(()=>({}));
+          const j = await r.json().catch(() => ({}));
           setBanner('ok', j && j.ok ? 'API OK' : 'API reachable');
         } catch {
           setBanner('err', 'API unreachable');
@@ -142,7 +160,7 @@
     });
   </script>
 
-  <!-- Load fixes first (pure JS file), then your app logic -->
+  <!-- Load fixes first (defines VedAPI helpers), then your app logic -->
   <script defer src="./vedsaas-fixes.js" referrerpolicy="no-referrer"></script>
   <script defer src="./app.js" referrerpolicy="no-referrer"></script>
 </body>
