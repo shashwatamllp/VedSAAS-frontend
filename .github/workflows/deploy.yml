@@ -31,13 +31,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for d in dist build out public; do
+          for d in dist build out public .; do
             if [[ -d "$d" && -f "$d/index.html" ]]; then
               echo "out=$d" >> "$GITHUB_OUTPUT"
+              echo "✅ Using output folder: $d"
               exit 0
             fi
           done
-          echo "❌ No build folder with index.html found (dist|build|out|public)" >&2
+          echo "❌ No folder with index.html found (dist|build|out|public|.)" >&2
           exit 1
 
       - name: 🔐 Configure AWS (OIDC)
@@ -54,54 +55,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          # JS (force proper mime + long cache)
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.js" \
             --content-type "application/javascript" \
             --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive "REPLACE" \
-            --only-show-errors
-
-          # CSS (force proper mime + long cache)
+            --metadata-directive "REPLACE" --only-show-errors
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.css" \
             --content-type "text/css" \
             --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive "REPLACE" \
-            --only-show-errors
-
-          # SVG (ensure correct mime)
+            --metadata-directive "REPLACE" --only-show-errors
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.svg" \
             --content-type "image/svg+xml" \
             --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive "REPLACE" \
-            --only-show-errors
-
-          # JSON + sourcemaps (optional assets)
+            --metadata-directive "REPLACE" --only-show-errors
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.json" \
             --content-type "application/json" \
             --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive "REPLACE" \
-            --only-show-errors
-
+            --metadata-directive "REPLACE" --only-show-errors
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.map" \
             --content-type "application/json" \
             --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive "REPLACE" \
-            --only-show-errors
-
-          # Other binary/static (let S3 detect mime; long cache only)
+            --metadata-directive "REPLACE" --only-show-errors
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" \
             --include "*.png" --include "*.jpg" --include "*.jpeg" --include "*.gif" --include "*.webp" \
             --include "*.woff" --include "*.woff2" --include "*.ttf" --include "*.otf" \
             --include "*.ico" --include "*.txt" --include "*.webmanifest" \
-            --cache-control "public, max-age=31536000, immutable" \
-            --only-show-errors
+            --cache-control "public, max-age=31536000, immutable" --only-show-errors
 
       # ---- Phase 2: HTML (no cache) ----
       - name: ⬆️ Upload HTML (no-cache)
@@ -114,10 +98,8 @@ jobs:
             --exclude "*" --include "*.html" \
             --content-type "text/html; charset=utf-8" \
             --cache-control "no-cache, no-store, must-revalidate, max-age=0" \
-            --metadata-directive "REPLACE" \
-            --only-show-errors
+            --metadata-directive "REPLACE" --only-show-errors
 
-      # (Optional) Remove files that were deleted in repo (safe when using hashed assets)
       - name: 🧹 Prune removed files (sync delete)
         env:
           OUT: ${{ steps.detect.outputs.out }}
