@@ -14,15 +14,15 @@
       ? (H === "api.vedsaas.com" ? ORIGIN : "https://api.vedsaas.com")
       : /:(8010|8011|8012)\b/.test(ORIGIN) ? ORIGIN : "https://api.vedsaas.com");
 
-  /* ---------- Optional API key (prefer adding at Nginx) ---------- */
-  const API_KEY = (window.__VED_API_KEY || "").trim();
+  /* ---------- Optional API key (prefer on Nginx/CF) ---------- */
+  let API_KEY = (window.__VED_API_KEY || "").trim();
 
   /* ---------- Token helpers ---------- */
   function getToken() { try { return localStorage.getItem("token"); } catch { return null; } }
   function setToken(t) { try { t ? localStorage.setItem("token", t) : localStorage.removeItem("token"); } catch {} }
   function clearToken() { setToken(null); }
 
-  /* ---------- Low-level fetch with timeout + retries ---------- */
+  /* ---------- URL + errors ---------- */
   function buildUrl(path) {
     if (/^https?:\/\//i.test(path)) return path;
     const p = path.startsWith("/") ? path : `/${path}`;
@@ -30,31 +30,53 @@
   }
 
   function friendlyError(resp, bodyText = "") {
-    // Common CF/S3 misroutes show as 403; surface a clearer hint
     if (resp?.status === 403 && /cloudfront|cacheable|accessdenied|<Error>/i.test(bodyText)) {
       return "CDN blocked or origin misrouted (check CloudFront behavior and S3 permissions).";
     }
     if (resp?.status === 401) return "Unauthorized";
+    if (resp?.status === 429) return "Too many requests. Please slow down.";
+    if (resp?.status >= 500) return "Server error. Please try again.";
     return `HTTP ${resp?.status || "ERR"}${resp?.statusText ? " " + resp.statusText : ""}${bodyText ? ": " + bodyText : ""}`;
   }
 
-  async function postJSON(path, body, { timeoutMs = 10000, retries = 2, bearer = getToken() } = {}) {
+  /* ---------- generic JSON fetch (timeout + retries) ---------- */
+  async function jsonFetch(path, {
+    method = "GET",
+    body,
+    bearer = getToken(),
+    timeoutMs = 10000,
+    retries = 2,
+    headers: extraHeaders
+  } = {}) {
     const url = buildUrl(path);
-    const headers = new Headers({ Accept: "application/json", "Content-Type": "application/json" });
+    const headers = new Headers({ Accept: "application/json" });
     if (API_KEY) headers.set("X-API-Key", API_KEY);
-    if (bearer && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${bearer}`);
 
-    const payload = JSON.stringify(body || {});
+    const hasBody = body !== undefined && body !== null;
+    if (hasBody && !(body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+    if (bearer && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${bearer}`);
+    }
+    if (extraHeaders) {
+      for (const [k, v] of Object.entries(extraHeaders)) headers.set(k, v);
+    }
+
+    let payload = body;
+    if (hasBody && !(body instanceof FormData) && typeof body !== "string") {
+      payload = JSON.stringify(body);
+    }
+
     let lastErr;
-
     for (let attempt = 0; attempt <= retries; attempt++) {
       const ac = new AbortController();
       const to = setTimeout(() => ac.abort(new Error("timeout")), timeoutMs);
       try {
         const resp = await fetch(url, {
-          method: "POST",
+          method,
           headers,
-          body: payload,
+          body: hasBody ? payload : undefined,
           mode: "cors",
           cache: "no-store",
           credentials: "omit",
@@ -64,20 +86,24 @@
 
         const ct = resp.headers.get("content-type") || "";
         const text = await resp.text().catch(() => "");
-        const json = ct.includes("application/json") ? (text ? JSON.parse(text) : {}) : null;
+        const json = ct.includes("application/json") ? (text ? safeParseJSON(text) : {}) : null;
 
         if (!resp.ok) {
           const msg = friendlyError(resp, text.slice(0, 300));
+          // transient retry for 502/503/504 or timeouts only
+          if (attempt < retries && [502, 503, 504].includes(resp.status)) {
+            await backoff(attempt);
+            continue;
+          }
           throw Object.assign(new Error(json?.error || msg), { resp, body: json ?? text });
         }
         return json ?? {};
       } catch (e) {
         clearTimeout(to);
         lastErr = e;
-        const msg = String(e?.message || "");
-        const transient = /timeout|NetworkError|Failed to fetch/i.test(msg) || /HTTP 50[234]/i.test(msg);
+        const transient = isTransientError(e);
         if (attempt < retries && transient) {
-          await new Promise(r => setTimeout(r, 300 * Math.pow(2, attempt))); // backoff
+          await backoff(attempt);
           continue;
         }
         throw e;
@@ -86,15 +112,25 @@
     throw lastErr || new Error("Request failed");
   }
 
-  /* ---------- Public API (attach to window) ---------- */
+  function safeParseJSON(t) { try { return JSON.parse(t); } catch { return null; } }
+  function isTransientError(e) {
+    const msg = String(e?.message || "");
+    return /timeout|NetworkError|Failed to fetch/i.test(msg);
+  }
+  function backoff(attempt) {
+    const ms = 300 * Math.pow(2, attempt);
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  /* ---------- public methods ---------- */
   async function sendOTP(identifier) {
     if (!identifier) throw new Error("Identifier required");
-    return postJSON("/api/send-otp", { identifier });
+    return jsonFetch("/api/send-otp", { method: "POST", body: { identifier } });
   }
 
   async function verifyOTP(identifier, otp) {
     if (!identifier || !otp) throw new Error("Identifier and OTP required");
-    const res = await postJSON("/api/verify-otp", { identifier, otp });
+    const res = await jsonFetch("/api/verify-otp", { method: "POST", body: { identifier, otp } });
     if (res?.ok && res?.token) setToken(res.token);
     return res;
   }
@@ -104,7 +140,8 @@
   }
 
   async function me() {
-    return postJSON("/api/user/me", {}, { bearer: getToken() });
+    // अगर तुमारे backend में POST चाहिए तो: { method:"POST", body:{} }
+    return jsonFetch("/api/user/me", { method: "GET", bearer: getToken() });
   }
 
   window.VedAuth = {
@@ -115,7 +152,10 @@
     me,
     getToken,
     setToken,
-    clearToken
+    clearToken,
+    // optional: expose apiKey setter/getter
+    get apiKey() { return API_KEY; },
+    set apiKey(v) { API_KEY = (v || "").trim(); }
   };
 
   console.log("VedAuth wired ✅", { API_BASE });
