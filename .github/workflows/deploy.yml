@@ -1,4 +1,4 @@
-name: Deploy Static Frontend to S3+CF
+name: 🚀 Deploy Static Frontend to S3 + CloudFront
 
 on:
   push:
@@ -12,54 +12,112 @@ permissions:
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   S3_BUCKET:  ${{ secrets.S3_BUCKET }}
-  CF_DIST_ID: ${{ secrets.CF_DIST_ID }}   # <-- map secret to env
+  CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: 🧩 Checkout
+        uses: actions/checkout@v4
 
-      - name: Configure AWS (OIDC)
+      # (Optional) Build if your repo needs it
+      # - name: 🏗️ Build
+      #   run: npm ci && npm run build
+
+      - name: 🔎 Detect output folder
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          for d in dist build out public .; do
+            if [ -d "$d" ]; then echo "out=$d" >> "$GITHUB_OUTPUT"; exit 0; fi
+          done
+          echo "No output dir found" >&2
+          exit 1
+
+      - name: 🔐 Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: VedSAAS-Frontend-${{ github.run_id }}
 
-      - name: Detect build folder (public or root)
-        id: detect
-        run: |
-          if [ -d "public" ]; then echo "out=public" >> $GITHUB_OUTPUT; else echo "out=." >> $GITHUB_OUTPUT; fi
-
-      - name: Sync static assets to S3 (long cache)
+      # ---- Phase 1: Static assets (long cache, correct MIME) ----
+      - name: ⬆️ Upload assets (js/css/images/fonts) with long cache
         env:
           OUT: ${{ steps.detect.outputs.out }}
+        shell: bash
         run: |
           set -euo pipefail
-          aws s3 sync "$OUT" "s3://${S3_BUCKET}" \
-            --delete \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude "Dockerfile*" \
-            --exclude "README.md" \
-            --exclude "index.html" \
-            --cache-control "public,max-age=31536000,immutable" \
+          # JS
+          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
+            --exclude "*" --include "*.js" \
+            --content-type "application/javascript" \
+            --cache-control "public, max-age=31536000, immutable" \
             --metadata-directive "REPLACE"
 
-      - name: Upload index.html with no-cache
+          # CSS
+          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
+            --exclude "*" --include "*.css" \
+            --content-type "text/css" \
+            --cache-control "public, max-age=31536000, immutable" \
+            --metadata-directive "REPLACE"
+
+          # Images
+          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
+            --exclude "*" --include "*.png" --include "*.jpg" --include "*.jpeg" --include "*.gif" --include "*.webp" --include "*.svg" \
+            --cache-control "public, max-age=31536000, immutable"
+
+          # Fonts
+          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
+            --exclude "*" --include "*.woff" --include "*.woff2" --include "*.ttf" --include "*.otf" \
+            --cache-control "public, max-age=31536000, immutable"
+
+          # Other static (map/json) — optional
+          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
+            --exclude "*" --include "*.map" --include "*.json" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      # ---- Phase 2: HTML (no cache) ----
+      - name: ⬆️ Upload HTML (no-cache)
         env:
           OUT: ${{ steps.detect.outputs.out }}
+        shell: bash
         run: |
           set -euo pipefail
-          aws s3 cp "$OUT/index.html" "s3://${S3_BUCKET}/index.html" \
-            --cache-control "no-cache,no-store,must-revalidate,max-age=0" \
-            --metadata-directive "REPLACE" || true
+          # Upload all HTML with no-cache
+          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
+            --exclude "*" --include "*.html" \
+            --content-type "text/html; charset=utf-8" \
+            --cache-control "no-cache, no-store, must-revalidate, max-age=0" \
+            --metadata-directive "REPLACE"
 
-      - name: Invalidate CloudFront
-        if: ${{ success() && env.CF_DIST_ID != '' }}   # <-- use env instead of secrets
+      # (Optional) Remove files that were deleted in repo (safe when using hashed assets)
+      - name: 🧹 Prune removed files (sync delete)
+        env:
+          OUT: ${{ steps.detect.outputs.out }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Keep HTML step authoritative; for the rest, mirror repo (delete extraneous)
+          aws s3 sync "$OUT" "s3://${S3_BUCKET}" \
+            --delete \
+            --exclude ".git/*" --exclude ".github/*" \
+            --exclude "Dockerfile*" --exclude "README.md"
+
+      - name: 🌐 CloudFront Invalidate (HTML first)
+        if: ${{ env.CF_DIST_ID != '' }}
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "${CF_DIST_ID}" \
-            --paths "/*"
+            --paths "/*.html" "/index.html"
+
+      # Toggle this on if you don't use hashed filenames or need a hard refresh
+      # - name: 🌐 (Optional) Wide Invalidate
+      #   if: ${{ env.CF_DIST_ID != '' }}
+      #   run: |
+      #     aws cloudfront create-invalidation \
+      #       --distribution-id "${CF_DIST_ID}" \
+      #       --paths "/*"
