@@ -93,9 +93,7 @@ async function apiFetch(path, options = {}) {
     try {
       const resp = await _doFetch(url, opts, timeoutMs);
       if (!resp.ok) {
-        // read body once
         const text = await resp.text().catch(() => "");
-        // retry only if transient and we still have attempts left
         if (attempt < maxRetries && [502,503,504].includes(resp.status)) {
           await new Promise(r => setTimeout(r, 300 * Math.pow(2, attempt)));
           continue;
@@ -135,38 +133,131 @@ const VedAPI = {
 };
 window.VedAPI = VedAPI;
 
-/* ================= Minimal wiring ================= */
+/* ================= UI glue + Chat rendering ================= */
+
+/* --- tiny helpers --- */
+function autosizeTA(ta){
+  if (!ta) return;
+  const fit = () => { ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight) + 'px'; };
+  ta.addEventListener('input', fit, { passive:true });
+  queueMicrotask(fit);
+}
+function setBanner(cls, msg){
+  const b = $("banner"); if (!b) return;
+  b.className = "banner " + cls;
+  b.textContent = msg;
+}
+function renderMessage(role, content){
+  const area = $("chat-area"); if (!area) return;
+  const div = document.createElement("div");
+  div.className = `msg msg-${role}`;
+  div.textContent = content;
+  area.appendChild(div);
+}
+function scrollChatBottom(smooth){
+  const el = $("chat-area");
+  if (!el) return;
+  el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+}
+
+/* --- chat send --- */
+async function sendChat(text) {
+  if (!text) return;
+
+  // switch to chat shell on first send
+  const landing = $("landing"), shell = $("chat-shell");
+  if (landing && shell && shell.style.display === "none") {
+    landing.style.display = "none";
+    shell.style.display = "flex";
+  }
+
+  const mainBtn = $("send-btn");
+  const landBtn = $("landing-start");
+  if (mainBtn) mainBtn.disabled = true;
+  if (landBtn) landBtn.disabled = true;
+
+  try {
+    renderMessage("user", text);
+    scrollChatBottom(true);
+
+    const res = await VedAPI.post("/api/chat", { message: text, mode: "default" });
+    const reply =
+      (res && (res.reply || res.answer || res.message || res.text)) ||
+      (typeof res === "string" ? res : JSON.stringify(res));
+    renderMessage("assistant", reply || "(empty)");
+    scrollChatBottom(true);
+  } catch (e) {
+    console.error("chat error:", e);
+    renderMessage("system", "⚠️ " + (e?.message || "Server error. Please try again."));
+    setBanner("warn", e?.message || "API error");
+  } finally {
+    if (mainBtn) mainBtn.disabled = false;
+    if (landBtn) landBtn.disabled = false;
+  }
+}
+
+/* --- boot wiring --- */
 (function boot() {
+  // show container (in case CSS hid it before load)
+  const app = $("app"); if (app) app.style.display = "block";
+
+  // wire landing composer
   const landingBtn = $("landing-start");
+  const landingInput = $("landing-input");
   if (landingBtn) {
     landingBtn.onclick = async () => {
-      const t = $("landing-input")?.value?.trim();
+      const t = landingInput?.value?.trim();
       if (!t) return;
+      landingInput.value = "";
+      autosizeTA(landingInput);
       await sendChat(t);
     };
   }
+  if (landingInput) {
+    autosizeTA(landingInput);
+    landingInput.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); landingBtn?.click(); }
+    });
+  }
+
+  // wire main composer
+  const mainBtn = $("send-btn");
+  const mainInput = $("main-input");
+  if (mainBtn) {
+    mainBtn.onclick = async () => {
+      const t = mainInput?.value?.trim();
+      if (!t) return;
+      mainInput.value = "";
+      autosizeTA(mainInput);
+      await sendChat(t);
+    };
+  }
+  if (mainInput) {
+    autosizeTA(mainInput);
+    mainInput.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); mainBtn?.click(); }
+    });
+  }
+
+  // “Latest” button
   const toBottom = $("to-bottom");
   if (toBottom) toBottom.onclick = () => scrollChatBottom(true);
 
+  // Health badge + banner
+  setBanner("warn", "Checking API…");
+  VedAPI.get("/api/health")
+    .then(() => {
+      const badge = $("api-ok-badge"); if (badge) badge.style.display = "inline-flex";
+      setBanner("ok", "API OK");
+    })
+    .catch(() => setBanner("err", "API unreachable"));
+
+  // Log boot
   console.log("VedSAAS API base:", API_BASE);
   if (API_KEY) console.log("VedSAAS: using client API key header (X-API-Key)");
   console.log("VedSAAS frontend loaded successfully ✅");
 })();
 
-/* ================= Chat example ================= */
-async function sendChat(text) {
-  try {
-    const res = await VedAPI.post("/api/chat", { message: text, mode: "default" });
-    console.log("chat:", res);
-    // TODO: render to UI if needed
-  } catch (e) {
-    console.error("chat error:", e);
-    if (typeof showToast === "function") showToast(e?.message || "Server error. Please try again.");
-  }
-}
-
-function scrollChatBottom(smooth) {
-  const el = $("chat-area");
-  if (!el) return;
-  el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
-}
+// Keep named exports for reuse
+window.sendChat = sendChat;
+window.scrollChatBottom = scrollChatBottom;
