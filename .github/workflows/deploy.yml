@@ -1,4 +1,4 @@
-name: 🚀 Deploy Static Frontend to S3 + CloudFront
+name: "🚀 Deploy Static Frontend to S3 + CloudFront"
 
 on:
   push:
@@ -23,13 +23,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧩 Checkout
+      - name: "🧩 Checkout"
         uses: actions/checkout@v4
 
-      # - name: 🏗️ Build
+      # - name: "🏗️ Build"
       #   run: npm ci && npm run build
 
-      - name: 🔎 Detect output folder safely
+      - name: "🔎 Detect output folder safely"
         id: detect
         shell: bash
         run: |
@@ -44,14 +44,14 @@ jobs:
           echo "❌ No folder with index.html found" >&2
           exit 1
 
-      - name: 🔐 Configure AWS (OIDC)
+      - name: "🔐 Configure AWS (OIDC)"
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: VedSAAS-Frontend-${{ github.run_id }}
 
-      - name: ⬆️ Upload assets (js/css/images/fonts) with long cache
+      - name: "⬆️ Upload assets (js/css/images/fonts) with long cache"
         shell: bash
         env:
           OUT: ${{ steps.detect.outputs.out }}
@@ -80,7 +80,7 @@ jobs:
             --cache-control "public, max-age=31536000, immutable" \
             --only-show-errors
 
-      - name: ⬆️ Upload HTML (no-cache)
+      - name: "⬆️ Upload HTML (no-cache)"
         shell: bash
         env:
           OUT: ${{ steps.detect.outputs.out }}
@@ -92,7 +92,7 @@ jobs:
             --cache-control "no-cache, no-store, must-revalidate, max-age=0" \
             --metadata-directive "REPLACE" --only-show-errors
 
-      - name: 🧹 Prune removed files
+      - name: "🧹 Prune removed files"
         shell: bash
         env:
           OUT: ${{ steps.detect.outputs.out }}
@@ -110,7 +110,7 @@ jobs:
             --delete --exclude "*" --include "*.html" \
             --only-show-errors
 
-      - name: 🌐 CloudFront Invalidate (HTML first)
+      - name: "🌐 CloudFront Invalidate (HTML first)"
         if: ${{ env.CF_DIST_ID != '' }}
         run: |
           aws cloudfront create-invalidation \
