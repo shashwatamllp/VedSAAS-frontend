@@ -5,9 +5,20 @@
   // --------- DOM helper ----------
   function $(id){ return document.getElementById(id); }
 
-  // --------- Config ----------
-  var API_BASE = (typeof window !== "undefined" && window.API_BASE) ? window.API_BASE : "https://api.vedsaas.com";
+  // --------- Config (API base resolution) ----------
+  // Prefer single-origin: https://vedsaas.com (CloudFront routes /api/* to backend)
+  var META_BASE = (function(){
+    try { var m = document.querySelector('meta[name="ved-api-base"]'); return m ? (m.content||"").trim() : ""; } catch(_) { return ""; }
+  })();
+  var API_BASE = META_BASE || (typeof window !== "undefined" && window.API_BASE) || "https://vedsaas.com";
+
+  // For rare cases you want to hit api subdomain directly, set meta:
+  // <meta name="ved-api-base" content="https://api.vedsaas.com">
+
+  // Client-side API key sending is OFF by default for security.
+  // If you really want to allow it (temporary), set window.__ALLOW_CLIENT_API_KEY = true before app.js loads.
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
+  var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
 
   // --------- Token helpers ----------
   function getToken(){ try { return localStorage.getItem("token"); } catch { return null; } }
@@ -16,20 +27,32 @@
   window.setToken = function(t){ setToken(t); };
   window.clearToken = function(){ clearToken(); };
 
-  // --------- Fetch helpers ----------
-  function buildUrl(path){
+  // --------- URL helpers ----------
+  function ensureApiPath(path){
+    // If absolute URL, return as-is
     if (/^https?:\/\//i.test(path)) return path;
-    return API_BASE + (path[0] === "/" ? path : ("/" + path));
+    // Ensure leading slash
+    path = (path[0] === "/") ? path : ("/" + path);
+    // Force /api/ prefix
+    if (!path.startsWith("/api/")) path = "/api" + path;
+    return path;
   }
+  function buildUrl(path){
+    return API_BASE.replace(/\/+$/,"") + ensureApiPath(path);
+  }
+
+  // --------- Fetch helpers ----------
   function doFetch(url, opts, timeoutMs){
     var ac = new AbortController();
     var t  = setTimeout(function(){ ac.abort(new Error("timeout")); }, timeoutMs || 10000);
     var merged = Object.assign({ mode:"cors", cache:"no-store", credentials:"omit", signal: ac.signal }, opts || {});
     return fetch(url, merged).finally(function(){ clearTimeout(t); });
   }
+
   function apiFetch(path, options){
     options = options || {};
     var url = buildUrl(path);
+
     var headers = new Headers(options.headers || {});
     if (!headers.has("Accept")) headers.set("Accept","application/json");
 
@@ -39,15 +62,29 @@
 
     var tok = getToken();
     if (tok && !headers.has("Authorization")) headers.set("Authorization", "Bearer " + tok);
-    if (API_KEY && !headers.has("X-API-Key")) headers.set("X-API-Key", API_KEY);
+
+    // DO NOT send API key from browser unless explicitly allowed
+    if (ALLOW_CLIENT_API_KEY && API_KEY && !headers.has("X-API-Key")) {
+      headers.set("X-API-Key", API_KEY);
+    }
 
     var body = hasBody && !isForm ? JSON.stringify(options.body) : options.body;
     var opts = { method: options.method || "GET", headers: headers, body: body };
 
     return doFetch(url, opts, options.timeoutMs || 10000).then(function(resp){
-      if (!resp.ok) return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
-      var ct = resp.headers.get("content-type") || "";
-      return ct.indexOf("application/json") >= 0 ? resp.json() : resp.text();
+      if (!resp.ok) {
+        return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
+      }
+      var ct = (resp.headers.get("content-type") || "").toLowerCase();
+
+      // Guard: if CloudFront misroutes to S3/static, you'll get HTML here
+      if (ct.includes("text/html")) {
+        return resp.text().then(function(html){
+          var snip = html.slice(0,160).replace(/\s+/g,' ').trim();
+          throw new Error("API misrouted (got HTML). Check CloudFront /api/* behavior & app.js paths. Snip: " + snip);
+        });
+      }
+      return ct.includes("application/json") ? resp.json() : resp.text();
     });
   }
 
@@ -101,7 +138,7 @@
 
     renderMessage("user", text); scrollChatBottom(true);
 
-    return apiFetch("/api/chat", { method:"POST", body:{ message: text, mode:"default" } })
+    return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } }) // <-- "/chat" becomes "/api/chat"
       .then(function(res){
         var reply = (res && (res.reply || res.answer || res.message || res.text)) ||
                     (typeof res === "string" ? res : JSON.stringify(res));
@@ -164,7 +201,7 @@
 
     // Health banner (soft)
     setBanner("warn", "Checking API…");
-    apiFetch("/api/health")
+    apiFetch("/health")
       .then(function(){ var b = $("api-ok-badge"); if (b) b.style.display = "inline-flex"; setBanner("ok","API OK"); })
       .catch(function(){ setBanner("err","API unreachable"); });
 
