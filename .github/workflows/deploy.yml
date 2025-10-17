@@ -14,9 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AWS_REGION:  ${{ secrets.AWS_REGION }}
-  S3_BUCKET:   ${{ secrets.S3_BUCKET }}
-  CF_DIST_ID:  ${{ secrets.CF_DIST_ID }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  S3_BUCKET:  ${{ secrets.S3_BUCKET }}
+  CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
 
 jobs:
   deploy:
@@ -26,7 +26,6 @@ jobs:
       - name: 🧩 Checkout
         uses: actions/checkout@v4
 
-      # (Optional) Build if your repo needs it
       # - name: 🏗️ Build
       #   run: npm ci && npm run build
 
@@ -42,7 +41,7 @@ jobs:
               exit 0
             fi
           done
-          echo "❌ No folder with index.html found (dist|build|out|public|.)" >&2
+          echo "❌ No folder with index.html found" >&2
           exit 1
 
       - name: 🔐 Configure AWS (OIDC)
@@ -52,31 +51,27 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: VedSAAS-Frontend-${{ github.run_id }}
 
-      # ---- Phase 1: Assets (long cache, correct MIME) ----
       - name: ⬆️ Upload assets (js/css/images/fonts) with long cache
-        env: { OUT: ${{ steps.detect.outputs.out }} }
         shell: bash
+        env:
+          OUT: ${{ steps.detect.outputs.out }}
         run: |
           set -euo pipefail
-          # JS
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.js" \
             --content-type "application/javascript; charset=utf-8" \
             --cache-control "public, max-age=31536000, immutable" \
             --metadata-directive "REPLACE" --only-show-errors
-          # CSS
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.css" \
             --content-type "text/css; charset=utf-8" \
             --cache-control "public, max-age=31536000, immutable" \
             --metadata-directive "REPLACE" --only-show-errors
-          # Maps/JSON
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.map" --include "*.json" \
             --content-type "application/json; charset=utf-8" \
             --cache-control "public, max-age=31536000, immutable" \
             --metadata-directive "REPLACE" --only-show-errors
-          # Images / fonts / misc
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" \
             --include "*.png" --include "*.jpg" --include "*.jpeg" --include "*.gif" --include "*.webp" --include "*.svg" \
@@ -85,10 +80,10 @@ jobs:
             --cache-control "public, max-age=31536000, immutable" \
             --only-show-errors
 
-      # ---- Phase 2: HTML (no cache) ----
       - name: ⬆️ Upload HTML (no-cache)
-        env: { OUT: ${{ steps.detect.outputs.out }} }
         shell: bash
+        env:
+          OUT: ${{ steps.detect.outputs.out }}
         run: |
           set -euo pipefail
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
@@ -97,14 +92,12 @@ jobs:
             --cache-control "no-cache, no-store, must-revalidate, max-age=0" \
             --metadata-directive "REPLACE" --only-show-errors
 
-      # ---- Phase 3: Delete removed files (WITHOUT re-uploading) ----
-      # We scope delete per-type so metadata set above remains intact.
       - name: 🧹 Prune removed files
-        env: { OUT: ${{ steps.detect.outputs.out }} }
         shell: bash
+        env:
+          OUT: ${{ steps.detect.outputs.out }}
         run: |
           set -euo pipefail
-          # Delete for assets
           aws s3 sync "$OUT" "s3://${S3_BUCKET}/" \
             --delete \
             --exclude "*" \
@@ -113,7 +106,6 @@ jobs:
             --include "*.woff" --include "*.woff2" --include "*.ttf" --include "*.otf" \
             --include "*.ico" --include "*.txt" --include "*.webmanifest" \
             --only-show-errors
-          # Delete for html
           aws s3 sync "$OUT" "s3://${S3_BUCKET}/" \
             --delete --exclude "*" --include "*.html" \
             --only-show-errors
