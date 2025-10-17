@@ -9,10 +9,14 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  S3_BUCKET:  ${{ secrets.S3_BUCKET }}
-  CF_DIST_ID: ${{ secrets.CF_DIST_ID }}
+  AWS_REGION:  ${{ secrets.AWS_REGION }}
+  S3_BUCKET:   ${{ secrets.S3_BUCKET }}
+  CF_DIST_ID:  ${{ secrets.CF_DIST_ID }}
 
 jobs:
   deploy:
@@ -48,49 +52,42 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: VedSAAS-Frontend-${{ github.run_id }}
 
-      # ---- Phase 1: Static assets (long cache, correct MIME) ----
+      # ---- Phase 1: Assets (long cache, correct MIME) ----
       - name: ⬆️ Upload assets (js/css/images/fonts) with long cache
-        env:
-          OUT: ${{ steps.detect.outputs.out }}
+        env: { OUT: ${{ steps.detect.outputs.out }} }
         shell: bash
         run: |
           set -euo pipefail
+          # JS
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.js" \
-            --content-type "application/javascript" \
+            --content-type "application/javascript; charset=utf-8" \
             --cache-control "public, max-age=31536000, immutable" \
             --metadata-directive "REPLACE" --only-show-errors
+          # CSS
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" --include "*.css" \
-            --content-type "text/css" \
+            --content-type "text/css; charset=utf-8" \
             --cache-control "public, max-age=31536000, immutable" \
             --metadata-directive "REPLACE" --only-show-errors
+          # Maps/JSON
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
-            --exclude "*" --include "*.svg" \
-            --content-type "image/svg+xml" \
+            --exclude "*" --include "*.map" --include "*.json" \
+            --content-type "application/json; charset=utf-8" \
             --cache-control "public, max-age=31536000, immutable" \
             --metadata-directive "REPLACE" --only-show-errors
-          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
-            --exclude "*" --include "*.json" \
-            --content-type "application/json" \
-            --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive "REPLACE" --only-show-errors
-          aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
-            --exclude "*" --include "*.map" \
-            --content-type "application/json" \
-            --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive "REPLACE" --only-show-errors
+          # Images / fonts / misc
           aws s3 cp "$OUT" "s3://${S3_BUCKET}/" --recursive \
             --exclude "*" \
-            --include "*.png" --include "*.jpg" --include "*.jpeg" --include "*.gif" --include "*.webp" \
+            --include "*.png" --include "*.jpg" --include "*.jpeg" --include "*.gif" --include "*.webp" --include "*.svg" \
             --include "*.woff" --include "*.woff2" --include "*.ttf" --include "*.otf" \
             --include "*.ico" --include "*.txt" --include "*.webmanifest" \
-            --cache-control "public, max-age=31536000, immutable" --only-show-errors
+            --cache-control "public, max-age=31536000, immutable" \
+            --only-show-errors
 
       # ---- Phase 2: HTML (no cache) ----
       - name: ⬆️ Upload HTML (no-cache)
-        env:
-          OUT: ${{ steps.detect.outputs.out }}
+        env: { OUT: ${{ steps.detect.outputs.out }} }
         shell: bash
         run: |
           set -euo pipefail
@@ -100,16 +97,25 @@ jobs:
             --cache-control "no-cache, no-store, must-revalidate, max-age=0" \
             --metadata-directive "REPLACE" --only-show-errors
 
-      - name: 🧹 Prune removed files (sync delete)
-        env:
-          OUT: ${{ steps.detect.outputs.out }}
+      # ---- Phase 3: Delete removed files (WITHOUT re-uploading) ----
+      # We scope delete per-type so metadata set above remains intact.
+      - name: 🧹 Prune removed files
+        env: { OUT: ${{ steps.detect.outputs.out }} }
         shell: bash
         run: |
           set -euo pipefail
-          aws s3 sync "$OUT" "s3://${S3_BUCKET}" \
+          # Delete for assets
+          aws s3 sync "$OUT" "s3://${S3_BUCKET}/" \
             --delete \
-            --exclude ".git/*" --exclude ".github/*" \
-            --exclude "Dockerfile*" --exclude "README.md" \
+            --exclude "*" \
+            --include "*.js" --include "*.css" --include "*.map" --include "*.json" \
+            --include "*.png" --include "*.jpg" --include "*.jpeg" --include "*.gif" --include "*.webp" --include "*.svg" \
+            --include "*.woff" --include "*.woff2" --include "*.ttf" --include "*.otf" \
+            --include "*.ico" --include "*.txt" --include "*.webmanifest" \
+            --only-show-errors
+          # Delete for html
+          aws s3 sync "$OUT" "s3://${S3_BUCKET}/" \
+            --delete --exclude "*" --include "*.html" \
             --only-show-errors
 
       - name: 🌐 CloudFront Invalidate (HTML first)
