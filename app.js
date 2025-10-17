@@ -10,13 +10,12 @@
   var META_BASE = (function(){
     try { var m = document.querySelector('meta[name="ved-api-base"]'); return m ? (m.content||"").trim() : ""; } catch(_) { return ""; }
   })();
-  var API_BASE = META_BASE || (typeof window !== "undefined" && window.API_BASE) || "https://vedsaas.com";
+  var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "https://vedsaas.com").replace(/\/+$/,"");
 
-  // For rare cases you want to hit api subdomain directly, set meta:
+  // If you want to hit api subdomain directly:
   // <meta name="ved-api-base" content="https://api.vedsaas.com">
 
-  // Client-side API key sending is OFF by default for security.
-  // If you really want to allow it (temporary), set window.__ALLOW_CLIENT_API_KEY = true before app.js loads.
+  // Client-side API key sending is OFF by default (safer)
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
   var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
 
@@ -29,24 +28,26 @@
 
   // --------- URL helpers ----------
   function ensureApiPath(path){
-    // If absolute URL, return as-is
-    if (/^https?:\/\//i.test(path)) return path;
-    // Ensure leading slash
-    path = (path[0] === "/") ? path : ("/" + path);
-    // Force /api/ prefix
-    if (!path.startsWith("/api/")) path = "/api" + path;
+    if (/^https?:\/\//i.test(path)) return path;        // absolute URL? keep
+    path = (path[0] === "/") ? path : ("/" + path);     // ensure leading slash
+    if (!path.startsWith("/api/")) path = "/api" + path; // force /api/
     return path;
   }
-  function buildUrl(path){
-    return API_BASE.replace(/\/+$/,"") + ensureApiPath(path);
-  }
+  function buildUrl(path){ return API_BASE + ensureApiPath(path); }
 
   // --------- Fetch helpers ----------
   function doFetch(url, opts, timeoutMs){
     var ac = new AbortController();
-    var t  = setTimeout(function(){ ac.abort(new Error("timeout")); }, timeoutMs || 10000);
+    var t  = setTimeout(function(){ ac.abort(new Error("timeout")); }, timeoutMs || 15000);
     var merged = Object.assign({ mode:"cors", cache:"no-store", credentials:"omit", signal: ac.signal }, opts || {});
     return fetch(url, merged).finally(function(){ clearTimeout(t); });
+  }
+
+  function isLikelyHTML(ct, textHead){
+    if (ct && ct.toLowerCase().includes("text/html")) return true;
+    if (!textHead) return false;
+    var head = textHead.slice(0,200).trim().toLowerCase();
+    return head.startsWith("<!doctype") || head.startsWith("<html");
   }
 
   function apiFetch(path, options){
@@ -71,20 +72,28 @@
     var body = hasBody && !isForm ? JSON.stringify(options.body) : options.body;
     var opts = { method: options.method || "GET", headers: headers, body: body };
 
-    return doFetch(url, opts, options.timeoutMs || 10000).then(function(resp){
+    return doFetch(url, opts, options.timeoutMs || 15000).then(function(resp){
+      // Non-OK → try to show useful message
       if (!resp.ok) {
+        var ct = resp.headers.get("content-type") || "";
+        if (ct.toLowerCase().includes("application/json")) {
+          return resp.json().then(function(j){ throw new Error("HTTP " + resp.status + ": " + (j.error || j.message || JSON.stringify(j))); });
+        }
         return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
       }
-      var ct = (resp.headers.get("content-type") || "").toLowerCase();
 
-      // Guard: if CloudFront misroutes to S3/static, you'll get HTML here
-      if (ct.includes("text/html")) {
-        return resp.text().then(function(html){
-          var snip = html.slice(0,160).replace(/\s+/g,' ').trim();
-          throw new Error("API misrouted (got HTML). Check CloudFront /api/* behavior & app.js paths. Snip: " + snip);
-        });
-      }
-      return ct.includes("application/json") ? resp.json() : resp.text();
+      // OK → prefer JSON; guard against HTML misroute
+      var ctOK = (resp.headers.get("content-type") || "").toLowerCase();
+      if (ctOK.includes("application/json")) return resp.json();
+
+      // Not JSON → read text and check if HTML (misroute)
+      return resp.text().then(function(txt){
+        if (isLikelyHTML(ctOK, txt)) {
+          var snip = txt.slice(0,200).replace(/\s+/g," ").trim();
+          throw new Error("API misrouted (got HTML). Fix CloudFront behavior /api/* to EC2. Snip: " + snip);
+        }
+        return txt; // plain text fallback
+      });
     });
   }
 
@@ -99,7 +108,6 @@
   function autosizeTA(ta){
     if (!ta) return;
     if (window.__ved && typeof window.__ved.autosize === "function") return window.__ved.autosize(ta);
-    // fallback
     var fit = function(){ ta.style.height = "auto"; ta.style.height = Math.min(160, ta.scrollHeight) + "px"; };
     ta.addEventListener("input", fit, { passive:true });
     setTimeout(fit, 0);
@@ -113,7 +121,16 @@
     var area = $("chat-area"); if (!area) return;
     var div = document.createElement("div");
     div.className = "msg msg-" + role;
-    div.textContent = content;
+
+    // If someone still returns HTML, render safely in <pre> so UI readable rahe
+    if (typeof content === "string" && /^(\s*<!doctype|\s*<html)/i.test(content)) {
+      var pre = document.createElement("pre");
+      pre.textContent = content;
+      div.appendChild(pre);
+    } else {
+      div.textContent = content;
+    }
+
     area.appendChild(div);
   }
   function scrollChatBottom(smooth){
@@ -138,7 +155,7 @@
 
     renderMessage("user", text); scrollChatBottom(true);
 
-    return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } }) // <-- "/chat" becomes "/api/chat"
+    return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } }) // "/chat" => "/api/chat"
       .then(function(res){
         var reply = (res && (res.reply || res.answer || res.message || res.text)) ||
                     (typeof res === "string" ? res : JSON.stringify(res));
