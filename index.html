@@ -5,19 +5,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta http-equiv="x-content-type-options" content="nosniff" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="color-scheme" content="dark light" />
 
-  <!-- API base ko yahin control karo (production) -->
+  <!-- API base (prod) — app.js picks this up -->
   <meta name="ved-api-base" content="https://api.vedsaas.com" />
 
   <title>VedSAAS</title>
 
   <link rel="icon" href="/favicon.ico" />
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         referrerpolicy="strict-origin-when-cross-origin"
         crossorigin="anonymous" />
-  <link rel="stylesheet" href="/style.css?v=20251017" />
+  <link rel="stylesheet" href="/style.css?v=20251017c" />
 
   <style>
     :root{ color-scheme:dark }
@@ -36,7 +37,7 @@
       display:none!important; height:0!important; margin:0!important; padding:0!important; overflow:hidden!important
     }
 
-    .msg{ padding:10px 12px; margin:10px; border-radius:12px; max-width:900px; line-height:1.45 }
+    .msg{ padding:10px 12px; margin:10px; border-radius:12px; max-width:900px; line-height:1.45; word-break:break-word; white-space:pre-wrap }
     .msg-user{ background:#1f2a44 }
     .msg-assistant{ background:#1f3a2a }
     .msg-system{ background:#3a1f1f }
@@ -60,7 +61,6 @@
       text-decoration:none; color:#e9edf4; background:#1a2233; border:1px solid #2b364c
     }
 
-    /* optional: sidebar open state */
     body.sidebar-open .sidebar { display:block }
     body.sidebar-open #backdrop {
       position:fixed; inset:0; background:#0008; backdrop-filter: blur(2px); display:block
@@ -79,7 +79,7 @@
 
   <div id="banner" class="banner" role="status" aria-live="polite"></div>
 
-  <div id="app" class="container">
+  <div id="app" class="container" hidden>
     <aside class="sidebar" aria-label="Conversation history">
       <div class="title" style="font-weight:700;margin:6px 0 12px">Chat History</div>
       <button class="btn" id="new-topic">+ New Chat</button>
@@ -146,7 +146,7 @@
     <i class="fas fa-angle-down"></i> Latest
   </button>
 
-  <!-- API base bootstrap (CDN / dev / api subdomain sab cover) -->
+  <!-- API base bootstrap (covers CDN/dev/api-subdomain) -->
   <script>
     (function () {
       if (window.API_BASE) return;
@@ -159,8 +159,10 @@
       else window.API_BASE = 'https://api.vedsaas.com';
     })();
 
-    // Small UX wiring so shell visible ho + sidebar toggles
+    // Minimal UX wiring: shell + sidebar
     window.addEventListener('DOMContentLoaded', () => {
+      const app = document.getElementById('app'); if (app) app.hidden = false;
+
       const landingInput = document.getElementById('landing-input');
       const landingBtn = document.getElementById('landing-start');
       if (landingInput && landingBtn) {
@@ -175,7 +177,7 @@
     });
   </script>
 
-  <!-- Error banner: agar JS fail ho to immediately dikh jaaye -->
+  <!-- Global error banner (shows even if app.js fails) -->
   <script>
     (function () {
       const banner = document.getElementById('banner');
@@ -194,8 +196,8 @@
     })();
   </script>
 
-  <!-- Static JS (S3 root). Cache-bust optional ?v=yyyymmddhh -->
-  <script defer src="/vedsaas-fixes.js?v=20251017" referrerpolicy="no-referrer"></script>
-  <script defer src="/app.js?v=20251017" referrerpolicy="no-referrer"></script>
+  <!-- Static JS (S3 root). Cache-bust ?v=yyyymmddhh to force fresh load -->
+  <script defer src="/vedsaas-fixes.js?v=20251017c" referrerpolicy="no-referrer"></script>
+  <script defer src="/app.js?v=20251017c" referrerpolicy="no-referrer"></script>
 </body>
 </html>
