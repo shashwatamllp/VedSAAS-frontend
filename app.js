@@ -2,20 +2,25 @@
 (function () {
   "use strict";
 
+  // avoid double-wiring if app.js somehow loads twice
+  if (window.__ved_chat_wired) {
+    console.warn("app.js: already wired; skipping second init");
+    return;
+  }
+  window.__ved_chat_wired = true;
+
+  // prevent multiple sends
+  var __sending = false;
+
   // --------- DOM helper ----------
   function $(id){ return document.getElementById(id); }
 
   // --------- Config (API base resolution) ----------
-  // Prefer single-origin: https://vedsaas.com (CloudFront routes /api/* to backend)
   var META_BASE = (function(){
     try { var m = document.querySelector('meta[name="ved-api-base"]'); return m ? (m.content||"").trim() : ""; } catch(_) { return ""; }
   })();
   var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "https://vedsaas.com").replace(/\/+$/,"");
 
-  // If you want to hit api subdomain directly:
-  // <meta name="ved-api-base" content="https://api.vedsaas.com">
-
-  // Client-side API key sending is OFF by default (safer)
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
   var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
 
@@ -23,14 +28,14 @@
   function getToken(){ try { return localStorage.getItem("token"); } catch { return null; } }
   function setToken(t){ try { t ? localStorage.setItem("token", t) : localStorage.removeItem("token"); } catch {} }
   function clearToken(){ setToken(null); }
-  window.setToken = function(t){ setToken(t); };
-  window.clearToken = function(){ clearToken(); };
+  window.setToken = setToken;
+  window.clearToken = clearToken;
 
   // --------- URL helpers ----------
   function ensureApiPath(path){
-    if (/^https?:\/\//i.test(path)) return path;        // absolute URL? keep
-    path = (path[0] === "/") ? path : ("/" + path);     // ensure leading slash
-    if (!path.startsWith("/api/")) path = "/api" + path; // force /api/
+    if (/^https?:\/\//i.test(path)) return path;
+    path = (path[0] === "/") ? path : ("/" + path);
+    if (!path.startsWith("/api/")) path = "/api" + path;
     return path;
   }
   function buildUrl(path){ return API_BASE + ensureApiPath(path); }
@@ -64,16 +69,12 @@
     var tok = getToken();
     if (tok && !headers.has("Authorization")) headers.set("Authorization", "Bearer " + tok);
 
-    // DO NOT send API key from browser unless explicitly allowed
-    if (ALLOW_CLIENT_API_KEY && API_KEY && !headers.has("X-API-Key")) {
-      headers.set("X-API-Key", API_KEY);
-    }
+    if (ALLOW_CLIENT_API_KEY && API_KEY && !headers.has("X-API-Key")) headers.set("X-API-Key", API_KEY);
 
     var body = hasBody && !isForm ? JSON.stringify(options.body) : options.body;
     var opts = { method: options.method || "GET", headers: headers, body: body };
 
     return doFetch(url, opts, options.timeoutMs || 15000).then(function(resp){
-      // Non-OK → try to show useful message
       if (!resp.ok) {
         var ct = resp.headers.get("content-type") || "";
         if (ct.toLowerCase().includes("application/json")) {
@@ -82,27 +83,20 @@
         return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
       }
 
-      // OK → prefer JSON; guard against HTML misroute
       var ctOK = (resp.headers.get("content-type") || "").toLowerCase();
       if (ctOK.includes("application/json")) return resp.json();
 
-      // Not JSON → read text and check if HTML (misroute)
       return resp.text().then(function(txt){
         if (isLikelyHTML(ctOK, txt)) {
           var snip = txt.slice(0,200).replace(/\s+/g," ").trim();
           throw new Error("API misrouted (got HTML). Fix CloudFront behavior /api/* to EC2. Snip: " + snip);
         }
-        return txt; // plain text fallback
+        return txt;
       });
     });
   }
 
-  // Public surface (optional)
-  window.VedAPI = {
-    API_BASE: API_BASE,
-    apiFetch: apiFetch,
-    getToken: getToken, setToken: setToken, clearToken: clearToken
-  };
+  window.VedAPI = { API_BASE, apiFetch, getToken, setToken, clearToken };
 
   // --------- UI helpers ----------
   function autosizeTA(ta){
@@ -121,8 +115,6 @@
     var area = $("chat-area"); if (!area) return;
     var div = document.createElement("div");
     div.className = "msg msg-" + role;
-
-    // If someone still returns HTML, render safely in <pre> so UI readable rahe
     if (typeof content === "string" && /^(\s*<!doctype|\s*<html)/i.test(content)) {
       var pre = document.createElement("pre");
       pre.textContent = content;
@@ -130,7 +122,6 @@
     } else {
       div.textContent = content;
     }
-
     area.appendChild(div);
   }
   function scrollChatBottom(smooth){
@@ -141,6 +132,8 @@
   // --------- Chat send ----------
   function sendChat(text){
     if (!text) return Promise.resolve();
+    if (__sending) return Promise.resolve();   // guard
+    __sending = true;
 
     var landing = $("landing"), shell = $("chat-shell");
     if (landing && shell && shell.style.display === "none"){
@@ -155,7 +148,7 @@
 
     renderMessage("user", text); scrollChatBottom(true);
 
-    return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } }) // "/chat" => "/api/chat"
+    return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } })
       .then(function(res){
         var reply = (res && (res.reply || res.answer || res.message || res.text)) ||
                     (typeof res === "string" ? res : JSON.stringify(res));
@@ -170,6 +163,7 @@
       .finally(function(){
         if (mainBtn) mainBtn.disabled = false;
         if (landBtn) landBtn.disabled = false;
+        __sending = false;
       });
   }
 
@@ -180,6 +174,7 @@
     // landing
     var landingBtn   = $("landing-start");
     var landingInput = $("landing-input");
+    if (landingBtn) landingBtn.setAttribute("type", "button");   // prevent submit
     if (landingInput) autosizeTA(landingInput);
     if (landingBtn && landingInput){
       landingBtn.onclick = function(){
@@ -197,6 +192,7 @@
     // main composer
     var mainBtn   = $("send-btn");
     var mainInput = $("main-input");
+    if (mainBtn) mainBtn.setAttribute("type", "button");         // prevent submit
     if (mainInput) autosizeTA(mainInput);
     if (mainBtn && mainInput){
       mainBtn.disabled = false;
@@ -212,11 +208,9 @@
       });
     }
 
-    // “Latest”
     var toBottom = $("to-bottom");
     if (toBottom) toBottom.onclick = function(){ scrollChatBottom(true); };
 
-    // Health banner (soft)
     setBanner("warn", "Checking API…");
     apiFetch("/health")
       .then(function(){ var b = $("api-ok-badge"); if (b) b.style.display = "inline-flex"; setBanner("ok","API OK"); })
@@ -225,7 +219,6 @@
     console.log("app.js booted. API_BASE =", API_BASE);
   });
 
-  // expose for console
   window.sendChat = sendChat;
   window.scrollChatBottom = scrollChatBottom;
 })();
