@@ -23,48 +23,29 @@
   <style>
     :root{ color-scheme:dark }
     * { box-sizing: border-box }
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
-      background:#0e0f14; color:#e9edf4
-    }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:#0e0f14; color:#e9edf4 }
     .container{ min-height:100dvh }
     .banner{ padding:8px 12px; text-align:center; font-size:13px; display:none }
     .banner.ok{ display:block; background:#063; color:#c7ffd9; border-bottom:1px solid #055 }
     .banner.warn{ display:block; background:#5a4600; color:#ffe9a8; border-bottom:1px solid #3d2f00 }
     .banner.err{ display:block; background:#5a0000; color:#ffd7d7; border-bottom:1px solid #3d0000 }
-
-    #settings-panel, #settings-panel *{
-      display:none!important; height:0!important; margin:0!important; padding:0!important; overflow:hidden!important
-    }
-
+    #settings-panel, #settings-panel *{ display:none!important; height:0!important; margin:0!important; padding:0!important; overflow:hidden!important }
     .msg{ padding:10px 12px; margin:10px; border-radius:12px; max-width:900px; line-height:1.45; word-break:break-word; white-space:pre-wrap }
     .msg-user{ background:#1f2a44 }
     .msg-assistant{ background:#1f3a2a }
     .msg-system{ background:#3a1f1f }
-
     .chat-area{ padding:12px; height:60vh; overflow:auto; border-top:1px solid #233 }
     .composer{ display:flex; gap:8px; padding:12px }
-    .composer textarea{
-      flex:1; resize:none; min-height:38px; max-height:160px; border-radius:10px;
-      padding:10px; border:1px solid #2a3; background:#121622; color:#e9edf4
-    }
+    .composer textarea{ flex:1; resize:none; min-height:38px; max-height:160px; border-radius:10px; padding:10px; border:1px solid #2a3; background:#121622; color:#e9edf4 }
     .send-btn{ border:0; padding:0 14px; border-radius:10px; cursor:pointer; background:#2a7; color:#041; font-weight:600 }
     .send-btn:disabled{ opacity:.6; cursor:not-allowed }
-
     .topbar{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid #233 }
     .sidebar{ width:240px; border-right:1px solid #233; padding:10px; display:none }
     .rail{ display:flex; min-height:100dvh }
     @media (min-width: 960px){ .sidebar{ display:block } }
-
-    .btn{
-      display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px;
-      text-decoration:none; color:#e9edf4; background:#1a2233; border:1px solid #2b364c
-    }
-
+    .btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; text-decoration:none; color:#e9edf4; background:#1a2233; border:1px solid #2b364c }
     body.sidebar-open .sidebar { display:block }
-    body.sidebar-open #backdrop {
-      position:fixed; inset:0; background:#0008; backdrop-filter: blur(2px); display:block
-    }
+    body.sidebar-open #backdrop { position:fixed; inset:0; background:#0008; backdrop-filter: blur(2px); display:block }
     .backdrop{ display:none }
   </style>
 </head>
@@ -72,9 +53,7 @@
   <div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
   <noscript>
-    <div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">
-      JavaScript required. Please enable JS.
-    </div>
+    <div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">JavaScript required. Please enable JS.</div>
   </noscript>
 
   <div id="banner" class="banner" role="status" aria-live="polite"></div>
@@ -146,7 +125,7 @@
     <i class="fas fa-angle-down"></i> Latest
   </button>
 
-  <!-- API base bootstrap (covers CDN/dev/api-subdomain) -->
+  <!-- API base bootstrap -->
   <script>
     (function () {
       if (window.API_BASE) return;
@@ -155,14 +134,22 @@
       const origin = location.origin || '';
       if (metaBase) window.API_BASE = metaBase.replace(/\/$/, '');
       else if (h.endsWith('vedsaas.com')) window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
-      else if (/:(8010|8011|8012)\b/.test(origin)) window.API_BASE = origin; // local dev fallback
+      else if (/:(8010|8011|8012)\b/.test(origin)) window.API_BASE = origin;
       else window.API_BASE = 'https://api.vedsaas.com';
     })();
+  </script>
 
-    // Minimal UX wiring: shell + sidebar
+  <!-- Optional: expose API key to client if your API requires it
+  <script>
+    window.__ALLOW_CLIENT_API_KEY = true;
+    window.__VED_API_KEY = "YOUR_KEY";
+  </script>
+  -->
+
+  <!-- Minimal UX bootstrap -->
+  <script>
     window.addEventListener('DOMContentLoaded', () => {
       const app = document.getElementById('app'); if (app) app.hidden = false;
-
       const landingInput = document.getElementById('landing-input');
       const landingBtn = document.getElementById('landing-start');
       if (landingInput && landingBtn) {
@@ -177,7 +164,7 @@
     });
   </script>
 
-  <!-- Global error banner (shows even if app.js fails) -->
+  <!-- Global error banner -->
   <script>
     (function () {
       const banner = document.getElementById('banner');
@@ -186,17 +173,14 @@
         banner.className = 'banner ' + kind;
         banner.textContent = msg;
       }
-      window.addEventListener('error', (e) => {
-        show('err', `Script error: ${e.message || e.error}`);
-      });
+      window.addEventListener('error', (e) => { show('err', `Script error: ${e.message || e.error}`); });
       window.addEventListener('unhandledrejection', (e) => {
-        const r = e.reason;
-        show('err', `Unhandled promise: ${r && r.message ? r.message : r}`);
+        const r = e.reason; show('err', `Unhandled promise: ${r && r.message ? r.message : r}`);
       });
     })();
   </script>
 
-  <!-- Static JS (S3 root). Cache-bust ?v=yyyymmddhh to force fresh load -->
+  <!-- Static JS -->
   <script defer src="/vedsaas-fixes.js?v=20251017c" referrerpolicy="no-referrer"></script>
   <script defer src="/app.js?v=20251017c" referrerpolicy="no-referrer"></script>
 </body>
