@@ -2,20 +2,13 @@
 (function () {
   "use strict";
 
-  // avoid double-wiring if app.js somehow loads twice
-  if (window.__ved_chat_wired) {
-    console.warn("app.js: already wired; skipping second init");
-    return;
-  }
+  if (window.__ved_chat_wired) return;
   window.__ved_chat_wired = true;
 
-  // prevent multiple sends
   var __sending = false;
-
-  // --------- DOM helper ----------
   function $(id){ return document.getElementById(id); }
 
-  // --------- Config (API base resolution) ----------
+  // --------- Config ----------
   var META_BASE = (function(){
     try { var m = document.querySelector('meta[name="ved-api-base"]'); return m ? (m.content||"").trim() : ""; } catch(_) { return ""; }
   })();
@@ -132,7 +125,7 @@
   // --------- Chat send ----------
   function sendChat(text){
     if (!text) return Promise.resolve();
-    if (__sending) return Promise.resolve();   // guard
+    if (__sending) return Promise.resolve();
     __sending = true;
 
     var landing = $("landing"), shell = $("chat-shell");
@@ -171,10 +164,9 @@
   window.addEventListener("DOMContentLoaded", function () {
     var app = $("app"); if (app) app.style.display = "block";
 
-    // landing
     var landingBtn   = $("landing-start");
     var landingInput = $("landing-input");
-    if (landingBtn) landingBtn.setAttribute("type", "button");   // prevent submit
+    if (landingBtn) landingBtn.setAttribute("type", "button");
     if (landingInput) autosizeTA(landingInput);
     if (landingBtn && landingInput){
       landingBtn.onclick = function(){
@@ -189,10 +181,9 @@
       });
     }
 
-    // main composer
     var mainBtn   = $("send-btn");
     var mainInput = $("main-input");
-    if (mainBtn) mainBtn.setAttribute("type", "button");         // prevent submit
+    if (mainBtn) mainBtn.setAttribute("type", "button");
     if (mainInput) autosizeTA(mainInput);
     if (mainBtn && mainInput){
       mainBtn.disabled = false;
