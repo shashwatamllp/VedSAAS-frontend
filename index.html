@@ -7,8 +7,8 @@
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="color-scheme" content="dark light" />
 
-  <!-- API base (prod) — app.js picks this up -->
-  <meta name="ved-api-base" content="https://api.vedsaas.com" />
+  <!-- API base (same host via CloudFront proxy) -->
+  <meta name="ved-api-base" content="/api" />
 
   <title>VedSAAS</title>
 
@@ -86,7 +86,6 @@
             <div style="margin-left:auto" id="meta-info">Local: 0 KB</div>
           </header>
 
-          <!-- Landing -->
           <section id="landing" style="display:flex; flex-direction:column; gap:12px; padding:16px">
             <div class="title" style="font-weight:700">Start a new conversation</div>
             <div class="hint" style="opacity:.8">Ask anything. I’ll reply in your language.</div>
@@ -106,7 +105,6 @@
             </div>
           </section>
 
-          <!-- Chat -->
           <section id="chat-shell" style="display:none; flex:1; min-height:0; flex-direction:column;">
             <div class="chat-area" id="chat-area"></div>
             <div class="composer">
@@ -129,13 +127,9 @@
   <script>
     (function () {
       if (window.API_BASE) return;
-      const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
-      const h = (location.hostname || '').toLowerCase();
-      const origin = location.origin || '';
-      if (metaBase) window.API_BASE = metaBase.replace(/\/$/, '');
-      else if (h.endsWith('vedsaas.com')) window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
-      else if (/:(8010|8011|8012)\b/.test(origin)) window.API_BASE = origin;
-      else window.API_BASE = 'https://api.vedsaas.com';
+      const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content?.trim() || '';
+      // If meta provided, use it; else default to same-origin proxy "/api"
+      window.API_BASE = (metaBase ? metaBase : '/api').replace(/\/$/, '');
     })();
   </script>
 
