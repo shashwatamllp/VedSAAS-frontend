@@ -1,4 +1,5 @@
-/* app.js — classic script (no modules, no import.meta) */
+<!-- app.js — drop in -->
+<script>
 (function () {
   "use strict";
 
@@ -10,9 +11,13 @@
 
   // --------- Config ----------
   var META_BASE = (function(){
-    try { var m = document.querySelector('meta[name="ved-api-base"]'); return m ? (m.content||"").trim() : ""; } catch(_) { return ""; }
+    try {
+      var m = document.querySelector('meta[name="ved-api-base"]');
+      return m ? (m.content || "").trim() : "";
+    } catch(_) { return ""; }
   })();
-  var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "https://vedsaas.com").replace(/\/+$/,"");
+  var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "")
+    .replace(/\/+$/,""); // '' | '/api' | 'https://api.vedsaas.com'
 
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
   var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
@@ -28,10 +33,14 @@
   function ensureApiPath(path){
     if (/^https?:\/\//i.test(path)) return path;
     path = (path[0] === "/") ? path : ("/" + path);
-    if (!path.startsWith("/api/")) path = "/api" + path;
+    var base = (typeof API_BASE === "string" ? API_BASE : "");
+    var baseIsAbs = /^https?:\/\//i.test(base);
+    if ((base === "" || baseIsAbs) && !path.startsWith("/api/")) {
+      path = "/api" + path;
+    }
     return path;
   }
-  function buildUrl(path){ return API_BASE + ensureApiPath(path); }
+  function buildUrl(path){ return (API_BASE || "") + ensureApiPath(path); }
 
   // --------- Fetch helpers ----------
   function doFetch(url, opts, timeoutMs){
@@ -213,3 +222,4 @@
   window.sendChat = sendChat;
   window.scrollChatBottom = scrollChatBottom;
 })();
+</script>
