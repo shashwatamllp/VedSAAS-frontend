@@ -17,7 +17,7 @@
     } catch(_) { return ""; }
   })();
   var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "")
-    .replace(/\/+$/,""); // '' | '/api' | 'https://api.vedsaas.com'
+    .replace(/\/+$/,""); // '' | '/api' | 'https://api.vedsaas.com' | 'https://api.vedsaas.com/api'
 
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
   var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
@@ -31,16 +31,30 @@
 
   // --------- URL helpers ----------
   function ensureApiPath(path){
+    if (!path) path = "/";
     if (/^https?:\/\//i.test(path)) return path;
     path = (path[0] === "/") ? path : ("/" + path);
+
     var base = (typeof API_BASE === "string" ? API_BASE : "");
     var baseIsAbs = /^https?:\/\//i.test(base);
-    if ((base === "" || baseIsAbs) && !path.startsWith("/api/")) {
+    var baseHasApi = /\/api\/?$/.test(base);
+
+    // Prepend '/api' only when needed:
+    // - same-origin (base == '')
+    // - absolute base that does NOT already include '/api'
+    if ( (base === "" || (baseIsAbs && !baseHasApi)) && !/^\/api\//i.test(path) ) {
       path = "/api" + path;
     }
     return path;
   }
-  function buildUrl(path){ return (API_BASE || "") + ensureApiPath(path); }
+  function buildUrl(path){
+    var base = API_BASE || "";
+    var url = ensureApiPath(path);
+    // Avoid double slashes at join
+    if (base && url.startsWith("/") && /^https?:\/\//i.test(base)) return base + url;
+    if (base && url.startsWith("/") && base.endsWith("/")) return base.replace(/\/+$/,"") + url;
+    return base + url;
+  }
 
   // --------- Fetch helpers ----------
   function doFetch(url, opts, timeoutMs){
@@ -53,7 +67,7 @@
   function isLikelyHTML(ct, textHead){
     if (ct && ct.toLowerCase().includes("text/html")) return true;
     if (!textHead) return false;
-    var head = textHead.slice(0,200).trim().toLowerCase();
+    var head = String(textHead).slice(0,200).trim().toLowerCase();
     return head.startsWith("<!doctype") || head.startsWith("<html");
   }
 
@@ -78,8 +92,8 @@
 
     return doFetch(url, opts, options.timeoutMs || 15000).then(function(resp){
       if (!resp.ok) {
-        var ct = resp.headers.get("content-type") || "";
-        if (ct.toLowerCase().includes("application/json")) {
+        var ct = (resp.headers.get("content-type") || "").toLowerCase();
+        if (ct.includes("application/json")) {
           return resp.json().then(function(j){ throw new Error("HTTP " + resp.status + ": " + (j.error || j.message || JSON.stringify(j))); });
         }
         return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
@@ -90,7 +104,7 @@
 
       return resp.text().then(function(txt){
         if (isLikelyHTML(ctOK, txt)) {
-          var snip = txt.slice(0,200).replace(/\s+/g," ").trim();
+          var snip = String(txt).slice(0,200).replace(/\s+/g," ").trim();
           throw new Error("API misrouted (got HTML). Fix CloudFront behavior /api/* to EC2. Snip: " + snip);
         }
         return txt;
