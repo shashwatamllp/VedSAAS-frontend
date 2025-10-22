@@ -39,9 +39,6 @@
     var baseIsAbs = /^https?:\/\//i.test(base);
     var baseHasApi = /\/api\/?$/.test(base);
 
-    // Prepend '/api' only when needed:
-    // - same-origin (base == '')
-    // - absolute base that does NOT already include '/api'
     if ( (base === "" || (baseIsAbs && !baseHasApi)) && !/^\/api\//i.test(path) ) {
       path = "/api" + path;
     }
@@ -50,7 +47,6 @@
   function buildUrl(path){
     var base = API_BASE || "";
     var url = ensureApiPath(path);
-    // Avoid double slashes at join
     if (base && url.startsWith("/") && /^https?:\/\//i.test(base)) return base + url;
     if (base && url.startsWith("/") && base.endsWith("/")) return base.replace(/\/+$/,"") + url;
     return base + url;
