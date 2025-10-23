@@ -35,13 +35,11 @@ input,textarea,select,button{font-size:16px}
   background-image:
 #landing::before{
   content:"";
-  position:absolute;
-  inset:0;
-  background:url("/image/logopic.png") center/60% no-repeat;
-  opacity:.2;
-  pointer-events:none;
-  z-index:0;
+  position:absolute; inset:0;
+  background:url("/public/image/logopic.png") center/60% no-repeat;
+  opacity:.20; pointer-events:none; z-index:0;
 }
+
 
 
 .topbar{padding:14px 18px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:center;background:transparent;position:relative;z-index:1}
@@ -130,4 +128,5 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
   h1{font-size:1.15rem}
   .topbar .menu-btn{padding:6px 8px}
 }
+
 
