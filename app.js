@@ -113,7 +113,6 @@
   // ---------- UI helpers ----------
   function autosizeTA(ta){
     if (!ta) return;
-    if (window.__ved && typeof window.__ved.autosize === "function") return window.__ved.autosize(ta);
     var fit = function(){ ta.style.height = "auto"; ta.style.height = Math.min(160, ta.scrollHeight) + "px"; };
     ta.addEventListener("input", fit, { passive:true });
     setTimeout(fit, 0);
@@ -150,8 +149,34 @@
   function pickReply(res){
     if (res == null) return null;
     if (typeof res === "string") return res;
-    return res.reply || res.answer || res.message || res.text || res.response || null;
+    if (typeof res.reply === "string") return res.reply;
+    if (typeof res.answer === "string") return res.answer;
+    if (typeof res.message === "string") return res.message;
+    if (typeof res.text === "string") return res.text;
+    if (typeof res.response === "string") return res.response;
+    // OpenAI-like
+    if (Array.isArray(res.choices) && res.choices[0]?.message?.content) return res.choices[0].message.content;
+    if (res.data) {
+      var d = res.data;
+      if (typeof d === "string") return d;
+      if (typeof d.reply === "string") return d.reply;
+      if (Array.isArray(d.choices) && d.choices[0]?.message?.content) return d.choices[0].message.content;
+    }
+    return null;
   }
+
+  function callChat(payload){
+    // try /chat → /ask fallback
+    return apiFetch("/chat", { method:"POST", body: payload })
+      .catch(function(e){
+        var msg = String(e && e.message || "");
+        if (msg.includes("404") || msg.includes("405")) {
+          return apiFetch("/ask", { method:"POST", body: payload });
+        }
+        throw e;
+      });
+  }
+
   function sendChat(text){
     if (!text) return Promise.resolve();
     if (__sending) return Promise.resolve();
@@ -172,10 +197,15 @@
     scrollChatBottom(true);
     setTyping(true);
 
-    return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } })
+    return callChat({ message: text, prompt: text, mode:"default" })
       .then(function(res){
         var reply = pickReply(res);
-        renderMessage("assistant", reply || "(empty)");
+        if (!reply || !String(reply).trim()){
+          console.warn("EMPTY_API_REPLY:", res);
+          renderMessage("system", "⚠️ Empty response from API");
+        } else {
+          renderMessage("assistant", String(reply));
+        }
         scrollChatBottom(true);
       })
       .catch(function(e){
@@ -235,13 +265,19 @@
     if (toBottom) toBottom.onclick = function(){ scrollChatBottom(true); };
 
     setBanner("warn", "Checking API…");
+    // try /health then /status
     apiFetch("/health")
       .then(function(){
         var b = $("api-ok-badge"); if (b) b.style.display = "inline-flex";
         setBanner("ok","API OK");
       })
       .catch(function(){
-        setBanner("err","API unreachable");
+        apiFetch("/status").then(function(){
+          var b = $("api-ok-badge"); if (b) b.style.display = "inline-flex";
+          setBanner("ok","API OK");
+        }).catch(function(){
+          setBanner("err","API unreachable");
+        });
       });
 
     console.log("app.js booted. API_BASE =", API_BASE || "(auto '/api')");
