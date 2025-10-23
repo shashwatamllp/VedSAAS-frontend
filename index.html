@@ -43,7 +43,7 @@
   #landing > *{ position:relative; z-index:1 }
 
   /* chat: composer fixed at bottom of main area */
-  #chat-shell{ display:flex; flex-direction:column; height:calc(100dvh - 50px); } /* ~topbar height */
+  #chat-shell{ display:flex; flex-direction:column; height:calc(100dvh - 50px); }
   .chat-area{ flex:1; padding:12px; overflow:auto; border-top:1px solid #233 }
   .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid #233; background:#0e0f14; position:sticky; bottom:0 }
   .composer textarea{ flex:1; resize:none; min-height:38px; max-height:160px; border-radius:10px; padding:10px; border:1px solid #2a3; background:#121622; color:#e9edf4 }
@@ -187,6 +187,34 @@ async function api(path, body, {timeout=15000}={}){
   } finally { clearTimeout(tm); }
 }
 
+/* ==== reply normalization + fallback ==== */
+function pickReply(res){
+  if(!res) return '';
+  if(typeof res === 'string') return res.trim();
+  for (const k of ['reply','answer','message','text','output','result','response','bot']) {
+    if (typeof res[k] === 'string' && res[k].trim()) return res[k];
+  }
+  if (Array.isArray(res.choices) && res.choices[0]?.message?.content) return res.choices[0].message.content;
+  const d=res.data;
+  if(d){
+    if (typeof d === 'string' && d.trim()) return d;
+    for (const k of ['reply','answer','message','text','output','result','response']) {
+      if (typeof d[k] === 'string' && d[k].trim()) return d[k];
+    }
+    if (Array.isArray(d.choices) && d.choices[0]?.message?.content) return d.choices[0].message.content;
+  }
+  return '';
+}
+async function chatCall(payload){
+  try{
+    return await api('/chat', payload);
+  }catch(e){
+    const msg=String(e?.message||'');
+    if(msg.includes('404')||msg.includes('405')) return await api('/ask', payload);
+    throw e;
+  }
+}
+
 /* ==== send ==== */
 async function send(text){
   if(!text||sending) return;
@@ -194,9 +222,9 @@ async function send(text){
   if(!currentTopicId) newTopic('New Chat');
   appendMessage('user',text);
   try{
-    const res=await api('/chat',{message:text});
-    const reply = (typeof res==='string') ? res : (res.reply||res.answer||res.message||res.text||'No response');
-    appendMessage('assistant',reply);
+    const res=await chatCall({message:text,prompt:text});
+    const reply=pickReply(res);
+    appendMessage('assistant', reply || '⚠️ Empty response from API');
   }catch(e){
     appendMessage('system','⚠️ '+(e.message||'Error'));
   }finally{
