@@ -1,8 +1,6 @@
-<!-- app.js — drop in -->
 <script>
 (function () {
   "use strict";
-
   if (window.__ved_chat_wired) return;
   window.__ved_chat_wired = true;
 
@@ -17,7 +15,7 @@
     } catch(_) { return ""; }
   })();
   var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "")
-    .replace(/\/+$/,""); // '' | '/api' | 'https://api.vedsaas.com' | 'https://api.vedsaas.com/api'
+    .replace(/\/+$/,"");
 
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
   var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
@@ -80,7 +78,6 @@
 
     var tok = getToken();
     if (tok && !headers.has("Authorization")) headers.set("Authorization", "Bearer " + tok);
-
     if (ALLOW_CLIENT_API_KEY && API_KEY && !headers.has("X-API-Key")) headers.set("X-API-Key", API_KEY);
 
     var body = hasBody && !isForm ? JSON.stringify(options.body) : options.body;
@@ -141,6 +138,14 @@
     el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }
 
+  // --------- Reply extraction ----------
+  function extractReply(res){
+    if (res == null) return "";
+    if (typeof res === "string") return res;
+    // backend sends: { ok:true, response:"...", source:"pipeline" }
+    return res.response || res.reply || res.answer || res.message || res.text || JSON.stringify(res);
+  }
+
   // --------- Chat send ----------
   function sendChat(text){
     if (!text) return Promise.resolve();
@@ -162,8 +167,7 @@
 
     return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } })
       .then(function(res){
-        var reply = (res && (res.reply || res.answer || res.message || res.text)) ||
-                    (typeof res === "string" ? res : JSON.stringify(res));
+        var reply = extractReply(res);
         renderMessage("assistant", reply || "(empty)");
         scrollChatBottom(true);
       })
