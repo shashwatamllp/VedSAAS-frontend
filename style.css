@@ -33,12 +33,16 @@ input,textarea,select,button{font-size:16px}
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.20;
   background-position:center; background-repeat:no-repeat; background-size:60%;
   background-image:
-    url("/image/vedsaas.png"),
-    url("/image/logopic.png"),
-    url("/images/logopic.png"),
-    url("/logopic.png"),
-    url("images/logopic.png");
+#landing::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:url("/image/logopic.png") center/60% no-repeat;
+  opacity:.2;
+  pointer-events:none;
+  z-index:0;
 }
+
 
 .topbar{padding:14px 18px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:center;background:transparent;position:relative;z-index:1}
 .topbar h1{margin:0;font-size:20px;letter-spacing:1px}
@@ -126,3 +130,4 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
   h1{font-size:1.15rem}
   .topbar .menu-btn{padding:6px 8px}
 }
+
