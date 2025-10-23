@@ -1,35 +1,34 @@
-<!-- app.js — drop in -->
 <script>
 (function () {
   "use strict";
-
   if (window.__ved_chat_wired) return;
   window.__ved_chat_wired = true;
 
   var __sending = false;
   function $(id){ return document.getElementById(id); }
 
-  // --------- Config ----------
+  // ---------- Config ----------
   var META_BASE = (function(){
     try {
       var m = document.querySelector('meta[name="ved-api-base"]');
       return m ? (m.content || "").trim() : "";
     } catch(_) { return ""; }
   })();
+
   var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "")
-    .replace(/\/+$/,""); // '' | '/api' | 'https://api.vedsaas.com' | 'https://api.vedsaas.com/api'
+    .replace(/\/+$/,""); // '', '/api', 'https://api.vedsaas.com', etc.
 
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
   var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
 
-  // --------- Token helpers ----------
+  // ---------- Token helpers ----------
   function getToken(){ try { return localStorage.getItem("token"); } catch { return null; } }
   function setToken(t){ try { t ? localStorage.setItem("token", t) : localStorage.removeItem("token"); } catch {} }
   function clearToken(){ setToken(null); }
   window.setToken = setToken;
   window.clearToken = clearToken;
 
-  // --------- URL helpers ----------
+  // ---------- URL helpers ----------
   function ensureApiPath(path){
     if (!path) path = "/";
     if (/^https?:\/\//i.test(path)) return path;
@@ -38,33 +37,38 @@
     var base = (typeof API_BASE === "string" ? API_BASE : "");
     var baseIsAbs = /^https?:\/\//i.test(base);
     var baseHasApi = /\/api\/?$/.test(base);
-
-    if ( (base === "" || (baseIsAbs && !baseHasApi)) && !/^\/api\//i.test(path) ) {
-      path = "/api" + path;
-    }
+    if ( (base === "" || (baseIsAbs && !baseHasApi)) && !/^\/api\//i.test(path) ) path = "/api" + path;
     return path;
   }
   function buildUrl(path){
     var base = API_BASE || "";
     var url = ensureApiPath(path);
     if (base && url.startsWith("/") && /^https?:\/\//i.test(base)) return base + url;
-    if (base && url.startsWith("/") && base.endsWith("/")) return base.replace(/\/+$/,"") + url;
+    if (base && url.startsWith("/")) return base.replace(/\/+$/,"") + url;
     return base + url;
   }
 
-  // --------- Fetch helpers ----------
+  // ---------- Fetch core ----------
   function doFetch(url, opts, timeoutMs){
     var ac = new AbortController();
     var t  = setTimeout(function(){ ac.abort(new Error("timeout")); }, timeoutMs || 15000);
     var merged = Object.assign({ mode:"cors", cache:"no-store", credentials:"omit", signal: ac.signal }, opts || {});
     return fetch(url, merged).finally(function(){ clearTimeout(t); });
   }
-
   function isLikelyHTML(ct, textHead){
     if (ct && ct.toLowerCase().includes("text/html")) return true;
     if (!textHead) return false;
     var head = String(textHead).slice(0,200).trim().toLowerCase();
     return head.startsWith("<!doctype") || head.startsWith("<html");
+  }
+
+  // small retry for transient 502/504/network/timeout
+  function withRetry(fn, attempts){
+    return fn().catch(function(e){
+      if (attempts <= 1) throw e;
+      return new Promise(function(res){ setTimeout(res, 400 * Math.pow(2, (3 - attempts))); })
+        .then(function(){ return withRetry(fn, attempts - 1); });
+    });
   }
 
   function apiFetch(path, options){
@@ -80,37 +84,39 @@
 
     var tok = getToken();
     if (tok && !headers.has("Authorization")) headers.set("Authorization", "Bearer " + tok);
-
     if (ALLOW_CLIENT_API_KEY && API_KEY && !headers.has("X-API-Key")) headers.set("X-API-Key", API_KEY);
 
     var body = hasBody && !isForm ? JSON.stringify(options.body) : options.body;
     var opts = { method: options.method || "GET", headers: headers, body: body };
 
-    return doFetch(url, opts, options.timeoutMs || 15000).then(function(resp){
-      if (!resp.ok) {
-        var ct = (resp.headers.get("content-type") || "").toLowerCase();
-        if (ct.includes("application/json")) {
-          return resp.json().then(function(j){ throw new Error("HTTP " + resp.status + ": " + (j.error || j.message || JSON.stringify(j))); });
+    return withRetry(function(){ return doFetch(url, opts, options.timeoutMs || 15000); }, 3)
+      .then(function(resp){
+        if (!resp.ok) {
+          var ct = (resp.headers.get("content-type") || "").toLowerCase();
+          if (ct.includes("application/json")) {
+            return resp.json().then(function(j){
+              throw new Error("HTTP " + resp.status + ": " + (j.error || j.message || j.detail || JSON.stringify(j)));
+            });
+          }
+          return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
         }
-        return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
-      }
 
-      var ctOK = (resp.headers.get("content-type") || "").toLowerCase();
-      if (ctOK.includes("application/json")) return resp.json();
+        var ctOK = (resp.headers.get("content-type") || "").toLowerCase();
+        if (ctOK.includes("application/json")) return resp.json();
 
-      return resp.text().then(function(txt){
-        if (isLikelyHTML(ctOK, txt)) {
-          var snip = String(txt).slice(0,200).replace(/\s+/g," ").trim();
-          throw new Error("API misrouted (got HTML). Fix CloudFront behavior /api/* to EC2. Snip: " + snip);
-        }
-        return txt;
+        return resp.text().then(function(txt){
+          if (isLikelyHTML(ctOK, txt)) {
+            var snip = String(txt).slice(0,200).replace(/\s+/g," ").trim();
+            throw new Error("API misrouted (HTML). Fix CDN/NGINX for /api/* → backend. Snip: " + snip);
+          }
+          return txt;
+        });
       });
-    });
   }
 
   window.VedAPI = { API_BASE, apiFetch, getToken, setToken, clearToken };
 
-  // --------- UI helpers ----------
+  // ---------- UI helpers ----------
   function autosizeTA(ta){
     if (!ta) return;
     if (window.__ved && typeof window.__ved.autosize === "function") return window.__ved.autosize(ta);
@@ -141,7 +147,20 @@
     el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }
 
-  // --------- Chat send ----------
+  // typing indicator
+  function setTyping(on){
+    var t = $("typing");
+    if (!t) return;
+    t.style.display = on ? "inline-block" : "none";
+  }
+
+  // ---------- Chat send ----------
+  function pickReply(res){
+    if (res == null) return null;
+    if (typeof res === "string") return res;
+    return res.reply || res.answer || res.message || res.text || res.response || null;
+  }
+
   function sendChat(text){
     if (!text) return Promise.resolve();
     if (__sending) return Promise.resolve();
@@ -158,28 +177,31 @@
     if (mainBtn) mainBtn.disabled = true;
     if (landBtn) landBtn.disabled = true;
 
-    renderMessage("user", text); scrollChatBottom(true);
+    renderMessage("user", text);
+    scrollChatBottom(true);
+    setTyping(true);
 
     return apiFetch("/chat", { method:"POST", body:{ message: text, mode:"default" } })
       .then(function(res){
-        var reply = (res && (res.reply || res.answer || res.message || res.text)) ||
-                    (typeof res === "string" ? res : JSON.stringify(res));
+        var reply = pickReply(res);
         renderMessage("assistant", reply || "(empty)");
         scrollChatBottom(true);
       })
       .catch(function(e){
         console.error("chat error:", e);
-        renderMessage("system", "⚠️ " + (e && e.message ? e.message : "Server error. Please try again."));
-        setBanner("warn", (e && e.message) || "API error");
+        var msg = (e && e.message) ? e.message : "Server error. Please try again.";
+        renderMessage("system", "⚠️ " + msg);
+        setBanner("warn", msg);
       })
       .finally(function(){
+        setTyping(false);
         if (mainBtn) mainBtn.disabled = false;
         if (landBtn) landBtn.disabled = false;
         __sending = false;
       });
   }
 
-  // --------- Boot wiring ----------
+  // ---------- Boot wiring ----------
   window.addEventListener("DOMContentLoaded", function () {
     var app = $("app"); if (app) app.style.display = "block";
 
@@ -223,10 +245,15 @@
 
     setBanner("warn", "Checking API…");
     apiFetch("/health")
-      .then(function(){ var b = $("api-ok-badge"); if (b) b.style.display = "inline-flex"; setBanner("ok","API OK"); })
-      .catch(function(){ setBanner("err","API unreachable"); });
+      .then(function(){
+        var b = $("api-ok-badge"); if (b) b.style.display = "inline-flex";
+        setBanner("ok","API OK");
+      })
+      .catch(function(){
+        setBanner("err","API unreachable");
+      });
 
-    console.log("app.js booted. API_BASE =", API_BASE);
+    console.log("app.js booted. API_BASE =", API_BASE || "(auto '/api')");
   });
 
   window.sendChat = sendChat;
