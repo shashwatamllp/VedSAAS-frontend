@@ -1,182 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta http-equiv="x-content-type-options" content="nosniff" />
-  <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <meta name="color-scheme" content="dark light" />
-
-  <!-- API base (same host via CloudFront proxy) -->
-  <meta name="ved-api-base" content="" />
-
-  <title>VedSAAS</title>
-
-  <link rel="icon" href="/favicon.ico" />
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        referrerpolicy="strict-origin-when-cross-origin"
-        crossorigin="anonymous" />
-  <link rel="stylesheet" href="/style.css?v=20251017c" />
-
-  <style>
-    :root{ color-scheme:dark }
-    * { box-sizing: border-box }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:#0e0f14; color:#e9edf4 }
-    .container{ min-height:100dvh }
-    .banner{ padding:8px 12px; text-align:center; font-size:13px; display:none }
-    .banner.ok{ display:block; background:#063; color:#c7ffd9; border-bottom:1px solid #055 }
-    .banner.warn{ display:block; background:#5a4600; color:#ffe9a8; border-bottom:1px solid #3d2f00 }
-    .banner.err{ display:block; background:#5a0000; color:#ffd7d7; border-bottom:1px solid #3d0000 }
-    #settings-panel, #settings-panel *{ display:none!important; height:0!important; margin:0!important; padding:0!important; overflow:hidden!important }
-    .msg{ padding:10px 12px; margin:10px; border-radius:12px; max-width:900px; line-height:1.45; word-break:break-word; white-space:pre-wrap }
-    .msg-user{ background:#1f2a44 }
-    .msg-assistant{ background:#1f3a2a }
-    .msg-system{ background:#3a1f1f }
-    .chat-area{ padding:12px; height:60vh; overflow:auto; border-top:1px solid #233 }
-    .composer{ display:flex; gap:8px; padding:12px }
-    .composer textarea{ flex:1; resize:none; min-height:38px; max-height:160px; border-radius:10px; padding:10px; border:1px solid #2a3; background:#121622; color:#e9edf4 }
-    .send-btn{ border:0; padding:0 14px; border-radius:10px; cursor:pointer; background:#2a7; color:#041; font-weight:600 }
-    .send-btn:disabled{ opacity:.6; cursor:not-allowed }
-    .topbar{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid #233 }
-    .sidebar{ width:240px; border-right:1px solid #233; padding:10px; display:none }
-    .rail{ display:flex; min-height:100dvh }
-    @media (min-width: 960px){ .sidebar{ display:block } }
-    .btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; text-decoration:none; color:#e9edf4; background:#1a2233; border:1px solid #2b364c }
-    body.sidebar-open .sidebar { display:block }
-    body.sidebar-open #backdrop { position:fixed; inset:0; background:#0008; backdrop-filter: blur(2px); display:block }
-    .backdrop{ display:none }
-  </style>
-</head>
-<body>
-  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
-
-  <noscript>
-    <div style="background:#b91c1c;color:#fff;padding:10px;text-align:center">JavaScript required. Please enable JS.</div>
-  </noscript>
-
-  <div id="banner" class="banner" role="status" aria-live="polite"></div>
-
-  <div id="app" class="container" hidden>
-    <aside class="sidebar" aria-label="Conversation history">
-      <div class="title" style="font-weight:700;margin:6px 0 12px">Chat History</div>
-      <button class="btn" id="new-topic">+ New Chat</button>
-      <div class="history-list" id="history-list"></div>
-
-      <div class="settings-summary" style="margin-top:auto">
-        <a id="settings-header" class="user-chip" title="Account & Settings" href="/settings.html"
-           style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit">
-          <div id="settings-avatar" class="user-avatar" aria-hidden="true">U</div>
-          <div id="settings-username" class="user-name">User</div>
-          <i class="fas fa-gear settings-caret" aria-hidden="true"></i>
-        </a>
-        <div id="settings-panel" class="settings-panel" aria-hidden="true"></div>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="ved-api-base" content="">
+<title>VedSAAS</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<div id="banner" class="banner"></div>
+<div id="app" class="container" hidden>
+  <main style="flex:1">
+    <header class="topbar"><h1>VedSAAS <small id="api-ok-badge" style="display:none">API OK</small></h1></header>
+    <section id="landing">
+      <div class="composer">
+        <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
+        <button id="landing-start" class="send-btn"><i class="fas fa-paper-plane"></i></button>
       </div>
-    </aside>
-
-    <main class="main" style="flex:1">
-      <div class="rail">
-        <section style="flex:1; display:flex; flex-direction:column; min-height:100dvh">
-          <header class="topbar">
-            <button id="menu-toggle" class="btn" aria-label="Open menu"><i class="fas fa-bars"></i></button>
-            <h1 style="margin:0">VedSAAS
-              <small id="api-ok-badge" style="display:none;margin-left:8px;font-weight:600;color:#6dffb8">API OK</small>
-            </h1>
-            <div style="margin-left:auto" id="meta-info">Local: 0 KB</div>
-          </header>
-
-          <section id="landing" style="display:flex; flex-direction:column; gap:12px; padding:16px">
-            <div class="title" style="font-weight:700">Start a new conversation</div>
-            <div class="hint" style="opacity:.8">Ask anything. I’ll reply in your language.</div>
-
-            <div class="composer">
-              <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
-              <button id="landing-start" class="send-btn" title="Send" aria-label="Send">
-                <i class="fas fa-paper-plane"></i>
-              </button>
-            </div>
-
-            <div style="display:flex; gap:8px; flex-wrap:wrap">
-              <a class="btn" href="/login.html">Login</a>
-              <a class="btn" href="/register.html">Register</a>
-              <a class="btn" href="/settings.html">Settings</a>
-              <button id="landing-open-history" class="btn" type="button">Open Previous Chats</button>
-            </div>
-          </section>
-
-          <section id="chat-shell" style="display:none; flex:1; min-height:0; flex-direction:column;">
-            <div class="chat-area" id="chat-area"></div>
-            <div class="composer">
-              <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
-              <button id="send-btn" class="send-btn" title="Send" aria-label="Send" disabled>
-                <i class="fas fa-paper-plane"></i>
-              </button>
-            </div>
-          </section>
-        </section>
+    </section>
+    <section id="chat-shell" style="display:none">
+      <div id="chat-area" class="chat-area"></div>
+      <div class="composer">
+        <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
+        <button id="send-btn" class="send-btn" disabled><i class="fas fa-paper-plane"></i></button>
       </div>
-    </main>
-  </div>
-
-  <button id="to-bottom" class="btn" style="position:fixed; right:16px; bottom:16px">
-    <i class="fas fa-angle-down"></i> Latest
-  </button>
-
-  <!-- API base bootstrap -->
-  <script>
-    (function () {
-      if (window.API_BASE) return;
-      const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content?.trim() || '';
-      // If meta provided, use it; else default to same-origin proxy "/api"
-      window.API_BASE = (metaBase ? metaBase : '/api').replace(/\/$/, '');
-    })();
-  </script>
-
-  <!-- Optional: expose API key to client if your API requires it
-  <script>
-    window.__ALLOW_CLIENT_API_KEY = true;
-    window.__VED_API_KEY = "YOUR_KEY";
-  </script>
-  -->
-
-  <!-- Minimal UX bootstrap -->
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const app = document.getElementById('app'); if (app) app.hidden = false;
-      const landingInput = document.getElementById('landing-input');
-      const landingBtn = document.getElementById('landing-start');
-      if (landingInput && landingBtn) {
-        landingInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); landingBtn.click(); }
-        });
-      }
-      const menu = document.getElementById('menu-toggle');
-      const bd = document.getElementById('backdrop');
-      if (menu) menu.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
-      if (bd) bd.addEventListener('click', () => document.body.classList.remove('sidebar-open'));
-    });
-  </script>
-
-  <!-- Global error banner -->
-  <script>
-    (function () {
-      const banner = document.getElementById('banner');
-      function show(kind, msg){
-        if(!banner) return;
-        banner.className = 'banner ' + kind;
-        banner.textContent = msg;
-      }
-      window.addEventListener('error', (e) => { show('err', `Script error: ${e.message || e.error}`); });
-      window.addEventListener('unhandledrejection', (e) => {
-        const r = e.reason; show('err', `Unhandled promise: ${r && r.message ? r.message : r}`);
-      });
-    })();
-  </script>
-
-  <!-- Static JS -->
-  <script defer src="/vedsaas-fixes.js?v=20251017c" referrerpolicy="no-referrer"></script>
-  <script defer src="/app.js?v=20251017c" referrerpolicy="no-referrer"></script>
-</body>
-</html>
-
+    </section>
+  </main>
+</div>
+<button id="to-bottom" class="btn" style="position:fixed;right:16px;bottom:16px"><i class="fas fa-angle-down"></i> Latest</button>
+<script>
+  if(!window.API_BASE){
+    const m=document.querySelector('meta[name="ved-api-base"]')?.content?.trim()||'';
+    window.API_BASE=(m?m:'/api').replace(/\/$/,'');
+  }
+  document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('app').hidden=false; });
+</script>
+<script defer src="/app.js"></script>
+</body></html>
