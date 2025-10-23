@@ -16,7 +16,7 @@
   })();
 
   var API_BASE = (META_BASE || (typeof window !== "undefined" && window.API_BASE) || "")
-    .replace(/\/+$/,""); // '', '/api', 'https://api.vedsaas.com', etc.
+    .replace(/\/+$/,"");
 
   var API_KEY  = (typeof window !== "undefined" && window.__VED_API_KEY) ? String(window.__VED_API_KEY).trim() : "";
   var ALLOW_CLIENT_API_KEY = !!(typeof window !== "undefined" && window.__ALLOW_CLIENT_API_KEY === true);
@@ -61,8 +61,6 @@
     var head = String(textHead).slice(0,200).trim().toLowerCase();
     return head.startsWith("<!doctype") || head.startsWith("<html");
   }
-
-  // small retry for transient 502/504/network/timeout
   function withRetry(fn, attempts){
     return fn().catch(function(e){
       if (attempts <= 1) throw e;
@@ -70,7 +68,6 @@
         .then(function(){ return withRetry(fn, attempts - 1); });
     });
   }
-
   function apiFetch(path, options){
     options = options || {};
     var url = buildUrl(path);
@@ -100,10 +97,8 @@
           }
           return resp.text().then(function(text){ throw new Error("HTTP " + resp.status + (text?(": "+text):"")); });
         }
-
         var ctOK = (resp.headers.get("content-type") || "").toLowerCase();
         if (ctOK.includes("application/json")) return resp.json();
-
         return resp.text().then(function(txt){
           if (isLikelyHTML(ctOK, txt)) {
             var snip = String(txt).slice(0,200).replace(/\s+/g," ").trim();
@@ -113,7 +108,6 @@
         });
       });
   }
-
   window.VedAPI = { API_BASE, apiFetch, getToken, setToken, clearToken };
 
   // ---------- UI helpers ----------
@@ -146,8 +140,6 @@
     var el = $("chat-area"); if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }
-
-  // typing indicator
   function setTyping(on){
     var t = $("typing");
     if (!t) return;
@@ -160,7 +152,6 @@
     if (typeof res === "string") return res;
     return res.reply || res.answer || res.message || res.text || res.response || null;
   }
-
   function sendChat(text){
     if (!text) return Promise.resolve();
     if (__sending) return Promise.resolve();
@@ -172,7 +163,7 @@
       shell.style.display = "flex";
     }
 
-    var mainBtn = $("send-btn");
+    var mainBtn = $("send-btn") || document.querySelector('[data-send], .send-btn, button.send, .chat-send');
     var landBtn = $("landing-start");
     if (mainBtn) mainBtn.disabled = true;
     if (landBtn) landBtn.disabled = true;
@@ -205,8 +196,8 @@
   window.addEventListener("DOMContentLoaded", function () {
     var app = $("app"); if (app) app.style.display = "block";
 
-    var landingBtn   = $("landing-start");
-    var landingInput = $("landing-input");
+    var landingBtn   = $("landing-start") || document.querySelector('[data-landing-start], .landing-start');
+    var landingInput = $("landing-input") || document.querySelector('#chat-input, .chat-input, textarea[name="message"], #message, textarea');
     if (landingBtn) landingBtn.setAttribute("type", "button");
     if (landingInput) autosizeTA(landingInput);
     if (landingBtn && landingInput){
@@ -222,8 +213,8 @@
       });
     }
 
-    var mainBtn   = $("send-btn");
-    var mainInput = $("main-input");
+    var mainBtn   = $("send-btn") || document.querySelector('[data-send], .send-btn, button.send, .chat-send');
+    var mainInput = $("main-input") || document.querySelector('#chat-input, .chat-input, textarea[name="message"], #message, textarea');
     if (mainBtn) mainBtn.setAttribute("type", "button");
     if (mainInput) autosizeTA(mainInput);
     if (mainBtn && mainInput){
@@ -256,6 +247,8 @@
     console.log("app.js booted. API_BASE =", API_BASE || "(auto '/api')");
   });
 
+  window.VedAPI = window.VedAPI || {};
+  window.VedAPI.apiFetch = apiFetch;
   window.sendChat = sendChat;
   window.scrollChatBottom = scrollChatBottom;
 })();
