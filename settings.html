@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="ved-api-base" content="/api">
   <title>VedSAAS • Settings</title>
   <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="/public/css/theme.css"/>
   <style>
     :root{
       --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
@@ -57,37 +59,20 @@
 
     <div class="grid">
       <div class="section">
-        <h3>Account</h3>
-        <div class="row">
-          <div class="userline">
-            <span id="avatar" class="avatar"></span>
-            <div>
-              <div id="uname" style="font-weight:600">User</div>
-              <div class="muted" id="ulogin">Guest session</div>
-            </div>
-          </div>
-          <a class="btn secondary" href="profile.html">Open Profile</a>
-        </div>
-        <div class="row">
-          <div>Logout</div>
-          <button id="logout" class="btn danger">Logout</button>
-        </div>
-        <div class="row">
-          <div>Back to Chat</div>
-          <a class="btn" href="index.html">Open Chat</a>
-        </div>
+        <h3>User</h3>
+        <div id="user-section" data-user-section></div>
       </div>
 
       <div class="section">
         <h3>Preferences</h3>
         <div class="row">
           <div>Theme</div>
-          <button id="dark-toggle" class="btn secondary">Toggle Dark Mode</button>
+          <button id="theme-toggle-settings" data-theme-toggle class="btn secondary">Toggle Theme</button>
         </div>
         <div class="row">
           <div>Language</div>
           <div>
-            <span class="pill" id="lang-pill">AUTO</span>
+            <span class="pill" id="lang-pill" data-lang-display>AUTO</span>
             <button id="lang-toggle" class="btn secondary" style="margin-left:8px">Change</button>
           </div>
         </div>
@@ -133,43 +118,23 @@
   function sizeKB(n){ return Math.round((n||0)/1024); }
 
   let topics=[]; let current=null;
-  try{ topics = JSON.parse(localStorage.getItem('vedsaas_topics')||'[]'); }catch{}
-  try{ current = localStorage.getItem('vedsaas_current') || (topics[0]&&topics[0].id) || null; }catch{}
+  try{ topics = JSON.parse(localStorage.getItem('ved_topics')||'[]'); }catch{}
+  try{ current = localStorage.getItem('ved_current') || (topics[0]&&topics[0].id) || null; }catch{}
   const curTopic = topics.find(t=>t.id===current);
   $('cur-title').textContent = curTopic ? (curTopic.title || 'Chat') : '—';
   $('stat-local').textContent = 'Local: '+sizeKB(bytes(topics))+' KB';
 
-  const name = localStorage.getItem('pendingName') || 'User';
-  $('uname').textContent = name;
-  const tok = localStorage.getItem('token');
-  $('ulogin').textContent = tok ? 'Logged in' : 'Guest session';
-  const av = $('avatar');
-  const pendAv = localStorage.getItem('pendingAvatar');
-  if(pendAv){ av.style.backgroundImage = `url('${pendAv}')`; }
-  else {
-    const initials = name.split(/\s+/).map(s=>s[0]||'').slice(0,2).join('').toUpperCase();
-    av.style.background = '#555'; av.style.display='grid'; av.style.placeItems='center';
-    av.style.fontWeight='700'; av.style.color='#eaeaea'; av.textContent = initials || 'U';
-  }
-
-  const curTheme = localStorage.getItem('pref_theme');
-  if(curTheme==='dark') document.body.classList.add('dark-mode');
-  $('dark-toggle').onclick=()=>{
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    localStorage.setItem('pref_theme', isDark ? 'dark' : 'light');
-    msg('Theme: '+(isDark?'Dark':'Light'), true);
-  };
-
-  const order=['auto','en','hi'];
-  let lang = localStorage.getItem('pref_lang') || 'auto';
-  const updateLangPill=()=> $('lang-pill').textContent = (lang||'auto').toUpperCase();
-  updateLangPill();
+  // Language toggle functionality  
+  const order=['auto','en','hi','es'];
   $('lang-toggle').onclick=()=>{
-    lang = order[(order.indexOf(lang)+1)%order.length];
-    localStorage.setItem('pref_lang', lang);
-    updateLangPill();
-    msg('Language: '+lang.toUpperCase(), true);
+    const currentLang = window.VedLang ? window.VedLang.current() : 'auto';
+    const nextIdx = (order.indexOf(currentLang) + 1) % order.length;
+    const nextLang = order[nextIdx];
+    if (window.VedLang) {
+      window.VedLang.save(nextLang);
+      window.VedLang.updateDisplay('#lang-pill');
+    }
+    msg('Language: '+nextLang.toUpperCase(), true);
   };
 
   $('export').onclick=()=>{
@@ -186,9 +151,9 @@
     if(!current){ return msg('No current chat.'); }
     if(!confirm('Delete the current chat?')) return;
     const rest = (topics||[]).filter(t=>t.id!==current);
-    localStorage.setItem('vedsaas_topics', JSON.stringify(rest));
+    localStorage.setItem('ved_topics', JSON.stringify(rest));
     const next = (rest[0]&&rest[0].id) || '';
-    localStorage.setItem('vedsaas_current', next);
+    localStorage.setItem('ved_current', next);
     msg('Current chat deleted.', true);
     setTimeout(()=>location.reload(), 400);
   };
@@ -196,17 +161,15 @@
   $('clear-all').onclick=()=>{
     if(!(topics&&topics.length)) return msg('No chats to clear.');
     if(!confirm('This will remove ALL local chats. Continue?')) return;
-    localStorage.removeItem('vedsaas_topics');
-    localStorage.removeItem('vedsaas_current');
+    localStorage.removeItem('ved_topics');
+    localStorage.removeItem('ved_current');
     msg('All chats cleared.', true);
     setTimeout(()=>location.reload(), 300);
   };
-
-  $('logout').onclick=()=>{
-    localStorage.removeItem('token');
-    msg('Logged out.', true);
-    setTimeout(()=>location.href='login.html', 300);
-  };
 </script>
+
+<script src="/public/js/theme-toggle.js"></script>
+<script src="/public/js/lang-toggle.js"></script>
+<script src="/public/js/settings.js"></script>
 </body>
 </html>

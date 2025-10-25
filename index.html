@@ -7,6 +7,7 @@
 <title>VedSAAS</title>
 <link rel="icon" href="/favicon.ico"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="/public/css/theme.css"/>
 
 <style>
   :root{ color-scheme:dark }
@@ -29,8 +30,11 @@
   .preview{ color:#bbb; font-size:12px; margin-top:4px }
 
   main{ flex:1; display:flex; flex-direction:column; min-width:0 }
-  .topbar{ display:flex; justify-content:center; align-items:center; padding:10px 12px; border-bottom:1px solid #233 }
-  .topbar h1{ margin:0; font-size:18px; letter-spacing:.5px }
+  .topbar{ display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid #233 }
+  .topbar h1{ margin:0; font-size:18px; letter-spacing:.5px; flex:1; text-align:center }
+  .topbar-controls{ display:flex; gap:8px; align-items:center }
+  .theme-toggle{ background:transparent; border:1px solid #2b364c; color:#e9edf4; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:14px }
+  .theme-toggle:hover{ background:#1a2233 }
 
   /* landing with logo bg 20% */
   #landing{ position:relative; display:flex; flex-direction:column; gap:12px; padding:16px; min-height:40vh; overflow:hidden }
@@ -47,6 +51,8 @@
   .chat-area{ flex:1; padding:12px; overflow:auto; border-top:1px solid #233 }
   .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid #233; background:#0e0f14; position:sticky; bottom:0 }
   .composer textarea{ flex:1; resize:none; min-height:38px; max-height:160px; border-radius:10px; padding:10px; border:1px solid #2a3; background:#121622; color:#e9edf4 }
+  .lang-selector{ border:1px solid #2b364c; background:#1a2233; color:#e9edf4; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px }
+  .lang-selector:focus{ outline:2px solid #2e7bbd; outline-offset:2px }
   .send-btn{ border:0; padding:0 14px; border-radius:10px; cursor:pointer; background:#2a7; color:#041; font-weight:600 }
   .send-btn:disabled{ opacity:.6; cursor:not-allowed }
 
@@ -72,11 +78,15 @@
     <div class="title">Chat History</div>
     <button id="new-topic" class="btn" type="button">+ New Chat</button>
     <div id="history-list"></div>
+    <a href="settings.html" class="btn" style="margin-top:auto; text-decoration:none"><i class="fas fa-cog"></i> Settings</a>
   </aside>
 
   <main>
     <header class="topbar">
       <h1>VedSAAS</h1>
+      <div class="topbar-controls">
+        <button id="theme-toggle" class="theme-toggle" data-theme-toggle aria-label="Toggle theme" type="button">☀️</button>
+      </div>
     </header>
 
     <section id="landing">
@@ -84,6 +94,12 @@
       <div style="opacity:.8">Ask anything. I’ll reply in your language.</div>
       <div class="composer">
         <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
+        <select id="landing-lang" class="lang-selector" data-lang-select aria-label="Select language">
+          <option value="auto">Auto</option>
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="es">Español</option>
+        </select>
         <button id="landing-start" class="send-btn" type="button"><i class="fas fa-paper-plane"></i></button>
       </div>
       <div><button id="landing-open-history" class="btn" type="button">Open Previous Chats</button></div>
@@ -93,6 +109,12 @@
       <div id="chat-area" class="chat-area"></div>
       <div class="composer">
         <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
+        <select id="main-lang" class="lang-selector" data-lang-select aria-label="Select language">
+          <option value="auto">Auto</option>
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="es">Español</option>
+        </select>
         <button id="send-btn" class="send-btn" type="button" disabled><i class="fas fa-paper-plane"></i></button>
       </div>
     </section>
@@ -220,9 +242,13 @@ async function send(text){
   if(!text||sending) return;
   sending=true; $('send-btn').disabled=true;
   if(!currentTopicId) newTopic('New Chat');
+  
+  // Add language marker if applicable
+  const messageToSend = window.VedLang ? window.VedLang.addMarker(text) : text;
+  
   appendMessage('user',text);
   try{
-    const res=await chatCall({message:text,prompt:text});
+    const res=await chatCall({message:messageToSend,prompt:messageToSend});
     const reply=pickReply(res);
     appendMessage('assistant', reply || '⚠️ Empty response from API');
   }catch(e){
@@ -261,6 +287,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   toggle();
 });
 </script>
+
+<script src="/public/js/theme-toggle.js"></script>
+<script src="/public/js/lang-toggle.js"></script>
 </body>
 </html>
 

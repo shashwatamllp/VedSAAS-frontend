@@ -1,0 +1,38 @@
+/* VedSAAS Theme Variables */
+:root {
+  /* Dark theme (default) */
+  --bg-primary: #0e0f14;
+  --bg-secondary: #1a2233;
+  --bg-surface: #1f2a44;
+  --border-color: #233;
+  --text-primary: #e9edf4;
+  --text-secondary: #ddd;
+  --text-muted: #bbb;
+  --accent-primary: #2a7;
+  --accent-secondary: #2e7bbd;
+  --success: #063;
+  --warning: #5a4600;
+  --error: #5a0000;
+}
+
+/* Light theme */
+.light-theme {
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #ffffff;
+  --bg-surface: #ffffff;
+  --border-color: #d4dae4;
+  --text-primary: #1a202c;
+  --text-secondary: #2d3748;
+  --text-muted: #718096;
+  --accent-primary: #38a169;
+  --accent-secondary: #3182ce;
+  --success: #38a169;
+  --warning: #d69e2e;
+  --error: #e53e3e;
+}
+
+/* Apply theme to body when light-theme is active */
+.light-theme body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
