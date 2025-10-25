@@ -46,8 +46,12 @@
     const h = (location.hostname || '').toLowerCase();
     const origin = location.origin || '';
     
-    if (h.endsWith('vedsaas.com')) {
-      return h === 'api.vedsaas.com' ? origin : 'https://api.vedsaas.com';
+    // Exact domain match for vedsaas.com (prevent subdomain spoofing)
+    if (h === 'vedsaas.com' || h === 'www.vedsaas.com') {
+      return 'https://api.vedsaas.com';
+    }
+    if (h === 'api.vedsaas.com') {
+      return origin;
     }
     if (/:(8010|8011|8012)\b/.test(origin)) return origin;
     
