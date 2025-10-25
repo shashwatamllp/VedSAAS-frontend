@@ -1,212 +1,174 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>VedSAAS • Settings</title>
-  <link rel="icon" href="favicon.ico"/>
-  <style>
-    :root{
-      --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
-      --text:#fff; --muted:#b9bed1; --brand:#0078d4; --brand-2:#005ea2;
-      --ok:#b7ffb7; --err:#ffd7d7;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
-      background:var(--bg); color:var(--text);
-      display:flex; align-items:center; justify-content:center;
-      min-height:100vh; overflow:hidden;
-    }
-    .bg{position:fixed; inset:0; background:url('images/logopic.png') center/520px no-repeat; opacity:.06; pointer-events:none}
-    .card{
-      position:relative; z-index:1;
-      width:min(980px,96vw); max-height:92vh; overflow:auto; scrollbar-gutter:stable;
-      background:var(--card); border-radius:14px; padding:18px 18px 16px;
-      box-shadow:0 10px 38px rgba(0,0,0,.45);
-    }
-    h1{font-size:24px; text-align:center; margin-bottom:4px}
-    .sub{color:var(--muted); text-align:center; font-size:14px; margin-bottom:12px}
-    .grid{display:grid; grid-template-columns: 1fr 1fr; gap:12px 16px}
-    .section{background:#2a2a3a; border-radius:10px; padding:12px}
-    .section h3{font-size:15px; margin-bottom:8px}
-    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid rgba(255,255,255,.06)}
-    .row:first-child{border-top:none}
-    .btn{padding:10px 12px; border:none; border-radius:10px; background:var(--brand); color:#fff; cursor:pointer; font-weight:600}
-    .btn:hover{background:var(--brand-2)}
-    .btn.secondary{background:#444}
-    .btn.danger{background:#a22}
-    .btn.danger:hover{background:#821b1b}
-    .pill{padding:6px 10px; border-radius:999px; background:#3a3a4d; font-size:12px; color:#dfe3f4}
-    .avatar{width:48px;height:48px;border-radius:50%;background:#555 center/cover no-repeat; display:inline-block; margin-right:10px}
-    .userline{display:flex; align-items:center}
-    .muted{color:#b9bed1}
-    .msg{min-height:18px; text-align:center; font-size:13px; margin-top:8px}
-    .ok{color:var(--ok)} .err{color:var(--err)}
-    .footer{margin-top:10px; text-align:center; color:#9aa0b6; font-size:12px}
-    @media (max-width:760px){ .grid{grid-template-columns: 1fr} }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Settings — VedSAAS</title>
+<link rel="icon" href="/favicon.ico"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+  :root{
+    --bg: #0e0f14;
+    --surface: #0f1720;
+    --muted: #94a3b8;
+    --text: #e9edf4;
+    --accent: #2a7;
+  }
+  .light-theme{
+    --bg: #f7fafc;
+    --surface: #ffffff;
+    --muted: #475569;
+    --text: #0b1220;
+    --accent: #1366d6;
+  }
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:var(--bg); color:var(--text) }
+  .wrap{ max-width:960px; margin:24px auto; padding:16px }
+  h1,h2{ margin:0 0 12px 0 }
+  .card{ background:var(--surface); padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.03) }
+  .row{ display:flex; gap:12px; align-items:center; margin-top:10px }
+  select, button{ padding:8px 10px; border-radius:8px; background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.03) }
+  a.btn{ display:inline-block; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.02); color:var(--text) }
+</style>
 </head>
 <body>
-  <div class="bg"></div>
+  <div class="wrap">
+    <h1>Settings</h1>
 
-  <div class="card">
-    <h1>Settings & Tools</h1>
-    <p class="sub">Manage appearance, language, chats, and account.</p>
-
-    <div class="grid">
-      <div class="section">
-        <h3>Account</h3>
-        <div class="row">
-          <div class="userline">
-            <span id="avatar" class="avatar"></span>
-            <div>
-              <div id="uname" style="font-weight:600">User</div>
-              <div class="muted" id="ulogin">Guest session</div>
-            </div>
-          </div>
-          <a class="btn secondary" href="profile.html">Open Profile</a>
-        </div>
-        <div class="row">
-          <div>Logout</div>
-          <button id="logout" class="btn danger">Logout</button>
-        </div>
-        <div class="row">
-          <div>Back to Chat</div>
-          <a class="btn" href="index.html">Open Chat</a>
-        </div>
+    <section class="card" aria-labelledby="user-heading">
+      <h2 id="user-heading">User</h2>
+      <div id="user-settings" role="region" aria-live="polite">
+        <!-- JS will render login/register or user info here -->
+        <p>Loading...</p>
       </div>
+    </section>
 
-      <div class="section">
-        <h3>Preferences</h3>
-        <div class="row">
-          <div>Theme</div>
-          <button id="dark-toggle" class="btn secondary">Toggle Dark Mode</button>
-        </div>
-        <div class="row">
-          <div>Language</div>
-          <div>
-            <span class="pill" id="lang-pill">AUTO</span>
-            <button id="lang-toggle" class="btn secondary" style="margin-left:8px">Change</button>
-          </div>
-        </div>
+    <section class="card" style="margin-top:14px" aria-labelledby="appearance-heading">
+      <h2 id="appearance-heading">Appearance</h2>
+      <div class="row">
+        <button id="theme-toggle-btn" aria-label="Toggle theme">Toggle Theme</button>
+        <div style="margin-left:8px">Current: <span data-theme-indicator></span></div>
       </div>
+    </section>
 
-      <div class="section">
-        <h3>Chats</h3>
-        <div class="row">
-          <div>Current chat</div>
-          <div class="muted" id="cur-title">—</div>
-        </div>
-        <div class="row">
-          <div>Export chats (JSON)</div>
-          <button id="export" class="btn secondary">Export</button>
-        </div>
-        <div class="row">
-          <div>Delete current chat</div>
-          <button id="delete-current" class="btn danger">Delete</button>
-        </div>
-        <div class="row">
-          <div>Clear ALL chats</div>
-          <button id="clear-all" class="btn danger">Clear All</button>
-        </div>
+    <section class="card" style="margin-top:14px" aria-labelledby="language-heading">
+      <h2 id="language-heading">Chat Language</h2>
+      <div class="row">
+        <label for="chat-lang-select-settings" class="sr-only">Preferred chat language</label>
+        <select id="chat-lang-select-settings" aria-label="Select chat language">
+          <option value="Auto">Auto</option>
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+        <div style="margin-left:8px">Current: <span data-chat-lang-indicator></span></div>
       </div>
+    </section>
 
-      <div class="section">
-        <h3>About</h3>
-        <div class="row">
-          <div class="muted">VedSAAS • Shashwatam Eco-Chie Creations LLP</div>
-          <span class="pill" id="stat-local">Local: 0 KB</span>
-        </div>
-      </div>
+    <div style="margin-top:18px">
+      <a href="index.html" class="btn" aria-label="Back to chat">← Back to chat</a>
     </div>
-
-    <div id="msg" class="msg"></div>
-    <div class="footer">© VedSAAS by Shashwatam Eco-Chie Creations LLP</div>
   </div>
 
 <script>
-  const $=id=>document.getElementById(id);
-  const msg=(t,ok=false)=>{ const m=$('msg'); m.className='msg '+(ok?'ok':'err'); m.textContent=t||''; };
-  function bytes(obj){ try{ return JSON.stringify(obj).length; }catch{ return 0; } }
-  function sizeKB(n){ return Math.round((n||0)/1024); }
+/* Shared keys */
+const THEME_KEY = 'vedsaas_theme';
+const LANG_KEY = 'vedsaas_chat_lang';
 
-  let topics=[]; let current=null;
-  try{ topics = JSON.parse(localStorage.getItem('vedsaas_topics')||'[]'); }catch{}
-  try{ current = localStorage.getItem('vedsaas_current') || (topics[0]&&topics[0].id) || null; }catch{}
-  const curTopic = topics.find(t=>t.id===current);
-  $('cur-title').textContent = curTopic ? (curTopic.title || 'Chat') : '—';
-  $('stat-local').textContent = 'Local: '+sizeKB(bytes(topics))+' KB';
+function applyTheme(theme){
+  if(theme === 'light') document.documentElement.classList.add('light-theme');
+  else document.documentElement.classList.remove('light-theme');
+  document.querySelectorAll('[data-theme-indicator]').forEach(el=> el.textContent = theme);
+}
+function getSavedTheme(){ return localStorage.getItem(THEME_KEY) || 'dark'; }
+function setSavedTheme(t){ localStorage.setItem(THEME_KEY, t); applyTheme(t); }
 
-  const name = localStorage.getItem('pendingName') || 'User';
-  $('uname').textContent = name;
-  const tok = localStorage.getItem('token');
-  $('ulogin').textContent = tok ? 'Logged in' : 'Guest session';
-  const av = $('avatar');
-  const pendAv = localStorage.getItem('pendingAvatar');
-  if(pendAv){ av.style.backgroundImage = `url('${pendAv}')`; }
-  else {
-    const initials = name.split(/\s+/).map(s=>s[0]||'').slice(0,2).join('').toUpperCase();
-    av.style.background = '#555'; av.style.display='grid'; av.style.placeItems='center';
-    av.style.fontWeight='700'; av.style.color='#eaeaea'; av.textContent = initials || 'U';
+function setSavedLang(lang){
+  localStorage.setItem(LANG_KEY, lang);
+  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = lang);
+}
+function getSavedLang(){ return localStorage.getItem(LANG_KEY) || 'Auto'; }
+
+/* Settings user area */
+async function loadUserArea(){
+  const container = document.getElementById('user-settings');
+  const loginHref = 'login.html';
+  const registerHref = 'register.html';
+
+  function renderLoggedOut(){
+    container.innerHTML = `
+      <p>You are not signed in.</p>
+      <a href="${loginHref}" class="btn" role="button" aria-label="Login">Login</a>
+      <a href="${registerHref}" class="btn" role="button" aria-label="Register" style="margin-left:8px">Register</a>
+    `;
   }
 
-  const curTheme = localStorage.getItem('pref_theme');
-  if(curTheme==='dark') document.body.classList.add('dark-mode');
-  $('dark-toggle').onclick=()=>{
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    localStorage.setItem('pref_theme', isDark ? 'dark' : 'light');
-    msg('Theme: '+(isDark?'Dark':'Light'), true);
-  };
+  function renderUser(user){
+    container.innerHTML = `
+      <h3>${user.name || user.email || 'User'}</h3>
+      <p><strong>Email:</strong> ${user.email || '—'}</p>
+      <p><strong>Plan:</strong> ${user.plan || 'Free'}</p>
+      <div style="margin-top:8px">
+        <button id="logout-btn" class="btn" aria-label="Logout">Logout</button>
+      </div>
+    `;
+    const logoutBtn = document.getElementById('logout-btn');
+    if(logoutBtn && window.VedAPI && typeof VedAPI.logout === 'function'){
+      logoutBtn.addEventListener('click', async ()=>{
+        try{
+          await VedAPI.logout();
+          location.reload();
+        }catch(e){
+          console.error('Logout failed', e);
+          location.reload();
+        }
+      });
+    }
+  }
 
-  const order=['auto','en','hi'];
-  let lang = localStorage.getItem('pref_lang') || 'auto';
-  const updateLangPill=()=> $('lang-pill').textContent = (lang||'auto').toUpperCase();
-  updateLangPill();
-  $('lang-toggle').onclick=()=>{
-    lang = order[(order.indexOf(lang)+1)%order.length];
-    localStorage.setItem('pref_lang', lang);
-    updateLangPill();
-    msg('Language: '+lang.toUpperCase(), true);
-  };
+  try{
+    if(window.VedAPI && typeof VedAPI.getUser === 'function'){
+      const user = await VedAPI.getUser();
+      if(user && (user.email || user.name)){
+        renderUser(user);
+      } else {
+        renderLoggedOut();
+      }
+    } else {
+      if(window.USER && (USER.email || USER.name)){
+        renderUser(window.USER);
+      } else {
+        renderLoggedOut();
+      }
+    }
+  }catch(err){
+    console.error(err);
+    renderLoggedOut();
+  }
+}
 
-  $('export').onclick=()=>{
-    const blob = new Blob([JSON.stringify(topics||[], null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'vedsaas_chats.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    msg('Exported chats.', true);
-  };
+document.addEventListener('DOMContentLoaded', ()=>{
+  // apply theme and language saved values
+  applyTheme(getSavedTheme());
+  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = getSavedLang());
 
-  $('delete-current').onclick=()=>{
-    if(!current){ return msg('No current chat.'); }
-    if(!confirm('Delete the current chat?')) return;
-    const rest = (topics||[]).filter(t=>t.id!==current);
-    localStorage.setItem('vedsaas_topics', JSON.stringify(rest));
-    const next = (rest[0]&&rest[0].id) || '';
-    localStorage.setItem('vedsaas_current', next);
-    msg('Current chat deleted.', true);
-    setTimeout(()=>location.reload(), 400);
-  };
+  // Theme toggle
+  const tBtn = document.getElementById('theme-toggle-btn');
+  if(tBtn) tBtn.addEventListener('click', ()=>{
+    const current = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';
+    const next = current === 'light' ? 'dark' : 'light';
+    setSavedTheme(next);
+  });
 
-  $('clear-all').onclick=()=>{
-    if(!(topics&&topics.length)) return msg('No chats to clear.');
-    if(!confirm('This will remove ALL local chats. Continue?')) return;
-    localStorage.removeItem('vedsaas_topics');
-    localStorage.removeItem('vedsaas_current');
-    msg('All chats cleared.', true);
-    setTimeout(()=>location.reload(), 300);
-  };
+  // Language selector
+  const sel = document.getElementById('chat-lang-select-settings');
+  if(sel){
+    sel.value = getSavedLang();
+    sel.addEventListener('change', (e)=> setSavedLang(e.target.value));
+  }
 
-  $('logout').onclick=()=>{
-    localStorage.removeItem('token');
-    msg('Logged out.', true);
-    setTimeout(()=>location.href='login.html', 300);
-  };
+  loadUserArea();
+});
 </script>
 </body>
 </html>
