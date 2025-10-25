@@ -1,0 +1,70 @@
+/* Side theme toggle: top-right corner, rounded bottom.
+   Bottom indicator inverts color relative to theme:
+   - Default (dark theme): bottom is light
+   - .light-theme applied: bottom becomes dark
+*/
+
+#theme-side-toggle{
+  position:fixed;
+  right:12px;
+  top:12px;
+  z-index:9999;
+  width:56px;
+  height:140px;
+  background:var(--surface);
+  color:var(--text);
+  border:1px solid rgba(0,0,0,0.06);
+  border-top-left-radius:0;
+  border-top-right-radius:0;
+  border-bottom-left-radius:14px;
+  border-bottom-right-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(2,6,23,0.3);
+  overflow:visible;
+  writing-mode:vertical-rl;
+  transform: rotate(180deg);
+  font-size:12px;
+  line-height:1;
+}
+
+/* The small text inside (keeps horizontal reading) */
+#theme-side-toggle > .ts-text{
+  writing-mode:horizontal-tb;
+  transform: rotate(0deg);
+  display:block;
+  text-align:center;
+  font-weight:600;
+}
+
+/* Bottom pill (visual) that inverts color relative to theme.
+   Default: (dark theme) show light pill.
+   When .light-theme is present: show dark pill.
+*/
+#theme-side-toggle::after{
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  height: 34px;
+  border-radius: 18px;
+  /* Default (dark theme): light bottom */
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+  pointer-events: none;
+}
+
+/* If light theme active, make bottom pill dark */
+.light-theme #theme-side-toggle::after{
+  background: rgba(10,12,16,0.92);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+}
+
+/* Small responsive tweak */
+@media (max-width: 900px){
+  #theme-side-toggle{ right:8px; top:8px; height:110px; width:48px; }
+  #theme-side-toggle::after{ height:30px; left:6px; right:6px; bottom:6px; border-radius:15px; }
+}
