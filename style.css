@@ -1,21 +1,21 @@
 *{margin:0;padding:0;box-sizing:border-box}
 
 /* Base */
-html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#1e1e2f;color:#fff;overflow:hidden}
+html,body{height:100%;font-family:'Segoe UI',sans-serif;background:var(--bg-primary, #1e1e2f);color:var(--text-primary, #fff);overflow:hidden}
 body{min-height:100svh}
 body.dark-mode{background:#0e0e12}
 input,textarea,select,button{font-size:16px}
 
 /* Shell */
 .container{display:flex;height:100vh;position:relative;z-index:1;overflow:hidden}
-.sidebar{width:20%;min-width:275px;background:#232336;padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+.sidebar{width:20%;min-width:275px;background:var(--bg-secondary, #232336);padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
 .sidebar .title{text-align:center;font-weight:700;font-size:15px;color:#eee}
 .new-topic-btn{background:#0078d4;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;width:100%}
 .new-topic-btn:hover{filter:brightness(1.07)}
-.history-list{flex:1;overflow:auto;margin-top:10px;border-top:1px solid #333;padding-top:10px}
-.topic{padding:8px 10px;margin-bottom:8px;border-radius:8px;cursor:pointer;color:#ddd}
-.topic.active{background:#2e7bbd;color:#fff}
-.topic .preview{color:#bbb;font-size:13px;margin-top:4px}
+.history-list{flex:1;overflow:auto;margin-top:10px;border-top:1px solid var(--border-color, #333);padding-top:10px}
+.topic{padding:8px 10px;margin-bottom:8px;border-radius:8px;cursor:pointer;color:var(--text-secondary, #ddd)}
+.topic.active{background:var(--accent-secondary, #2e7bbd);color:#fff}
+.topic .preview{color:var(--text-muted, #bbb);font-size:13px;margin-top:4px}
 .settings-summary{margin-top:8px}
 .user-chip{display:flex;align-items:center;gap:10px;background:#2f2f42;border:1px solid #4a4a60;padding:10px 12px;border-radius:10px;cursor:pointer}
 .user-chip:hover{background:#34344e}
