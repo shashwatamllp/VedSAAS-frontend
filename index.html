@@ -9,28 +9,49 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
 <style>
+  /* Theme variables (dark default) */
+  :root{
+    --bg: #0e0f14;
+    --surface: #0f1720;
+    --muted: #94a3b8;
+    --text: #e9edf4;
+    --accent: #2a7;
+    --panel-border: #233;
+    --radius: 10px;
+  }
+  .light-theme{
+    --bg: #f7fafc;
+    --surface: #ffffff;
+    --muted: #475569;
+    --text: #0b1220;
+    --accent: #1366d6;
+    --panel-border: #e6eef4;
+  }
+
   :root{ color-scheme:dark }
   *{box-sizing:border-box}
-  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:#0e0f14; color:#e9edf4 }
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:var(--bg); color:var(--text) }
   a{ color:inherit; text-decoration:none }
 
   /* layout */
   .container{ display:flex; min-height:100dvh }
-  aside.sidebar{ width:260px; border-right:1px solid #233; padding:12px; display:flex; flex-direction:column; gap:10px }
+  aside.sidebar{ width:260px; border-right:1px solid var(--panel-border); padding:12px; display:flex; flex-direction:column; gap:10px; background:var(--surface) }
   .title{ font-weight:700; margin:6px 0 8px }
-  .btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; background:#1a2233; border:1px solid #2b364c; color:#e9edf4; cursor:pointer }
+  .btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color:var(--text); cursor:pointer }
   .btn:disabled{ opacity:.6; cursor:not-allowed }
 
   /* history list */
   #history-list{ overflow:auto; flex:1 }
-  .topic{ padding:8px 10px; border-radius:8px; cursor:pointer; color:#ddd }
+  .topic{ padding:8px 10px; border-radius:8px; cursor:pointer; color:var(--muted) }
   .topic+.topic{ margin-top:6px }
-  .topic.active{ background:#2e7bbd; color:#fff }
-  .preview{ color:#bbb; font-size:12px; margin-top:4px }
+  .topic.active{ background:var(--accent); color:#fff }
+  .preview{ color:var(--muted); font-size:12px; margin-top:4px }
 
   main{ flex:1; display:flex; flex-direction:column; min-width:0 }
-  .topbar{ display:flex; justify-content:center; align-items:center; padding:10px 12px; border-bottom:1px solid #233 }
+  .topbar{ display:flex; justify-content:center; align-items:center; padding:10px 12px; border-bottom:1px solid var(--panel-border); background:var(--surface) }
+  .topbar-inner{ width:100%; max-width:1100px; display:flex; align-items:center; justify-content:center; gap:12px }
   .topbar h1{ margin:0; font-size:18px; letter-spacing:.5px }
+  .topbar-right{ position:absolute; top:12px; right:16px; display:flex; gap:8px; align-items:center }
 
   /* landing with logo bg 20% */
   #landing{ position:relative; display:flex; flex-direction:column; gap:12px; padding:16px; min-height:40vh; overflow:hidden }
@@ -38,29 +59,33 @@
     content:"";
     position:absolute; inset:0;
     background:url("/logopic.png") center/60% no-repeat;
-    opacity:.2; pointer-events:none; z-index:0;
+    opacity:.08; pointer-events:none; z-index:0;
   }
   #landing > *{ position:relative; z-index:1 }
 
   /* chat: composer fixed at bottom of main area */
   #chat-shell{ display:flex; flex-direction:column; height:calc(100dvh - 50px); }
-  .chat-area{ flex:1; padding:12px; overflow:auto; border-top:1px solid #233 }
-  .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid #233; background:#0e0f14; position:sticky; bottom:0 }
-  .composer textarea{ flex:1; resize:none; min-height:38px; max-height:160px; border-radius:10px; padding:10px; border:1px solid #2a3; background:#121622; color:#e9edf4 }
-  .send-btn{ border:0; padding:0 14px; border-radius:10px; cursor:pointer; background:#2a7; color:#041; font-weight:600 }
+  .chat-area{ flex:1; padding:12px; overflow:auto; border-top:1px solid var(--panel-border) }
+  .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid var(--panel-border); background:var(--surface); position:sticky; bottom:0; align-items:center }
+  .composer textarea{ flex:1; resize:none; min-height:38px; max-height:160px; border-radius:10px; padding:10px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:var(--text) }
+  .send-btn{ border:0; padding:0 14px; border-radius:10px; cursor:pointer; background:var(--accent); color:#041; font-weight:600 }
+  .send-btn i{ color:#fff }
   .send-btn:disabled{ opacity:.6; cursor:not-allowed }
 
   .msg{ padding:10px 12px; margin:10px; border-radius:12px; max-width:900px; line-height:1.45; word-break:break-word; white-space:pre-wrap }
-  .msg-user{ background:#1f2a44; margin-left:auto }
-  .msg-assistant{ background:#1f3a2a }
-  .msg-system{ background:#3a1f1f }
+  .msg-user{ background:rgba(255,255,255,0.03); margin-left:auto; color:var(--text) }
+  .msg-assistant{ background:rgba(0,0,0,0.12); color:var(--text) }
+  .msg-system{ background:rgba(255,0,0,0.05); color:var(--text) }
 
   .banner{ padding:8px 12px; text-align:center; font-size:13px; display:none }
   .banner.ok{ display:block; background:#063; color:#c7ffd9; border-bottom:1px solid #055 }
   .banner.warn{ display:block; background:#5a4600; color:#ffe9a8; border-bottom:1px solid #3d2f00 }
   .banner.err{ display:block; background:#5a0000; color:#ffd7d7; border-bottom:1px solid #3d0000 }
 
+  #chat-lang-select{ background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.03); border-radius:8px; padding:6px 8px; font-size:14px }
+
   @media (max-width: 900px){ aside.sidebar{ display:none } }
+  .sr-only{ position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden }
 </style>
 </head>
 <body>
@@ -72,28 +97,56 @@
     <div class="title">Chat History</div>
     <button id="new-topic" class="btn" type="button">+ New Chat</button>
     <div id="history-list"></div>
+    <div style="margin-top:8px">
+      <a href="settings.html" class="btn" aria-label="Open settings">⚙️ Settings</a>
+    </div>
   </aside>
 
   <main>
     <header class="topbar">
-      <h1>VedSAAS</h1>
+      <div class="topbar-inner" role="banner" aria-label="Top bar">
+        <h1>VedSAAS</h1>
+        <div class="topbar-right" style="position:relative;">
+          <button id="theme-toggle-btn" class="btn" aria-label="Toggle theme" title="Toggle light/dark">Theme: <span data-theme-indicator></span></button>
+        </div>
+      </div>
     </header>
 
     <section id="landing">
       <div class="title">Start a new conversation</div>
       <div style="opacity:.8">Ask anything. I’ll reply in your language.</div>
-      <div class="composer">
-        <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
-        <button id="landing-start" class="send-btn" type="button"><i class="fas fa-paper-plane"></i></button>
+      <div class="composer" aria-label="Landing composer">
+        <textarea id="landing-input" placeholder="Type your first message..." rows="1" aria-label="Landing message input"></textarea>
+
+        <label for="landing-chat-lang" class="sr-only">Chat language</label>
+        <select id="landing-chat-lang" aria-label="Select chat language">
+          <option value="Auto">Auto</option>
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+
+        <button id="landing-start" class="send-btn" type="button" aria-label="Start chat"><i class="fas fa-paper-plane"></i></button>
       </div>
       <div><button id="landing-open-history" class="btn" type="button">Open Previous Chats</button></div>
     </section>
 
     <section id="chat-shell" style="display:none; min-height:0;">
-      <div id="chat-area" class="chat-area"></div>
-      <div class="composer">
-        <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
-        <button id="send-btn" class="send-btn" type="button" disabled><i class="fas fa-paper-plane"></i></button>
+      <div id="chat-area" class="chat-area" aria-live="polite"></div>
+      <div class="composer" role="region" aria-label="Chat composer">
+        <textarea id="main-input" placeholder="Type your message..." rows="1" aria-label="Chat message input"></textarea>
+
+        <label for="chat-lang-select" class="sr-only">Chat language</label>
+        <select id="chat-lang-select" aria-label="Select chat language">
+          <option value="Auto">Auto</option>
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+
+        <button id="send-btn" class="send-btn" type="button" disabled aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
       </div>
     </section>
   </main>
@@ -112,6 +165,24 @@ if(!window.API_BASE){
 const $ = (id)=>document.getElementById(id);
 const esc = (s)=>String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 function banner(kind,msg){ const b=$('banner'); b.className='banner '+kind; b.textContent=msg; b.style.display='block'; setTimeout(()=>b.style.display='none',2200); }
+
+/* ==== theme + language utilities ==== */
+const THEME_KEY = 'vedsaas_theme';
+const LANG_KEY = 'vedsaas_chat_lang';
+
+function applyTheme(theme){
+  if(theme === 'light') document.documentElement.classList.add('light-theme');
+  else document.documentElement.classList.remove('light-theme');
+  document.querySelectorAll('[data-theme-indicator]').forEach(el=> el.textContent = theme);
+}
+function getSavedTheme(){ return localStorage.getItem(THEME_KEY) || 'dark'; }
+function setSavedTheme(t){ localStorage.setItem(THEME_KEY, t); applyTheme(t); }
+
+function setSavedLang(lang){
+  localStorage.setItem(LANG_KEY, lang);
+  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = lang);
+}
+function getSavedLang(){ return localStorage.getItem(LANG_KEY) || 'Auto'; }
 
 /* ==== state ==== */
 let topics=[];               // [{id,title,created_at,messages:[{id,from,message,timestamp}]}]
@@ -234,12 +305,49 @@ async function send(text){
 
 /* ==== wiring ==== */
 document.addEventListener('DOMContentLoaded', ()=>{
+  // Apply theme and language saved preferences
+  applyTheme(getSavedTheme());
+  const savedLang = getSavedLang();
+  // show in indicators (if any)
+  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = savedLang);
+
   $('app').hidden=false;
 
   load(); renderHistory(); renderChat();
 
-  // landing
-  $('landing-start').onclick=()=>{ const v=($('landing-input').value||'').trim(); if(!v) return; $('landing-input').value=''; send(v); };
+  // landing composer language selector hookup
+  const landingLang = $('landing-chat-lang');
+  if(landingLang){
+    landingLang.value = getSavedLang();
+    landingLang.addEventListener('change', e => {
+      setSavedLang(e.target.value);
+      // keep other selector in sync
+      const mainSel = $('chat-lang-select');
+      if(mainSel) mainSel.value = e.target.value;
+    });
+  }
+
+  // main composer language selector hookup
+  const mainLang = $('chat-lang-select');
+  if(mainLang){
+    mainLang.value = getSavedLang();
+    mainLang.addEventListener('change', e => {
+      setSavedLang(e.target.value);
+      const land = $('landing-chat-lang');
+      if(land) land.value = e.target.value;
+    });
+  }
+
+  // landing start send
+  $('landing-start').onclick=()=>{
+    const v=($('landing-input').value||'').trim();
+    if(!v) return;
+    $('landing-input').value='';
+    // prepend lang if set
+    const lang = getSavedLang();
+    const final = (lang && lang !== 'Auto' && !v.startsWith('[lang:')) ? `[lang:${lang}] ${v}` : v;
+    send(final);
+  };
   $('landing-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); $('landing-start').click(); }});
   $('landing-open-history').onclick=()=>{ if(currentTopicId) renderChat(); };
 
@@ -248,10 +356,27 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const auto=(el)=>{ el.style.height='auto'; el.style.height=Math.min(160, el.scrollHeight)+'px'; };
   main.addEventListener('input',()=>{ auto(main); sendBtn.disabled = !main.value.trim(); });
   main.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendBtn.click(); }});
-  sendBtn.onclick=()=>{ const t=main.value.trim(); if(!t) return; main.value=''; sendBtn.disabled=true; send(t); };
+  sendBtn.onclick=()=>{
+    const raw = main.value.trim();
+    if(!raw) return;
+    // prepend lang if set
+    const lang = getSavedLang();
+    const toSend = (lang && lang !== 'Auto' && !raw.startsWith('[lang:')) ? `[lang:${lang}] ${raw}` : raw;
+    main.value=''; sendBtn.disabled=true; send(toSend);
+  };
 
   // new chat
   $('new-topic').onclick=()=>{ const id=newTopic('New Chat'); renderChat(); main.focus(); };
+
+  // theme toggle wiring
+  const themeBtn = $('theme-toggle-btn');
+  if(themeBtn){
+    themeBtn.addEventListener('click', ()=>{
+      const current = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';
+      const next = current === 'light' ? 'dark' : 'light';
+      setSavedTheme(next);
+    });
+  }
 
   // bottom pill
   const area=$('chat-area'); const pill=$('to-bottom');
@@ -263,4 +388,3 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </script>
 </body>
 </html>
-
