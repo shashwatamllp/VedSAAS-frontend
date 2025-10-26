@@ -9,16 +9,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
 <style>
-  :root{
-    --bg:#0e0f14; --surface:#0f1720; --muted:#94a3b8; --text:#e9edf4;
-    --accent:#2a7; --panel:#233;
-  }
+  :root{ --bg:#0e0f14; --surface:#0f1720; --muted:#94a3b8; --text:#e9edf4; --accent:#2a7; --panel:#233; }
   :root{ color-scheme:dark }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;background:var(--bg);color:var(--text)}
 
-  /* layout */
   .container{display:flex;min-height:100vh}
   aside.sidebar{width:260px;border-right:1px solid var(--panel);padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
   .title{font-weight:700;margin:6px 0 8px}
@@ -29,27 +25,26 @@
   .topic.active{background:var(--accent);color:#fff}
 
   main{flex:1;display:flex;flex-direction:column;min-width:0}
-  .topbar{display:flex;justify-content:center;align-items:center;padding:10px 12px;border-bottom:1px solid var(--panel);background:var(--surface)}
+  .topbar{display:flex;justify-content:center;align-items:center;padding:10px 12px;background:var(--surface);border-bottom:0} /* line removed */
   .topbar h1{margin:0;font-size:18px;letter-spacing:.5px}
-  /* remove any leftover theme text in header if present */
   .topbar-right,.theme-text,[data-theme-indicator]{display:none!important}
 
-  /* landing */
   #landing{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;min-height:40vh;overflow:hidden}
   #landing::before{content:"";position:absolute;inset:0;background:url("/logopic.png") center/60% no-repeat;opacity:.08;pointer-events:none}
   #landing > *{position:relative;z-index:1}
 
-  /* chat */
   #chat-shell{display:flex;flex-direction:column;height:calc(100vh - 50px)}
   .chat-area{
-    flex:1;padding:12px;overflow:auto;border-top:1px solid var(--panel);
+    flex:1;padding:12px;overflow:auto;
     display:flex;flex-direction:column;gap:6px;align-items:flex-start;
-    max-width:1100px;margin:0 auto;
+    max-width:1100px;margin:0 auto;border-top:0; /* line removed */
+    background:var(--bg);
   }
   .composer{
-    position:sticky;bottom:0;z-index:5;
+    position:sticky;bottom:0;z-index:10;
     display:flex;gap:8px;align-items:center;
-    padding:12px;border-top:1px solid var(--panel);background:var(--surface);
+    padding:12px;background:var(--surface);
+    border-top:0; box-shadow:none; /* line removed */
   }
   .composer textarea{
     flex:1;resize:none;min-height:38px;max-height:160px;
@@ -65,10 +60,8 @@
   .msg-assistant{align-self:flex-start;background:rgba(0,0,0,0.18)}
   .msg-system{align-self:center;background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5}
 
-  /* “Latest” pill */
   #to-bottom{position:fixed;right:16px;bottom:16px}
 
-  /* desktop only — remove mobile tweaks */
   @media (max-width:900px){ aside.sidebar{display:none} }
 </style>
 </head>
@@ -87,25 +80,18 @@
   </aside>
 
   <main>
-    <header class="topbar">
-      <h1>VedSAAS</h1>
-    </header>
+    <header class="topbar"><h1>VedSAAS</h1></header>
 
     <section id="landing">
       <div class="title">Start a new conversation</div>
       <div style="opacity:.8">Ask anything. I’ll reply in your language.</div>
       <div class="composer" aria-label="Landing composer">
         <textarea id="landing-input" placeholder="Type your first message..." rows="1" aria-label="Landing message input"></textarea>
-
         <label for="landing-chat-lang" class="sr-only">Chat language</label>
         <select id="landing-chat-lang" aria-label="Select chat language">
-          <option value="Auto">Auto</option>
-          <option value="en">English</option>
-          <option value="hi">हिन्दी</option>
-          <option value="es">Español</option>
-          <option value="fr">Français</option>
+          <option value="Auto">Auto</option><option value="en">English</option>
+          <option value="hi">हिन्दी</option><option value="es">Español</option><option value="fr">Français</option>
         </select>
-
         <button id="landing-start" class="send-btn" type="button" aria-label="Start chat"><i class="fas fa-paper-plane"></i></button>
       </div>
       <div><button id="landing-open-history" class="btn" type="button">Open Previous Chats</button></div>
@@ -115,16 +101,11 @@
       <div id="chat-area" class="chat-area" aria-live="polite"></div>
       <div class="composer" role="region" aria-label="Chat composer">
         <textarea id="main-input" placeholder="Type your message..." rows="1" aria-label="Chat message input"></textarea>
-
         <label for="chat-lang-select" class="sr-only">Chat language</label>
         <select id="chat-lang-select" aria-label="Select chat language">
-          <option value="Auto">Auto</option>
-          <option value="en">English</option>
-          <option value="hi">हिन्दी</option>
-          <option value="es">Español</option>
-          <option value="fr">Français</option>
+          <option value="Auto">Auto</option><option value="en">English</option>
+          <option value="hi">हिन्दी</option><option value="es">Español</option><option value="fr">Français</option>
         </select>
-
         <button id="send-btn" class="send-btn" type="button" disabled aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
       </div>
     </section>
@@ -134,30 +115,24 @@
 <button id="to-bottom" class="btn"><i class="fas fa-angle-down"></i> Latest</button>
 
 <script>
-/* API base */
 if(!window.API_BASE){
   const m=document.querySelector('meta[name="ved-api-base"]')?.content?.trim()||'';
   window.API_BASE=(m?m:'/api').replace(/\/$/,'');
 }
 
-/* utils */
 const $=(id)=>document.getElementById(id);
 const esc=(s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function banner(kind,msg){const b=document.getElementById('banner');b.className='banner '+kind;b.textContent=msg;b.style.display='block';setTimeout(()=>b.style.display='none',2200);}
 
-/* language pref only */
 const LANG_KEY='vedsaas_chat_lang';
 function getSavedLang(){ return localStorage.getItem(LANG_KEY)||'Auto'; }
 function setSavedLang(v){ localStorage.setItem(LANG_KEY,v); }
 
-/* state */
 let topics=[], currentTopicId=null, sending=false;
 
-/* storage */
 function save(){ try{ localStorage.setItem('ved_topics',JSON.stringify(topics)); localStorage.setItem('ved_current',currentTopicId||''); }catch{} }
 function load(){ try{ topics=JSON.parse(localStorage.getItem('ved_topics')||'[]'); }catch{ topics=[]; } currentTopicId=localStorage.getItem('ved_current')||(topics[0]?.id||null); }
 
-/* render */
 function renderHistory(){
   const list=$('history-list'); list.innerHTML='';
   topics.forEach(t=>{
@@ -185,13 +160,11 @@ function renderChat(){
   area.scrollTop=area.scrollHeight;
 }
 
-/* ops */
 function uid(){ return Math.random().toString(36).slice(2,9) }
 function newTopic(title='New Chat'){ const id='t_'+Date.now(); topics.unshift({id,title,created_at:Date.now(),messages:[]}); currentTopicId=id; save(); renderHistory(); renderChat(); return id; }
 function appendMessage(from,message){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; t.messages.push({id:uid(),from,message,timestamp:Date.now()}); save(); renderChat(); }
 function goToChat(id){ currentTopicId=id; save(); renderHistory(); renderChat(); }
 
-/* network */
 async function api(path,body,{timeout=15000}={}){
   const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),timeout);
   try{
@@ -205,7 +178,6 @@ async function api(path,body,{timeout=15000}={}){
   } finally { clearTimeout(tm); }
 }
 
-/* reply normalization + fallback */
 function pickReply(res){
   if(!res) return '';
   if(typeof res==='string') return res.trim();
@@ -228,7 +200,6 @@ async function chatCall(payload){
   catch(e){ const msg=String(e?.message||''); if(msg.includes('404')||msg.includes('405')) return await api('/ask',payload); throw e; }
 }
 
-/* send */
 async function send(text){
   if(!text||sending) return;
   sending=true; $('send-btn').disabled=true;
@@ -245,44 +216,38 @@ async function send(text){
   }
 }
 
-/* wiring */
 document.addEventListener('DOMContentLoaded',()=>{
   $('app').hidden=false;
 
   load(); renderHistory(); renderChat();
 
-  // language selectors
   const landingLang=$('landing-chat-lang'); const mainLang=$('chat-lang-select');
-  if(landingLang){ landingLang.value=getSavedLang(); landingLang.addEventListener('change',e=>{ setSavedLang(e.target.value); if(mainLang) mainLang.value=e.target.value; }); }
-  if(mainLang){ mainLang.value=getSavedLang(); mainLang.addEventListener('change',e=>{ setSavedLang(e.target.value); if(landingLang) landingLang.value=e.target.value; }); }
+  if(landingLang){ landingLang.value=getSavedLang(); landingLang.addEventListener('change',e=>{ localStorage.setItem('vedsaas_chat_lang',e.target.value); if(mainLang) mainLang.value=e.target.value; }); }
+  if(mainLang){ mainLang.value=getSavedLang(); mainLang.addEventListener('change',e=>{ localStorage.setItem('vedsaas_chat_lang',e.target.value); if(landingLang) landingLang.value=e.target.value; }); }
 
-  // landing send
   $('landing-start').onclick=()=>{
     const v=($('landing-input').value||'').trim(); if(!v) return;
     $('landing-input').value='';
-    const lang=getSavedLang();
+    const lang=localStorage.getItem('vedsaas_chat_lang')||'Auto';
     const final=(lang&&lang!=='Auto'&&!v.startsWith('[lang:'))?`[lang:${lang}] ${v}`:v;
     send(final);
   };
   $('landing-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); $('landing-start').click(); }});
   $('landing-open-history').onclick=()=>{ if(currentTopicId) renderChat(); };
 
-  // composer
   const main=$('main-input'), sendBtn=$('send-btn');
   const auto=(el)=>{ el.style.height='auto'; el.style.height=Math.min(160,el.scrollHeight)+'px'; };
   main.addEventListener('input',()=>{ auto(main); sendBtn.disabled=!main.value.trim(); });
   main.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendBtn.click(); }});
   sendBtn.onclick=()=>{
     const raw=main.value.trim(); if(!raw) return;
-    const lang=getSavedLang();
+    const lang=localStorage.getItem('vedsaas_chat_lang')||'Auto';
     const toSend=(lang&&lang!=='Auto'&&!raw.startsWith('[lang:'))?`[lang:${lang}] ${raw}`:raw;
     main.value=''; sendBtn.disabled=true; send(toSend);
   };
 
-  // new chat
   $('new-topic').onclick=()=>{ newTopic('New Chat'); renderChat(); $('main-input').focus(); };
 
-  // “Latest” pill
   const area=$('chat-area'), pill=$('to-bottom');
   const isBottom=()=> area.scrollHeight - area.scrollTop - area.clientHeight < 8;
   const toggle=()=> pill.style.display = isBottom() ? 'none':'inline-flex';
@@ -291,7 +256,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
-<!-- removed theme-side.js completely -->
 <script src="public/js/assistant-typing.js" defer></script>
 </body>
 </html>
