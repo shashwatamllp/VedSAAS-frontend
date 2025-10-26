@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
 <style>
-  /* Theme variables (dark default) */
+  /* Theme vars */
   :root{
     --bg:#0e0f14; --surface:#0f1720; --muted:#94a3b8; --text:#e9edf4;
     --accent:#2a7; --panel-border:#233; --radius:10px;
@@ -18,7 +18,6 @@
     --bg:#f7fafc; --surface:#ffffff; --muted:#475569; --text:#0b1220;
     --accent:#1366d6; --panel-border:#e6eef4;
   }
-
   :root{ color-scheme:dark }
   *{ box-sizing:border-box }
   body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:var(--bg); color:var(--text) }
@@ -31,7 +30,7 @@
   .btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color:var(--text); cursor:pointer }
   .btn:disabled{ opacity:.6; cursor:not-allowed }
 
-  /* history list */
+  /* history */
   #history-list{ overflow:auto; flex:1 }
   .topic{ padding:8px 10px; border-radius:8px; cursor:pointer; color:var(--muted) }
   .topic+.topic{ margin-top:6px }
@@ -42,17 +41,15 @@
   .topbar{ display:flex; justify-content:center; align-items:center; padding:10px 12px; border-bottom:1px solid var(--panel-border); background:var(--surface) }
   .topbar-inner{ width:100%; max-width:1100px; display:flex; align-items:center; justify-content:center; gap:12px; position:relative }
   .topbar h1{ margin:0; font-size:18px; letter-spacing:.5px }
-  .topbar-right{ display:none !important; } /* remove center "Theme: light" */
+  /* hard-remove any theme text in header */
+  .topbar-right,.theme-text,[data-theme-indicator],#theme-toggle-btn{ display:none !important; }
 
   /* landing with logo bg */
   #landing{ position:relative; display:flex; flex-direction:column; gap:12px; padding:16px; min-height:40vh; overflow:hidden }
-  #landing::before{
-    content:""; position:absolute; inset:0; background:url("/logopic.png") center/60% no-repeat;
-    opacity:.08; pointer-events:none; z-index:0;
-  }
+  #landing::before{ content:""; position:absolute; inset:0; background:url("/logopic.png") center/60% no-repeat; opacity:.08; pointer-events:none; z-index:0; }
   #landing > *{ position:relative; z-index:1 }
 
-  /* chat: composer fixed at bottom of main area */
+  /* chat */
   #chat-shell{ display:flex; flex-direction:column; height:calc(100dvh - 50px); }
   .chat-area{
     flex:1; padding:12px; overflow:auto; border-top:1px solid var(--panel-border);
@@ -65,16 +62,12 @@
   .send-btn i{ color:#fff }
   .send-btn:disabled{ opacity:.6; cursor:not-allowed }
 
-  .msg{
-    display:inline-block; padding:10px 12px; margin:6px 0; border-radius:12px; max-width:72%;
-    line-height:1.45; word-break:break-word; white-space:pre-wrap;
-    background:rgba(255,255,255,0.06); color:var(--text); align-self:flex-start; text-align:left;
-  }
+  .msg{ display:inline-block; padding:10px 12px; margin:6px 0; border-radius:12px; max-width:72%; line-height:1.45; word-break:break-word; white-space:pre-wrap; background:rgba(255,255,255,0.06); color:var(--text); align-self:flex-start; text-align:left; }
   .msg-user{ align-self:flex-end; text-align:right; background:rgba(255,255,255,0.10); }
   .msg-assistant{ align-self:flex-start; text-align:left; background:rgba(0,0,0,0.18); }
   .msg-system{ align-self:center; text-align:center; background:rgba(255,0,0,0.05); }
 
-  /* Typing placeholder */
+  /* typing */
   .msg.typing{ opacity:0.95; background:rgba(255,255,255,0.02); min-width:90px; max-width:220px; display:flex; align-items:center; justify-content:center; padding:8px 12px; }
   .typing-dots{ display:inline-flex; gap:6px; align-items:center; }
   .typing-dots span{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.3); display:inline-block; opacity:0.3; transform:translateY(0); animation:dot 1s infinite ease-in-out; }
@@ -89,7 +82,7 @@
 
   #chat-lang-select{ background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.03); border-radius:8px; padding:6px 8px; font-size:14px }
 
-  /* Right-side theme toggle: vertical and upright */
+  /* right-side theme toggle: upright vertical */
   #theme-side-toggle{
     position:fixed; right:12px; top:12px; z-index:9999;
     width:56px; height:140px;
@@ -98,15 +91,11 @@
     border-bottom-left-radius:14px; border-bottom-right-radius:14px;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; box-shadow:0 8px 20px rgba(2,6,23,0.3);
-    writing-mode:vertical-rl; text-orientation:mixed;
+    writing-mode:vertical-rl; text-orientation:upright;
     transform:none; font-size:12px; user-select:none;
   }
-  #theme-side-toggle > .ts-text{ writing-mode:vertical-rl; text-orientation:mixed; transform:none; display:block; text-align:center; font-weight:600; pointer-events:none; }
-  #theme-side-toggle::after{
-    content:''; position:absolute; left:8px; right:8px; bottom:8px; height:34px;
-    border-radius:18px; background:rgba(255,255,255,0.95);
-    pointer-events:none;
-  }
+  #theme-side-toggle > .ts-text{ writing-mode:vertical-rl; text-orientation:upright; transform:none; display:block; text-align:center; font-weight:600; pointer-events:none; }
+  #theme-side-toggle::after{ content:''; position:absolute; left:8px; right:8px; bottom:8px; height:34px; border-radius:18px; background:rgba(255,255,255,0.95); pointer-events:none; }
   .light-theme #theme-side-toggle::after{ background:rgba(10,12,16,0.92); }
 
   @media (max-width:900px){
@@ -121,10 +110,9 @@
 
 <div id="banner" class="banner"></div>
 
-<!-- Side theme toggle (top-right corner) -->
+<!-- Side theme toggle -->
 <button id="theme-side-toggle" aria-label="Toggle theme (side)" role="switch" tabindex="0">
   <span class="ts-text">Theme</span>
-  <span id="theme-side-indicator" style="display:none" aria-hidden="true"></span>
 </button>
 
 <div id="app" class="container" hidden>
@@ -141,7 +129,7 @@
     <header class="topbar">
       <div class="topbar-inner" role="banner" aria-label="Top bar">
         <h1>VedSAAS</h1>
-        <div class="topbar-right" aria-hidden="true"></div>
+        <!-- no theme text in header -->
       </div>
     </header>
 
@@ -188,49 +176,33 @@
 <button id="to-bottom" class="btn" style="position:fixed; right:16px; bottom:16px"><i class="fas fa-angle-down"></i> Latest</button>
 
 <script>
-/* ==== API base bootstrap ==== */
+/* API base */
 if(!window.API_BASE){
   const m=document.querySelector('meta[name="ved-api-base"]')?.content?.trim()||'';
   window.API_BASE=(m?m:'/api').replace(/\/$/,'');
 }
 
-/* ==== tiny utils ==== */
+/* utils */
 const $=(id)=>document.getElementById(id);
 const esc=(s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function banner(kind,msg){const b=$('banner');b.className='banner '+kind;b.textContent=msg;b.style.display='block';setTimeout(()=>b.style.display='none',2200);}
 
-/* ==== theme + language utilities ==== */
-const THEME_KEY='vedsaas_theme';
-const LANG_KEY='vedsaas_chat_lang';
-
-function applyTheme(theme){
-  if(theme==='light') document.documentElement.classList.add('light-theme');
-  else document.documentElement.classList.remove('light-theme');
-  document.querySelectorAll('[data-theme-indicator]').forEach(el=>el.textContent=theme);
-  const side=document.getElementById('theme-side-indicator'); if(side) side.textContent=theme;
-}
+/* theme + lang */
+const THEME_KEY='vedsaas_theme', LANG_KEY='vedsaas_chat_lang';
+function applyTheme(t){ if(t==='light') document.documentElement.classList.add('light-theme'); else document.documentElement.classList.remove('light-theme'); }
 function getSavedTheme(){ return localStorage.getItem(THEME_KEY)||'dark'; }
 function setSavedTheme(t){ localStorage.setItem(THEME_KEY,t); applyTheme(t); }
-
-function setSavedLang(lang){
-  localStorage.setItem(LANG_KEY,lang);
-  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=>el.textContent=lang);
-}
 function getSavedLang(){ return localStorage.getItem(LANG_KEY)||'Auto'; }
+function setSavedLang(v){ localStorage.setItem(LANG_KEY,v); }
 
-/* ==== state ==== */
-let topics=[]; let currentTopicId=null; let sending=false;
+/* state */
+let topics=[], currentTopicId=null, sending=false;
 
-/* ==== storage ==== */
-function save(){
-  try{ localStorage.setItem('ved_topics',JSON.stringify(topics)); localStorage.setItem('ved_current',currentTopicId||''); }catch{}
-}
-function load(){
-  try{ topics=JSON.parse(localStorage.getItem('ved_topics')||'[]'); }catch{ topics=[]; }
-  currentTopicId=localStorage.getItem('ved_current')||(topics[0]?.id||null);
-}
+/* storage */
+function save(){ try{ localStorage.setItem('ved_topics',JSON.stringify(topics)); localStorage.setItem('ved_current',currentTopicId||''); }catch{} }
+function load(){ try{ topics=JSON.parse(localStorage.getItem('ved_topics')||'[]'); }catch{ topics=[]; } currentTopicId=localStorage.getItem('ved_current')||(topics[0]?.id||null); }
 
-/* ==== renderers ==== */
+/* render */
 function renderHistory(){
   const list=$('history-list'); list.innerHTML='';
   topics.forEach(t=>{
@@ -256,62 +228,43 @@ function renderChat(){
   area.scrollTop=area.scrollHeight;
 }
 
-/* ==== operations ==== */
+/* ops */
 function uid(){ return Math.random().toString(36).slice(2,9) }
-function newTopic(title='New Chat'){
-  const id='t_'+Date.now();
-  topics.unshift({id,title,created_at:Date.now(),messages:[]});
-  currentTopicId=id; save(); renderHistory(); renderChat(); return id;
-}
-function appendMessage(from,message){
-  const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
-  t.messages.push({id:uid(),from,message,timestamp:Date.now()}); save(); renderChat();
-}
+function newTopic(title='New Chat'){ const id='t_'+Date.now(); topics.unshift({id,title,created_at:Date.now(),messages:[]}); currentTopicId=id; save(); renderHistory(); renderChat(); return id; }
+function appendMessage(from,message){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; t.messages.push({id:uid(),from,message,timestamp:Date.now()}); save(); renderChat(); }
 function goToChat(id){ currentTopicId=id; save(); renderHistory(); renderChat(); }
 
-/* ==== network ==== */
+/* network */
 async function api(path,body,{timeout=15000}={}){
   const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),timeout);
   try{
-    const r=await fetch((window.API_BASE||'/api')+path,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(body||{}), cache:'no-store', credentials:'omit', signal:ac.signal
-    });
+    const r=await fetch((window.API_BASE||'/api')+path,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body||{}), cache:'no-store', credentials:'omit', signal:ac.signal });
     const ct=(r.headers.get('content-type')||'').toLowerCase();
     if(!r.ok){ const txt=await r.text().catch(()=> ''); throw new Error(`HTTP ${r.status}${txt?': '+txt.slice(0,120):''}`); }
     return ct.includes('application/json')?r.json():r.text();
   } finally { clearTimeout(tm); }
 }
 
-/* ==== reply normalization + fallback ==== */
+/* reply normalization + fallback */
 function pickReply(res){
   if(!res) return '';
   if(typeof res==='string') return res.trim();
-  for(const k of ['reply','answer','message','text','output','result','response','bot']){
-    if(typeof res[k]==='string'&&res[k].trim()) return res[k];
-  }
+  for(const k of ['reply','answer','message','text','output','result','response','bot']) if(typeof res[k]==='string'&&res[k].trim()) return res[k];
   if(Array.isArray(res.choices)&&res.choices[0]?.message?.content) return res.choices[0].message.content;
   const d=res.data;
   if(d){
     if(typeof d==='string'&&d.trim()) return d;
-    for(const k of ['reply','answer','message','text','output','result','response']){
-      if(typeof d[k]==='string'&&d[k].trim()) return d[k];
-    }
+    for(const k of ['reply','answer','message','text','output','result','response']) if(typeof d[k]==='string'&&d[k].trim()) return d[k];
     if(Array.isArray(d.choices)&&d.choices[0]?.message?.content) return d.choices[0].message.content;
   }
   return '';
 }
 async function chatCall(payload){
-  try{
-    return await api('/chat',payload);
-  }catch(e){
-    const msg=String(e?.message||'');
-    if(msg.includes('404')||msg.includes('405')) return await api('/ask',payload);
-    throw e;
-  }
+  try{ return await api('/chat',payload); }
+  catch(e){ const msg=String(e?.message||''); if(msg.includes('404')||msg.includes('405')) return await api('/ask',payload); throw e; }
 }
 
-/* ==== send ==== */
+/* send */
 async function send(text){
   if(!text||sending) return;
   sending=true; $('send-btn').disabled=true;
@@ -328,34 +281,19 @@ async function send(text){
   }
 }
 
-/* ==== wiring ==== */
+/* wiring */
 document.addEventListener('DOMContentLoaded',()=>{
   applyTheme(getSavedTheme());
-  const savedLang=getSavedLang();
-  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=>el.textContent=savedLang);
-
   $('app').hidden=false;
 
   load(); renderHistory(); renderChat();
 
-  const landingLang=$('landing-chat-lang');
-  if(landingLang){
-    landingLang.value=getSavedLang();
-    landingLang.addEventListener('change',e=>{
-      setSavedLang(e.target.value);
-      const mainSel=$('chat-lang-select'); if(mainSel) mainSel.value=e.target.value;
-    });
-  }
+  // language selectors
+  const landingLang=$('landing-chat-lang'); const mainLang=$('chat-lang-select');
+  if(landingLang){ landingLang.value=getSavedLang(); landingLang.addEventListener('change',e=>{ setSavedLang(e.target.value); if(mainLang) mainLang.value=e.target.value; }); }
+  if(mainLang){ mainLang.value=getSavedLang(); mainLang.addEventListener('change',e=>{ setSavedLang(e.target.value); if(landingLang) landingLang.value=e.target.value; }); }
 
-  const mainLang=$('chat-lang-select');
-  if(mainLang){
-    mainLang.value=getSavedLang();
-    mainLang.addEventListener('change',e=>{
-      setSavedLang(e.target.value);
-      const land=$('landing-chat-lang'); if(land) land.value=e.target.value;
-    });
-  }
-
+  // landing send
   $('landing-start').onclick=()=>{
     const v=($('landing-input').value||'').trim(); if(!v) return;
     $('landing-input').value='';
@@ -366,6 +304,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('landing-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); $('landing-start').click(); }});
   $('landing-open-history').onclick=()=>{ if(currentTopicId) renderChat(); };
 
+  // composer
   const main=$('main-input'), sendBtn=$('send-btn');
   const auto=(el)=>{ el.style.height='auto'; el.style.height=Math.min(160,el.scrollHeight)+'px'; };
   main.addEventListener('input',()=>{ auto(main); sendBtn.disabled=!main.value.trim(); });
@@ -377,11 +316,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     main.value=''; sendBtn.disabled=true; send(toSend);
   };
 
-  $('new-topic').onclick=()=>{ newTopic('New Chat'); renderChat(); main.focus(); };
+  // new chat
+  $('new-topic').onclick=()=>{ newTopic('New Chat'); renderChat(); $('main-input').focus(); };
 
-  // header theme button removed via CSS; side toggle can flip theme if you wire it later
-
-  const area=$('chat-area'); const pill=$('to-bottom');
+  // bottom pill
+  const area=$('chat-area'), pill=$('to-bottom');
   const isBottom=()=> area.scrollHeight - area.scrollTop - area.clientHeight < 8;
   const toggle=()=> pill.style.display = isBottom() ? 'none':'inline-flex';
   area.addEventListener('scroll',toggle); pill.onclick=()=>{ area.scrollTop=area.scrollHeight; toggle(); };
