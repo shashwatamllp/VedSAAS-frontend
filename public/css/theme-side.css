@@ -1,4 +1,4 @@
-/* SIDE THEME TOGGLE — text hidden, only bottom pill visible */
+/* SIDE THEME TOGGLE — bottom pill only, a11y-safe, prod-ready */
 #theme-side-toggle{
   position:fixed;
   right:12px;
@@ -16,18 +16,17 @@
   box-shadow:none;
   writing-mode:initial;
   transform:none;
-  font-size:0;
+  font-size:0;               /* hide stray text nodes */
   line-height:1;
   overflow:visible;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color:transparent;
 }
 #theme-side-toggle:focus-visible{
   outline:2px solid var(--accent);
   outline-offset:3px;
 }
-
 #theme-side-toggle > .ts-text{
-  display:none !important;
+  display:none !important;   /* label hidden */
 }
 
 /* Default: dark UI -> light pill */
@@ -44,14 +43,14 @@
   pointer-events:none;
 }
 
-/* Light UI -> dark pill (support both class and data-theme) */
+/* Light UI -> dark pill (class or data-theme) */
 .light-theme #theme-side-toggle::after,
 html[data-theme="light"] #theme-side-toggle::after{
   background:rgba(10,12,16,0.92);
   box-shadow:0 6px 14px rgba(0,0,0,0.18);
 }
 
-/* Auto mode: respect prefers-color-scheme */
+/* Auto: follow system preference */
 @media (prefers-color-scheme: light){
   html[data-theme="auto"] #theme-side-toggle::after{
     background:rgba(10,12,16,0.92);
