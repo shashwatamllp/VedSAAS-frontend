@@ -13,11 +13,11 @@
   :root{ --bg:#0e0f14; --surface:#0f1720; --muted:#94a3b8; --text:#e9edf4; --accent:#2a7; --panel:#233; }
   :root{ color-scheme:dark }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
+  html,body{height:100%;margin:0;overflow:hidden}
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;background:var(--bg);color:var(--text)}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-  .container{display:flex;min-height:100vh}
+  .container{display:flex;height:100%}
   aside.sidebar{width:260px;border-right:1px solid var(--panel);padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
   .title{font-weight:700;margin:6px 0 8px}
   .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);color:var(--text);cursor:pointer}
@@ -27,26 +27,27 @@
   .topic.active{background:var(--accent);color:#fff}
 
   main{flex:1;display:flex;flex-direction:column;min-width:0}
-  .topbar{display:flex;justify-content:center;align-items:center;padding:10px 12px;background:var(--surface);border-bottom:0}
+  .topbar{display:flex;align-items:center;justify-content:center;padding:10px 12px;background:var(--surface)}
   .topbar h1{margin:0;font-size:18px;letter-spacing:.5px}
-  .topbar-right,.theme-text,[data-theme-indicator]{display:none!important}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .badge{display:none;background:var(--accent);color:#041;padding:2px 8px;border-radius:999px;font-size:12px}
 
-  #landing{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;min-height:40vh;overflow:hidden}
+  /* Landing clean: no internal scrollbars */
+  #landing{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;height:100%;overflow:hidden}
   #landing::before{content:"";position:absolute;inset:0;background:url("/public/image/logopic.png") center/60% no-repeat;opacity:.08;pointer-events:none}
   #landing > *{position:relative;z-index:1}
 
-  #chat-shell{display:flex;flex-direction:column;height:calc(100vh - 50px)}
+  /* Chat shell: internal scroll only in messages */
+  #chat-shell{display:none;flex-direction:column;min-height:0;height:100%}
   .chat-area{
-    flex:1;padding:12px;overflow:auto;
+    flex:1;min-height:0;padding:12px;overflow:auto;
     display:flex;flex-direction:column;gap:6px;align-items:flex-start;
-    max-width:1100px;margin:0 auto;border-top:0;
-    background:var(--bg);
+    max-width:1100px;margin:0 auto;background:var(--bg);
   }
   .composer{
     position:sticky;bottom:0;z-index:10;
     display:flex;gap:8px;align-items:center;
     padding:12px;background:var(--surface);
-    border-top:0; box-shadow:none;
   }
   .composer textarea{
     flex:1;resize:none;min-height:38px;max-height:160px;
@@ -81,8 +82,15 @@
   </aside>
 
   <main>
-    <header class="topbar"><h1>VedSAAS</h1></header>
+    <header class="topbar">
+      <h1 id="app-title">VedSAAS</h1>
+      <div class="right">
+        <span id="user-display" style="opacity:.9"></span>
+        <span id="api-ok-badge" class="badge">API OK</span>
+      </div>
+    </header>
 
+    <!-- Landing: clean, fills remaining height, no mid scrollbar -->
     <section id="landing">
       <div class="title">Start a new conversation</div>
       <div style="opacity:.8">Ask anything. I’ll reply in your language.</div>
@@ -98,7 +106,8 @@
       <div><button id="landing-open-history" class="btn" type="button">Open Previous Chats</button></div>
     </section>
 
-    <section id="chat-shell" style="display:none;min-height:0;">
+    <!-- Chat shell: hidden until first message -->
+    <section id="chat-shell">
       <div id="chat-area" class="chat-area" aria-live="polite"></div>
       <div class="composer" role="region" aria-label="Chat composer">
         <textarea id="main-input" placeholder="Type your message..." rows="1" aria-label="Chat message input"></textarea>
@@ -123,14 +132,26 @@ if(!window.API_BASE){
 
 const $=(id)=>document.getElementById(id);
 const esc=(s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function banner(kind,msg){const b=document.getElementById('banner');b.className='banner '+kind;b.textContent=msg;b.style.display='block';setTimeout(()=>b.style.display='none',2200);}
+
+function displayName(){
+  try{
+    const u = JSON.parse(localStorage.getItem('ved_user')||'null');
+    if (u && (u.name||u.username)) return u.name||u.username;
+  }catch{}
+  const nm = localStorage.getItem('ved_user_name');
+  return nm && nm.trim() ? nm.trim() : 'Guest';
+}
+
+function setHeader(){
+  const name = displayName();
+  const h = $('app-title'); if (h) h.textContent = `VedSAAS — ${name}`;
+  const ud = $('user-display'); if (ud) ud.textContent = name;
+}
 
 const LANG_KEY='vedsaas_chat_lang';
 function getSavedLang(){ return localStorage.getItem(LANG_KEY)||'Auto'; }
-function setSavedLang(v){ localStorage.setItem(LANG_KEY,v); }
 
 let topics=[], currentTopicId=null, sending=false;
-
 function save(){ try{ localStorage.setItem('ved_topics',JSON.stringify(topics)); localStorage.setItem('ved_current',currentTopicId||''); }catch{} }
 function load(){ try{ topics=JSON.parse(localStorage.getItem('ved_topics')||'[]'); }catch{ topics=[]; } currentTopicId=localStorage.getItem('ved_current')||(topics[0]?.id||null); }
 
@@ -190,7 +211,7 @@ function pickReply(res){
   if(d){
     if(typeof d==='string'&&d.trim()) return d;
     for(const k of ['reply','answer','message','text','output','result','response']){
-      if(typeof d[k]==='string'&&d[k].trim()) return d[k];
+      if(typeof d[k]==='string'&&d.trim()) return d[k];
     }
     if(Array.isArray(d.choices)&&d.choices[0]?.message?.content) return d.choices[0].message.content;
   }
@@ -219,6 +240,7 @@ async function send(text){
 
 document.addEventListener('DOMContentLoaded',()=>{
   $('app').hidden=false;
+  setHeader();
 
   load(); renderHistory(); renderChat();
 
@@ -254,6 +276,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   const toggle=()=> pill.style.display = isBottom() ? 'none':'inline-flex';
   area.addEventListener('scroll',toggle); pill.onclick=()=>{ area.scrollTop=area.scrollHeight; toggle(); };
   toggle();
+
+  // Health badge
+  fetch((window.API_BASE||'/api')+'/health',{cache:'no-store'})
+    .then(r=>r.json()).then(j=>{ if(j && (j.ok===true || j.status==='ok')){ const b=$('api-ok-badge'); if(b) b.style.display='inline-flex'; } })
+    .catch(()=>{});
 });
 </script>
 
