@@ -2,10 +2,40 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  // ---- API bridge (VED core or fallback) ----
+  const VED = (window.VED || {});
+  const API_BASE = (VED.apiBase ? VED.apiBase() : ((window.API_BASE || "/api").replace(/\/+$/,"")));
+  const API = {
+    async get(path, opt={}) {
+      if (VED.apiFetch) return VED.apiFetch(path, { method: "GET", ...opt });
+      const url = /^https?:\/\//i.test(path) ? path : `${API_BASE}${path.startsWith("/")?path:`/${path}`}`;
+      const r = await fetch(url, { method: "GET", cache: "no-store" });
+      const ct = (r.headers.get("content-type")||"").toLowerCase();
+      const data = ct.includes("application/json") ? await r.json().catch(()=> ({})) : await r.text();
+      if (!r.ok) throw new Error((data && data.error) || `HTTP ${r.status}`);
+      return data;
+    },
+    async post(path, body, opt={}) {
+      if (VED.apiFetch) return VED.apiFetch(path, { method: "POST", body, ...opt });
+      const url = /^https?:\/\//i.test(path) ? path : `${API_BASE}${path.startsWith("/")?path:`/${path}`}`;
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept":"application/json" },
+        body: JSON.stringify(body || {}),
+        cache: "no-store"
+      });
+      const ct = (r.headers.get("content-type")||"").toLowerCase();
+      const data = ct.includes("application/json") ? await r.json().catch(()=> ({})) : await r.text();
+      if (!r.ok) throw new Error((data && data.error) || `HTTP ${r.status}`);
+      return data;
+    }
+  };
+
+  // ---- UI helpers ----
   function autosizeTA(ta){
     if (!ta) return;
     const fit = () => { ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight) + 'px'; };
-    ta.addEventListener('input', fit, { passive:true });
+    ta.addEventListener('input', fit);
     queueMicrotask(fit);
   }
   function setBanner(cls, msg){
@@ -24,6 +54,8 @@
     const el = $("chat-area"); if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }
+
+  // ---- Chat send ----
   async function sendChat(text){
     if (!text) return;
     const landing = $("landing"), shell = $("chat-shell");
@@ -34,9 +66,9 @@
 
     try {
       renderMessage("user", text); scrollChatBottom(true);
-      const res = await VedAPI.post("/api/chat", { message: text, mode: "default" });
+      const res = await API.post("/api/chat", { message: text, mode: "default" });
       const reply = (res && (res.reply || res.answer || res.message || res.text)) ||
-                    (typeof res === "string" ? res : JSON.stringify(res));
+                    (typeof res === "string" ? res : JSON.stringify(res || {}));
       renderMessage("assistant", reply || "(empty)"); scrollChatBottom(true);
     } catch (e) {
       console.error("chat error:", e);
@@ -48,21 +80,41 @@
   }
   window.sendChat = sendChat; window.scrollChatBottom = scrollChatBottom;
 
+  // ---- Boot ----
   document.addEventListener("DOMContentLoaded", () => {
     const app = $("app"); if (app) app.style.display = "block";
 
     const landingBtn = $("landing-start"); const landingInput = $("landing-input");
-    if (landingBtn) landingBtn.onclick = async () => { const t = landingInput?.value?.trim(); if (!t) return; landingInput.value=""; autosizeTA(landingInput); await sendChat(t); };
-    if (landingInput){ autosizeTA(landingInput); landingInput.addEventListener("keydown", (ev) => { if (ev.key==="Enter" && !ev.shiftKey){ ev.preventDefault(); landingBtn?.click(); } }); }
+    if (landingBtn) landingBtn.onclick = async () => {
+      const t = landingInput?.value?.trim(); if (!t) return;
+      landingInput.value=""; autosizeTA(landingInput); await sendChat(t);
+    };
+    if (landingInput){
+      autosizeTA(landingInput);
+      landingInput.addEventListener("keydown", (ev) => {
+        if (ev.key==="Enter" && !ev.shiftKey){ ev.preventDefault(); landingBtn?.click(); }
+      });
+    }
 
     const mainBtn = $("send-btn"); const mainInput = $("main-input");
-    if (mainBtn) mainBtn.onclick = async () => { const t = mainInput?.value?.trim(); if (!t) return; mainInput.value=""; autosizeTA(mainInput); await sendChat(t); };
-    if (mainInput){ autosizeTA(mainInput); mainInput.addEventListener("keydown", (ev)=>{ if (ev.key==="Enter" && !ev.shiftKey){ ev.preventDefault(); mainBtn?.click(); } }); }
+    if (mainBtn) mainBtn.onclick = async () => {
+      const t = mainInput?.value?.trim(); if (!t) return;
+      mainInput.value=""; autosizeTA(mainInput); await sendChat(t);
+    };
+    if (mainInput){
+      autosizeTA(mainInput);
+      mainInput.addEventListener("keydown", (ev)=>{
+        if (ev.key==="Enter" && !ev.shiftKey){ ev.preventDefault(); mainBtn?.click(); }
+      });
+    }
 
     const toBottom = $("to-bottom"); if (toBottom) toBottom.onclick = () => scrollChatBottom(true);
 
+    // Health badge: support both ids
+    const badge = $("api-ok-badge") || $("apiBadge");
     setBanner("warn", "Checking API…");
-    VedAPI.get("/api/health").then(()=>{ const badge=$("api-ok-badge"); if (badge) badge.style.display="inline-flex"; setBanner("ok","API OK"); })
-                             .catch(()=> setBanner("err","API unreachable"));
+    API.get("/api/health")
+      .then((j)=>{ if (badge) badge.style.display="inline-flex"; setBanner("ok", "API OK"); return j; })
+      .catch(()=> setBanner("err","API unreachable"));
   });
 })();
