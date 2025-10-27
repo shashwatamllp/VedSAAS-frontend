@@ -32,16 +32,16 @@
   .topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
   .badge{display:none;background:var(--accent);color:#041;padding:2px 8px;border-radius:999px;font-size:12px}
 
-  /* Landing clean: no internal scrollbars */
+  /* Landing clean */
   #landing{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;height:100%;overflow:hidden}
   #landing::before{content:"";position:absolute;inset:0;background:url("/public/image/logopic.png") center/60% no-repeat;opacity:.08;pointer-events:none}
   #landing > *{position:relative;z-index:1}
 
-  /* Chat shell: internal scroll only in messages */
+  /* Chat shell */
   #chat-shell{display:none;flex-direction:column;min-height:0;height:100%}
   .chat-area{
     flex:1;min-height:0;padding:12px;overflow:auto;
-    display:flex;flex-direction:column;gap:6px;align-items:flex-start;
+    display:flex;flex-direction:column;gap:6px;align-items:stretch;
     max-width:1100px;margin:0 auto;background:var(--bg);
   }
   .composer{
@@ -58,10 +58,16 @@
   .send-btn i{color:#fff}
   .send-btn:disabled{opacity:.6;cursor:not-allowed}
 
-  .msg{display:inline-block;padding:10px 12px;margin:6px 0;border-radius:12px;max-width:72%;line-height:1.45;word-break:break-word;white-space:pre-wrap;background:rgba(255,255,255,0.06);color:var(--text);text-align:left}
+  .msg{display:inline-block;padding:10px 12px;margin:4px 0;border-radius:12px;max-width:72%;line-height:1.45;word-break:break-word;white-space:pre-wrap;background:rgba(255,255,255,0.06);color:var(--text)}
   .msg-user{align-self:flex-end;background:rgba(255,255,255,0.10);text-align:right}
   .msg-assistant{align-self:flex-start;background:rgba(0,0,0,0.18)}
   .msg-system{align-self:center;background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5}
+
+  /* Name label above bubbles */
+  .msg-block{display:flex;flex-direction:column;max-width:72%}
+  .msg-block.left{align-self:flex-start;text-align:left}
+  .msg-block.right{align-self:flex-end;text-align:right}
+  .msg-label{font-size:12px;color:var(--muted);opacity:.9;margin:2px 4px}
 
   #to-bottom{position:fixed;right:16px;bottom:16px;z-index:999}
   @media (max-width:900px){ aside.sidebar{display:none} }
@@ -90,7 +96,6 @@
       </div>
     </header>
 
-    <!-- Landing: clean, fills remaining height, no mid scrollbar -->
     <section id="landing">
       <div class="title">Start a new conversation</div>
       <div style="opacity:.8">Ask anything. I’ll reply in your language.</div>
@@ -106,7 +111,6 @@
       <div><button id="landing-open-history" class="btn" type="button">Open Previous Chats</button></div>
     </section>
 
-    <!-- Chat shell: hidden until first message -->
     <section id="chat-shell">
       <div id="chat-area" class="chat-area" aria-live="polite"></div>
       <div class="composer" role="region" aria-label="Chat composer">
@@ -133,6 +137,7 @@ if(!window.API_BASE){
 const $=(id)=>document.getElementById(id);
 const esc=(s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+// ----- Name helpers -----
 function displayName(){
   try{
     const u = JSON.parse(localStorage.getItem('ved_user')||'null');
@@ -141,13 +146,17 @@ function displayName(){
   const nm = localStorage.getItem('ved_user_name');
   return nm && nm.trim() ? nm.trim() : 'Guest';
 }
-
+function nameForRole(role){
+  if(role==='assistant') return 'VedSAAS';
+  if(role==='system') return 'System';
+  return displayName(); // user
+}
 function setHeader(){
-  const name = displayName();
-  const h = $('app-title'); if (h) h.textContent = `VedSAAS — ${name}`;
-  const ud = $('user-display'); if (ud) ud.textContent = name;
+  const ud = $('user-display'); if (ud) ud.textContent = displayName();
+  const h = $('app-title'); if (h) h.textContent = 'VedSAAS';
 }
 
+// ----- Chat state -----
 const LANG_KEY='vedsaas_chat_lang';
 function getSavedLang(){ return localStorage.getItem(LANG_KEY)||'Auto'; }
 
@@ -166,6 +175,21 @@ function renderHistory(){
     list.appendChild(div);
   });
 }
+
+function messageNode(role, text){
+  const wrap=document.createElement('div');
+  wrap.className='msg-block ' + (role==='user'?'right':role==='assistant'?'left':'');
+  const label=document.createElement('div');
+  label.className='msg-label';
+  label.textContent=nameForRole(role);
+  const bubble=document.createElement('div');
+  bubble.className='msg ' + (role==='user'?'msg-user':role==='assistant'?'msg-assistant':'msg-system');
+  bubble.textContent=text;
+  wrap.appendChild(label);
+  wrap.appendChild(bubble);
+  return wrap;
+}
+
 function renderChat(){
   const area=$('chat-area'); const t=topics.find(x=>x.id===currentTopicId);
   if(!t){ $('landing').style.display='flex'; $('chat-shell').style.display='none'; return; }
@@ -173,12 +197,7 @@ function renderChat(){
   area.innerHTML='';
   const header=document.createElement('div'); header.style.textAlign='center'; header.style.margin='6px 0 10px';
   header.innerHTML=`<strong>${esc(t.title||'New Chat')}</strong>`; area.appendChild(header);
-  t.messages.forEach(m=>{
-    const row=document.createElement('div');
-    row.className='msg '+(m.from==='user'?'msg-user':m.from==='assistant'?'msg-assistant':'msg-system');
-    row.textContent=m.message;
-    area.appendChild(row);
-  });
+  t.messages.forEach(m=> area.appendChild(messageNode(m.from, m.message)));
   area.scrollTop=area.scrollHeight;
 }
 
@@ -187,6 +206,7 @@ function newTopic(title='New Chat'){ const id='t_'+Date.now(); topics.unshift({i
 function appendMessage(from,message){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; t.messages.push({id:uid(),from,message,timestamp:Date.now()}); save(); renderChat(); }
 function goToChat(id){ currentTopicId=id; save(); renderHistory(); renderChat(); }
 
+// ----- API -----
 async function api(path,body,{timeout=15000}={}){
   const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),timeout);
   try{
@@ -199,7 +219,6 @@ async function api(path,body,{timeout=15000}={}){
     return ct.includes('application/json')?r.json():r.text();
   } finally { clearTimeout(tm); }
 }
-
 function pickReply(res){
   if(!res) return '';
   if(typeof res==='string') return res.trim();
@@ -221,7 +240,6 @@ async function chatCall(payload){
   try{ return await api('/chat',payload); }
   catch(e){ const msg=String(e?.message||''); if(msg.includes('404')||msg.includes('405')) return await api('/ask',payload); throw e; }
 }
-
 async function send(text){
   if(!text||sending) return;
   sending=true; $('send-btn').disabled=true;
@@ -277,7 +295,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   area.addEventListener('scroll',toggle); pill.onclick=()=>{ area.scrollTop=area.scrollHeight; toggle(); };
   toggle();
 
-  // Health badge
   fetch((window.API_BASE||'/api')+'/health',{cache:'no-store'})
     .then(r=>r.json()).then(j=>{ if(j && (j.ok===true || j.status==='ok')){ const b=$('api-ok-badge'); if(b) b.style.display='inline-flex'; } })
     .catch(()=>{});
