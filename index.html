@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/public/css/theme-side.css"/>
 
 <style>
-  :root{ --bg:#0e0f14; --surface:#0f1720; --muted:#94a3b8; --text:#e9edf4; --accent:#2a7; --panel:#233; }
+  :root{ --bg:#0e0f14; --surface:#0f1720; --muted:#94a3b8; --text:#e9edf4; --accent:#2a7; --panel:#233 }
   :root{ color-scheme:dark }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;overflow:hidden}
@@ -32,10 +32,10 @@
   .topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
   .badge{display:none;background:var(--accent);color:#041;padding:2px 8px;border-radius:999px;font-size:12px}
 
-  /* Landing clean */
+  /* Landing (no mid-scroll) */
   #landing{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;height:100%;overflow:hidden}
   #landing::before{content:"";position:absolute;inset:0;background:url("/public/image/logopic.png") center/60% no-repeat;opacity:.08;pointer-events:none}
-  #landing > *{position:relative;z-index:1}
+  #landing>*{position:relative;z-index:1}
 
   /* Chat shell */
   #chat-shell{display:none;flex-direction:column;min-height:0;height:100%}
@@ -58,12 +58,12 @@
   .send-btn i{color:#fff}
   .send-btn:disabled{opacity:.6;cursor:not-allowed}
 
+  /* Bubbles + labels */
   .msg{display:inline-block;padding:10px 12px;margin:4px 0;border-radius:12px;max-width:72%;line-height:1.45;word-break:break-word;white-space:pre-wrap;background:rgba(255,255,255,0.06);color:var(--text)}
   .msg-user{align-self:flex-end;background:rgba(255,255,255,0.10);text-align:right}
   .msg-assistant{align-self:flex-start;background:rgba(0,0,0,0.18)}
   .msg-system{align-self:center;background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5}
 
-  /* Name label above bubbles */
   .msg-block{display:flex;flex-direction:column;max-width:72%}
   .msg-block.left{align-self:flex-start;text-align:left}
   .msg-block.right{align-self:flex-end;text-align:right}
@@ -137,7 +137,7 @@ if(!window.API_BASE){
 const $=(id)=>document.getElementById(id);
 const esc=(s)=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// ----- Name helpers -----
+/* ---- Names ---- */
 function displayName(){
   try{
     const u = JSON.parse(localStorage.getItem('ved_user')||'null');
@@ -149,14 +149,14 @@ function displayName(){
 function nameForRole(role){
   if(role==='assistant') return 'VedSAAS';
   if(role==='system') return 'System';
-  return displayName(); // user
+  return displayName();
 }
 function setHeader(){
-  const ud = $('user-display'); if (ud) ud.textContent = displayName();
-  const h = $('app-title'); if (h) h.textContent = 'VedSAAS';
+  const ud=$('user-display'); if(ud) ud.textContent=displayName();
+  const h=$('app-title'); if(h) h.textContent='VedSAAS';
 }
 
-// ----- Chat state -----
+/* ---- State ---- */
 const LANG_KEY='vedsaas_chat_lang';
 function getSavedLang(){ return localStorage.getItem(LANG_KEY)||'Auto'; }
 
@@ -164,6 +164,7 @@ let topics=[], currentTopicId=null, sending=false;
 function save(){ try{ localStorage.setItem('ved_topics',JSON.stringify(topics)); localStorage.setItem('ved_current',currentTopicId||''); }catch{} }
 function load(){ try{ topics=JSON.parse(localStorage.getItem('ved_topics')||'[]'); }catch{ topics=[]; } currentTopicId=localStorage.getItem('ved_current')||(topics[0]?.id||null); }
 
+/* ---- History ---- */
 function renderHistory(){
   const list=$('history-list'); list.innerHTML='';
   topics.forEach(t=>{
@@ -176,20 +177,15 @@ function renderHistory(){
   });
 }
 
-function messageNode(role, text){
+/* ---- Messages ---- */
+function messageNode(role,text){
   const wrap=document.createElement('div');
-  wrap.className='msg-block ' + (role==='user'?'right':role==='assistant'?'left':'');
-  const label=document.createElement('div');
-  label.className='msg-label';
-  label.textContent=nameForRole(role);
-  const bubble=document.createElement('div');
-  bubble.className='msg ' + (role==='user'?'msg-user':role==='assistant'?'msg-assistant':'msg-system');
-  bubble.textContent=text;
-  wrap.appendChild(label);
-  wrap.appendChild(bubble);
+  wrap.className='msg-block '+(role==='user'?'right':role==='assistant'?'left':'');
+  const label=document.createElement('div'); label.className='msg-label'; label.textContent=nameForRole(role);
+  const bubble=document.createElement('div'); bubble.className='msg '+(role==='user'?'msg-user':role==='assistant'?'msg-assistant':'msg-system'); bubble.textContent=text;
+  wrap.append(label,bubble);
   return wrap;
 }
-
 function renderChat(){
   const area=$('chat-area'); const t=topics.find(x=>x.id===currentTopicId);
   if(!t){ $('landing').style.display='flex'; $('chat-shell').style.display='none'; return; }
@@ -197,23 +193,19 @@ function renderChat(){
   area.innerHTML='';
   const header=document.createElement('div'); header.style.textAlign='center'; header.style.margin='6px 0 10px';
   header.innerHTML=`<strong>${esc(t.title||'New Chat')}</strong>`; area.appendChild(header);
-  t.messages.forEach(m=> area.appendChild(messageNode(m.from, m.message)));
+  t.messages.forEach(m=> area.appendChild(messageNode(m.from,m.message)));
   area.scrollTop=area.scrollHeight;
 }
-
 function uid(){ return Math.random().toString(36).slice(2,9) }
 function newTopic(title='New Chat'){ const id='t_'+Date.now(); topics.unshift({id,title,created_at:Date.now(),messages:[]}); currentTopicId=id; save(); renderHistory(); renderChat(); return id; }
 function appendMessage(from,message){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; t.messages.push({id:uid(),from,message,timestamp:Date.now()}); save(); renderChat(); }
 function goToChat(id){ currentTopicId=id; save(); renderHistory(); renderChat(); }
 
-// ----- API -----
+/* ---- API ---- */
 async function api(path,body,{timeout=15000}={}){
   const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),timeout);
   try{
-    const r=await fetch((window.API_BASE||'/api')+path,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(body||{}), cache:'no-store', credentials:'omit', signal:ac.signal
-    });
+    const r=await fetch((window.API_BASE||'/api')+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{}),cache:'no-store',credentials:'omit',signal:ac.signal});
     const ct=(r.headers.get('content-type')||'').toLowerCase();
     if(!r.ok){ const txt=await r.text().catch(()=> ''); throw new Error(`HTTP ${r.status}${txt?': '+txt.slice(0,120):''}`); }
     return ct.includes('application/json')?r.json():r.text();
@@ -256,6 +248,7 @@ async function send(text){
   }
 }
 
+/* ---- Boot ---- */
 document.addEventListener('DOMContentLoaded',()=>{
   $('app').hidden=false;
   setHeader();
