@@ -6,26 +6,31 @@
   z-index:9999;
   width:48px;
   height:120px;
-  background:transparent;        /* no panel body */
+  background:transparent;
   color:var(--text);
-  border:0;                      /* no border */
+  border:0;
   display:flex;
   align-items:center;
   justify-content:center;
   cursor:pointer;
   box-shadow:none;
   writing-mode:initial;
-  transform:none;                /* upright */
-  font-size:0;                   /* hide any stray text nodes */
+  transform:none;
+  font-size:0;
   line-height:1;
   overflow:visible;
+  -webkit-tap-highlight-color: transparent;
+}
+#theme-side-toggle:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
 }
 
 #theme-side-toggle > .ts-text{
-  display:none !important;       /* hide label completely */
+  display:none !important;
 }
 
-/* Bottom pill only; inverts with theme */
+/* Default: dark UI -> light pill */
 #theme-side-toggle::after{
   content:'';
   position:absolute;
@@ -34,16 +39,33 @@
   bottom:6px;
   height:32px;
   border-radius:16px;
-  background:rgba(255,255,255,0.95);      /* dark theme -> light pill */
+  background:rgba(255,255,255,0.95);
   box-shadow:0 6px 14px rgba(0,0,0,0.12);
   pointer-events:none;
 }
-.light-theme #theme-side-toggle::after{
-  background:rgba(10,12,16,0.92);          /* light theme -> dark pill */
+
+/* Light UI -> dark pill (support both class and data-theme) */
+.light-theme #theme-side-toggle::after,
+html[data-theme="light"] #theme-side-toggle::after{
+  background:rgba(10,12,16,0.92);
   box-shadow:0 6px 14px rgba(0,0,0,0.18);
 }
 
-/* Desktop focus; optional compact tweak for small screens */
+/* Auto mode: respect prefers-color-scheme */
+@media (prefers-color-scheme: light){
+  html[data-theme="auto"] #theme-side-toggle::after{
+    background:rgba(10,12,16,0.92);
+    box-shadow:0 6px 14px rgba(0,0,0,0.18);
+  }
+}
+@media (prefers-color-scheme: dark){
+  html[data-theme="auto"] #theme-side-toggle::after{
+    background:rgba(255,255,255,0.95);
+    box-shadow:0 6px 14px rgba(0,0,0,0.12);
+  }
+}
+
+/* Compact on small screens */
 @media (max-width:900px){
   #theme-side-toggle{ right:8px; top:8px; width:42px; height:96px; }
   #theme-side-toggle::after{ left:6px; right:6px; bottom:6px; height:26px; border-radius:14px; }
