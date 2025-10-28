@@ -1,4 +1,4 @@
-*{margin:90;padding:90;box-sizing:border-box} 
+*{margin:0;padding:0;box-sizing:border-box}
 
 /* Base */
 html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#1e1e2f;color:#fff;overflow:hidden}
@@ -70,7 +70,15 @@ input,textarea,select,button{font-size:16px}
 .from-bot  .msg-label{color:#b7c1d6}
 
 /* Bubbles */
-.message-row .msg-body{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;border-radius:12px;padding:10px 12px}
+.message-row .msg-body{
+  display:inline-block;              /* fix: prevents vertical stacking */
+  white-space:pre-wrap;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  border-radius:12px;
+  padding:10px 12px;
+  max-width:72%;
+}
 .from-bot  .msg-body{background:#2a2a3f;border:1px solid #3b3b53;color:#eaeaf2}
 .from-user .msg-body{background:#3a3a52;border:1px solid #4a4a60;color:#ffffff}
 
@@ -154,7 +162,6 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 
 /* =================== DESKTOP-ONLY LAYOUT TIGHTENING =================== */
 @media (min-width:1024px){
-  /* remove side gutters and hard-center the chat stream */
   .rail{padding-inline:0}
   .content{align-items:center}
   .chat-area{
@@ -163,12 +170,7 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
     padding-left:16px; padding-right:16px;
     align-items:stretch;
   }
-  /* keep bubbles readable inside centered column */
   .message-row{max-width:100%}
-  .message-row .msg-body{display:inline-block; max-width:72%}
-  /* title visible and centered */
   .topbar{justify-content:center}
   .topbar h1{color:#e9edf4;font-weight:700;letter-spacing:.6px;text-shadow:0 0 1px rgba(0,0,0,.3)}
 }
-
-
