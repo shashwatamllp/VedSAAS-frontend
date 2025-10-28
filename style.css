@@ -19,8 +19,7 @@ input,textarea,select,button{font-size:16px}
 .settings-summary{margin-top:8px}
 
 /* Header user chip -> green */
-.user-chip{display:flex;align-items:center;gap:10px;background:#16a34a;border:0;color:#041;
-  padding:6px 10px;border-radius:999px;cursor:pointer;font-weight:600}
+.user-chip{display:flex;align-items:center;gap:10px;background:#16a34a;border:0;color:#041;padding:6px 10px;border-radius:999px;cursor:pointer;font-weight:600}
 .user-chip:hover{filter:brightness(1.05)}
 .user-avatar{width:26px;height:26px;border-radius:50%;background:#0078d4;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;overflow:hidden}
 .user-name{font-size:13px;color:#0b1;flex:1}
@@ -29,8 +28,9 @@ input,textarea,select,button{font-size:16px}
 .settings-panel .btn-like,.settings-panel button{display:block;width:100%;text-align:left;background:none;border:1px solid #3a3a4d;border-radius:8px;color:#ddd;padding:10px 12px;cursor:pointer;margin-bottom:6px}
 .settings-panel button:hover,.settings-panel .btn-like:hover{background:#2f2f42;color:#fff}
 
-.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
-.rail{position:relative;width:min(920px,100%);margin:0 auto;height:100%;display:flex;flex-direction:column;min-width:0;min-height:0}
+/* Main rail + content */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.rail{position:relative;width:100%;max-width:none;margin:0;padding-inline:16px;height:100%;display:flex;flex-direction:column;min-width:0;min-height:0}
 
 /* Logo background on landing */
 #landing::before{
@@ -40,6 +40,7 @@ input,textarea,select,button{font-size:16px}
   opacity:.20; pointer-events:none; z-index:0;
 }
 
+/* Topbar hard-center title */
 .topbar{padding:14px 18px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:center;background:transparent;position:relative;z-index:1}
 .topbar h1{margin:0;font-size:20px;letter-spacing:1px}
 .top-controls{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;gap:8px;align-items:center}
@@ -49,13 +50,18 @@ input,textarea,select,button{font-size:16px}
 /* Hide API badge and Local KB text */
 #api-ok-badge,#meta-info{display:none !important}
 
-.content{flex:1;min-height:0;display:flex;flex-direction:column;z-index:1}
+/* Only chat-area scrolls */
+.content{flex:1;min-height:0;display:flex;flex-direction:column;z-index:1;overflow:hidden}
 
-/* Chat list must stretch to edges for left/right labels */
-.chat-area{flex:1;min-height:0;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px;
-  -webkit-overflow-scrolling:touch;align-items:stretch}
+/* Chat list edge-to-edge */
+.chat-area{
+  flex:1;min-height:0;overflow:auto;
+  padding:20px;display:flex;flex-direction:column;gap:12px;
+  -webkit-overflow-scrolling:touch;align-items:stretch;
+  max-width:none;margin:0;
+}
 
-/* Message rows with labels like screenshot */
+/* Message rows with labels */
 .message-row{max-width:80%;position:relative;line-height:1.5;display:flex;flex-direction:column}
 .from-user{align-self:flex-end;text-align:right}
 .from-bot{align-self:flex-start;text-align:left}
