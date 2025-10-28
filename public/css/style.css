@@ -57,27 +57,34 @@ input,textarea,select,button{font-size:16px}
 .chat-area{
   flex:1;min-height:0;overflow:auto;
   padding:20px;display:flex;flex-direction:column;gap:12px;
-  -webkit-overflow-scrolling:touch;align-items:stretch;
+  -webkit-overflow-scrolling:touch;align-items:flex-start;
   max-width:none;margin:0;
 }
 
 /* Message rows with labels */
-.message-row{max-width:80%;position:relative;line-height:1.5;display:flex;flex-direction:column}
+.message-row{
+  width:fit-content;
+  max-width:min(720px,90%);
+  position:relative;
+  line-height:1.5;
+  display:flex;
+  flex-direction:column;
+}
 .from-user{align-self:flex-end;text-align:right}
 .from-bot{align-self:flex-start;text-align:left}
-.msg-label{font-size:12px;color:#bbb;margin:2px 4px 6px}
+.msg-label{font-size:12px;color:#bbb;margin:2px 4px 6px;width:fit-content;max-width:min(720px,90%)}
 .from-user .msg-label{color:#a8ffd0}
 .from-bot  .msg-label{color:#b7c1d6}
 
 /* Bubbles */
 .message-row .msg-body{
-  display:inline-block;              /* fix: prevents vertical stacking */
+  display:block;
   white-space:pre-wrap;
-  word-break:break-word;
-  overflow-wrap:anywhere;
+  word-break:normal;
+  overflow-wrap:break-word;
   border-radius:12px;
   padding:10px 12px;
-  max-width:72%;
+  max-width:72ch;
 }
 .from-bot  .msg-body{background:#2a2a3f;border:1px solid #3b3b53;color:#eaeaf2}
 .from-user .msg-body{background:#3a3a52;border:1px solid #4a4a60;color:#ffffff}
@@ -168,7 +175,7 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
     width:min(980px,100%);
     margin-left:auto; margin-right:auto;
     padding-left:16px; padding-right:16px;
-    align-items:stretch;
+    align-items:flex-start;
   }
   .message-row{max-width:100%}
   .topbar{justify-content:center}
