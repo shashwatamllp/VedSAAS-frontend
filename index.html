@@ -293,29 +293,53 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 <script>
 /* ===== API base normalize ===== */
 const API_BASE = (() => {
-  const FALLBACK = 'http://127.0.0.1:8000';
   try {
     const meta = document.querySelector('meta[name="ved-api-base"]');
-    const m = meta ? (meta.content||'').trim() : '';
-    if (m) return m.replace(/\/+$/,'');
-    const o = location.origin || '';
-    if (!o || o.startsWith('file://')) return FALLBACK;
-    return o.replace(/\/+$/,'');
-  } catch { return FALLBACK; }
+    const m = (meta?.content || '').trim().replace(/\/+$/,'');
+    if (m) return m;                                     // e.g. "/api" or "https://api.vedsaas.com"
+    if (location.origin && !location.origin.startsWith('file://')) {
+      return (location.origin.replace(/\/+$/,'') + '/api');  // e.g. "https://vedsaas.com/api"
+    }
+    return 'http://127.0.0.1:8012/api';                  // fallback for file:// or unknown
+  } catch {
+    return 'http://127.0.0.1:8012/api';
+  }
 })();
-function api(path){
-  let p = String(path||'');
-  if(!p.startsWith('/')) p = '/'+p;
+
+function api(path) {
+  let p = String(path || '');
+  if (!p.startsWith('/')) p = '/' + p;
+  // avoid "/api/api/*"
   if (API_BASE.endsWith('/api') && p.startsWith('/api')) p = p.replace(/^\/api\b/, '');
   return API_BASE + p;
 }
+
+/* ===== Minimal fetch helpers ===== */
+async function apiPost(path, bodyObj) {
+  const res = await fetch(api(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bodyObj || {})
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text.slice(0,200)}`);
+  }
+  return res.json();
+}
+
+/* ===== Engine1 compat calls ===== */
+async function askEngine1(query, user='web') {
+  return apiPost('/engine1/ask', { query: String(query || ''), user });
+}
+
 
 /* ===== State ===== */
 let token = localStorage.getItem('token') || null;
 let topics = []; let currentTopicId = null; let sending = false;
 
 /* Limits */
-const MAX_LOCAL_BYTES = 2_000_000, TOPIC_HARD_LIMIT = 80, MSGS_PER_TOPIC_LIMIT = 200;
+const MAX_LOCAL_BYTES = 2_000_000, TOPIC_HARD_LIMIT = 800, MSGS_PER_TOPIC_LIMIT = 2000;
 
 /* Utils */
 function banner(msg){ const b=document.getElementById('banner'); b.textContent=msg; b.style.display='block'; setTimeout(()=>b.style.display='none', 2500); }
@@ -661,3 +685,4 @@ document.getElementById('ac-upgrade').addEventListener('click', ()=>{ banner('Up
 </script>
 </body>
 </html>
+
