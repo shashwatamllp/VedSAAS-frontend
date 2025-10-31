@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer"/>
 
-<!-- CSP -->
+<!-- CSP (note: frame-ancestors must be set via HTTP header to be enforced) -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   img-src 'self' data:;
@@ -293,17 +293,16 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 <script>
 /* ========= State must come first ========= */
 let token = localStorage.getItem('token') || null;
-let topics = [];
+let topics = [];            // single declaration only
 let currentTopicId = null;
 let sending = false;
 let serverOnline = false;
 let _pingTimer = null;
 
-/* ========= DOM refs (map to your UI) ========= */
-const $msgs  = document.getElementById('chat-area');   // messages container
-const $input = document.getElementById('main-input');  // textarea
-const $send  = document.getElementById('send-btn');    // send button
-const $topic = null;                                   // optional title element
+/* ========= DOM refs ========= */
+const $msgs  = document.getElementById('chat-area');
+const $input = document.getElementById('main-input');
+const $send  = document.getElementById('send-btn');
 
 /* ========= Limits ========= */
 const MAX_LOCAL_BYTES = 2_000_000, TOPIC_HARD_LIMIT = 800, MSGS_PER_TOPIC_LIMIT = 2000;
@@ -314,50 +313,40 @@ function formatFull(ts){ const d=ts?new Date(ts):new Date(),z=n=>String(n).padSt
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))}
 function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); t=t.replace(/`([^`]+)`/g,'<code>$1</code>'); t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); t=t.replace(/\*([^*]+)\*/g,'<em>$1</em>'); return t.replace(/\n/g,'<br/>'); }
 function uid(){ return Math.random().toString(36).slice(2,9) }
+function pickResponse(o){ if(!o||typeof o!=='object') return ''; return String(o.answer ?? o.response ?? o.reply ?? o.message ?? o.text ?? ''); }
 
-/* ========= Storage helpers ========= */
-function approxBytesOf(o){ try{return JSON.stringify(o).length;}catch{return 0;} }
-function tryTrimForQuota(){
-  if (topics.length > TOPIC_HARD_LIMIT) topics = topics.slice(0, TOPIC_HARD_LIMIT);
-  topics.forEach(t=>{ if(Array.isArray(t.messages) && t.messages.length>MSGS_PER_TOPIC_LIMIT) t.messages=t.messages.slice(-MSGS_PER_TOPIC_LIMIT); });
-  let size = approxBytesOf(topics);
-  while (size > MAX_LOCAL_BYTES && topics.length > 1) { topics.pop(); size = approxBytesOf(topics); }
-  if (size > MAX_LOCAL_BYTES) {
-    for (let i = topics.length - 1; i >= 0 && size > MAX_LOCAL_BYTES; i--) {
-      const t = topics[i];
-      while (t.messages && t.messages.length > 1 && size > MAX_LOCAL_BYTES) { t.messages.shift(); size = approxBytesOf(topics); }
-    }
+/* ========= API base ========= */
+const API_BASE = (() => {
+  try {
+    const meta = document.querySelector('meta[name="ved-api-base"]');
+    const m = (meta?.content || '').trim().replace(/\/+$/,'');
+    if (m) return m;
+    if (location.origin && !location.origin.startsWith('file://')) return (location.origin.replace(/\/+$/,'') + '/api');
+    return 'http://127.0.0.1:8012/api';
+  } catch { return 'http://127.0.0.1:8012/api'; }
+})();
+function api(path){ let p=String(path||''); if(!p.startsWith('/')) p='/'+p; if(API_BASE.endsWith('/api') && p.startsWith('/api')) p=p.replace(/^\/api\b/,''); return API_BASE + p; }
+
+/* ========= HTTP helpers ========= */
+async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
+  const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), timeoutMs);
+  const url = api(path);
+  const res = await fetch(url, { ...opts, signal: ctrl.signal, credentials:'include',
+    headers:{ 'Content-Type':'application/json', ...(opts.headers||{}), ...(token?{'Authorization':'Bearer '+token}:{}) }});
+  clearTimeout(t);
+  if(!res.ok){
+    let text=''; try{ text=await res.text(); }catch{}
+    const snippet=(text||'').slice(0,160);
+    throw new Error(`HTTP ${res.status} ${res.statusText}${snippet? ' — '+snippet:''}`);
   }
+  return res;
 }
-function saveLocal(){
-  tryTrimForQuota();
-  localStorage.setItem('topics', JSON.stringify(topics));
-  updateMeta();
+async function apiPost(path, bodyObj){
+  const res = await fetch(api(path), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(bodyObj||{}) });
+  if(!res.ok){ const text=await res.text(); throw new Error(`HTTP ${res.status}: ${text.slice(0,200)}`); }
+  return res.json();
 }
-function ensureTopic(){
-  if (currentTopicId && topics.find(t=>t.id===currentTopicId)) return;
-  const t = { id: uid(), title: 'New chat', createdAt: Date.now(), messages: [] };
-  topics.unshift(t);
-  currentTopicId = t.id;
-}
-function getTopic(){ ensureTopic(); return topics.find(t=>t.id===currentTopicId); }
-
-/* ========= Rendering ========= */
-function renderBubble(role, htmlText, meta=''){
-  if(!$msgs) return;
-  const wrap = document.createElement('div');
-  wrap.className = `msg msg-${role}`;
-  wrap.innerHTML = `
-    <div class="msg-inner">
-      <div class="msg-text">${htmlText}</div>
-      ${meta ? `<div class="msg-meta">${esc(meta)}</div>` : ''}
-    </div>`;
-  $msgs.appendChild(wrap);
-  $msgs.scrollTop = $msgs.scrollHeight;
-}
-function renderUserBubble(text){ renderBubble('user', mdLite(text), formatFull()); }
-function renderAssistantBubble(text, meta=''){ renderBubble('assistant', mdLite(text), meta); }
-function topicTitleFromFirstUser(msg){ const s=(msg||'').trim().slice(0,60); return s ? s.replace(/\s+/g,' ').trim() : 'New chat'; }
+async function askEngine1(query, user='web'){ return apiPost('/engine1/ask', { query:String(query||''), user }); }
 
 /* ========= Server status ========= */
 const PROBES = ['/api/user-status','/api/health','/api/engine1/health','/api/engine2/health','/__routes','/openapi.json'];
@@ -371,71 +360,54 @@ async function pingServer(){
 }
 function startPinger(){ if(_pingTimer) clearInterval(_pingTimer); _pingTimer=setInterval(pingServer,5000); pingServer(); }
 
-/* ========= API base + HTTP ========= */
-const API_BASE = (() => {
-  try {
-    const meta = document.querySelector('meta[name="ved-api-base"]');
-    const m = (meta?.content || '').trim().replace(/\/+$/,'');
-    if (m) return m;
-    if (location.origin && !location.origin.startsWith('file://')) return (location.origin.replace(/\/+$/,'') + '/api');
-    return 'http://127.0.0.1:8012/api';
-  } catch { return 'http://127.0.0.1:8012/api'; }
-})();
-function api(path){ let p=String(path||''); if(!p.startsWith('/')) p='/'+p; if(API_BASE.endsWith('/api') && p.startsWith('/api')) p=p.replace(/^\/api\b/,''); return API_BASE + p; }
-async function apiPost(path, bodyObj){
-  const res = await fetch(api(path), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(bodyObj||{}) });
-  if(!res.ok){ const text=await res.text(); throw new Error(`HTTP ${res.status}: ${text.slice(0,200)}`); }
-  return res.json();
-}
-async function askEngine1(query, user='web'){ return apiPost('/engine1/ask', { query:String(query||''), user }); }
-
-/* ========= Send flow ========= */
-async function handleSend(){
-  if (sending) return;
-  const q = String(($input&&$input.value)||'').trim();
-  if (!q) return;
-  sending = true; if($send) $send.disabled = true;
-
-  const t = getTopic();
-  if (!t.messages.length) t.title = topicTitleFromFirstUser(q);
-  if ($topic) $topic.textContent = t.title;
-
-  renderUserBubble(q);
-  t.messages.push({ id: uid(), role:'user', text:q, ts:Date.now() });
-  saveLocal();
-
-  try{
-    const resp = await askEngine1(q, 'web');
-    const text = resp?.reply ?? (resp?.echo ? JSON.stringify(resp.echo) : '');
-    const meta = resp?.mode ? `mode:${resp.mode}${resp.intent? ' • intent:'+resp.intent:''}${resp.conf!=null? ' • conf:'+String(resp.conf):''}` : '';
-    const finalText = text || '[empty reply]';
-    renderAssistantBubble(finalText, meta);
-    t.messages.push({ id: uid(), role:'assistant', text:finalText, meta, ts:Date.now() });
-    saveLocal();
-  }catch(e){
-    const err = String(e?.message||e);
-    renderAssistantBubble('Error: '+esc(err));
-    banner('Send failed');
-  }finally{
-    if($input){ $input.value=''; $input.focus(); }
-    sending=false; if($send) $send.disabled=false;
+/* ========= Storage ========= */
+function approxBytesOf(o){ try{return JSON.stringify(o).length;}catch{return 0;} }
+function tryTrimForQuota(){
+  if (topics.length > TOPIC_HARD_LIMIT) topics = topics.slice(0, TOPIC_HARD_LIMIT);
+  topics.forEach(t=>{ if(Array.isArray(t.messages) && t.messages.length>MSGS_PER_TOPIC_LIMIT) t.messages=t.messages.slice(-MSGS_PER_TOPIC_LIMIT); });
+  let size = approxBytesOf(topics);
+  while (size > MAX_LOCAL_BYTES && topics.length > 1) { topics.pop(); size = approxBytesOf(topics); }
+  if (size > MAX_LOCAL_BYTES) {
+    for (let i = topics.length - 1; i >= 0 && size > MAX_LOCAL_BYTES; i--) {
+      const t = topics[i];
+      while (t.messages && t.messages.length > 1 && size > MAX_LOCAL_BYTES) { t.messages.shift(); size = approxBytesOf(topics); }
+    }
   }
 }
+function saveTopicsToLocal(){
+  tryTrimForQuota();
+  try{ localStorage.setItem('vedsaas_topics', JSON.stringify(topics)); localStorage.setItem('vedsaas_current', currentTopicId||''); }catch{}
+  renderStorageUsage();
+}
+function loadTopicsFromLocal(){
+  try{ topics=JSON.parse(localStorage.getItem('vedsaas_topics')||'[]'); }catch{ topics=[]; }
+  try{ currentTopicId=localStorage.getItem('vedsaas_current')||(topics[0]&&topics[0].id)||null; }catch{ currentTopicId=(topics[0]&&topics[0].id)||null; }
+}
+function ensureTopic(){
+  if (currentTopicId && topics.find(t=>t.id===currentTopicId)) return;
+  const t = { id: uid(), title: 'New Chat', created_at: Date.now(), messages: [] };
+  topics.unshift(t); currentTopicId = t.id;
+}
+function getTopic(){ ensureTopic(); return topics.find(t=>t.id===currentTopicId); }
 
-/* ========= Wire events ========= */
-if ($send)  $send.addEventListener('click', handleSend);
-if ($input) $input.addEventListener('keydown', e=>{ if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }});
+/* ========= History ========= */
+function renderHistory(){
+  const list=document.getElementById('history-list'); if(!list) return; list.innerHTML='';
+  (topics||[]).forEach(t=>{
+    const div=document.createElement('div'); div.className='topic'+(t.id===currentTopicId?' active':''); div.dataset.id=t.id;
+    const last=(t.messages&&t.messages.length)?t.messages[t.messages.length-1]:null;
+    const preview=esc(String(last?(last.message??''):'').replace(/\n/g,' ')).slice(0,40);
+    div.innerHTML=`<div style="font-weight:600">${esc(t.title||'Chat')}</div><div class="preview">${preview}</div>`;
+    div.onclick=()=>{ location.hash='#/chat/'+encodeURIComponent(t.id); };
+    list.appendChild(div);
+  });
+}
 
-/* ========= Boot ========= */
-startPinger();
-updateMeta();
-</script>
-
-/* Messages */
+/* ========= Messages + chat render ========= */
 function messageNode(m){
   const wrap=document.createElement('div'); wrap.className='message-row '+(m.from==='user'?'from-user':'from-bot'); wrap.dataset.mid=m.id;
   const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${m.from==='user'?'You':'VedSAAS'} • ${formatFull(m.timestamp)}`;
-  const body=document.createElement('div'); body.className='msg-body'; body.innerHTML=mdLite(String(m.message??''));
+  const body=document.createElement('div'); body.className='msg-body'; body.innerHTML=mdLite(String(m.message??'')); 
   const act=document.createElement('div'); act.className='msg-actions';
   const btnCopy=document.createElement('button'); btnCopy.innerHTML='<i class="fas fa-copy"></i>'; btnCopy.title='Copy'; btnCopy.onclick=()=>{ navigator.clipboard.writeText(String(m.message??'')); banner('Copied'); };
   const btnDel=document.createElement('button'); btnDel.innerHTML='<i class="fas fa-trash"></i>'; btnDel.title='Delete'; btnDel.onclick=()=>{ deleteMessage(m.id) };
@@ -456,7 +428,7 @@ function newTopic(title='New Chat'){ const id='t_'+Date.now(); topics.unshift({i
 function appendMessage(from,message){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; const m={id:uid(),from,message,timestamp:Date.now()}; t.messages.push(m); saveTopicsToLocal(); updateUsage(); return m; }
 function deleteMessage(mid){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; t.messages=t.messages.filter(m=>m.id!==mid); saveTopicsToLocal(); renderChat(); updateUsage(); }
 
-/* Delete / Clear */
+/* ========= Delete / Clear ========= */
 function deleteCurrentChat(){ if(!currentTopicId) return banner('No chat selected'); const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
   if(!confirm('Delete this chat from local storage?')) return; topics=topics.filter(x=>x.id!==currentTopicId); currentTopicId=(topics[0]&&topics[0].id)||null;
   saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); if(!currentTopicId) showLanding();
@@ -465,12 +437,10 @@ function clearAllChats(){ if(!topics.length) return banner('No chats to clear.')
   topics=[]; currentTopicId=null; saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); showLanding();
 }
 
-/* Typing */
+/* ========= Typing bubble + typewriter ========= */
 function showTyping(){ let tip=document.querySelector('.typing-row'); if(!tip){ tip=document.createElement('div'); tip.className='typing-row'; tip.innerHTML=`<span class="dots"><i></i><i></i><i></i></span> <span style="opacity:.8">VedSAAS is typing…</span>`; }
   const area=document.getElementById('chat-area'); if(tip.parentElement!==area) area.appendChild(tip); autoScroll(true); }
 function hideTyping(){ const tip=document.querySelector('.typing-row'); if(tip&&tip.parentElement) tip.remove(); }
-
-/* Typewriter */
 function typeWriteBot(text,speed=null){
   const sp=Number(localStorage.getItem('pref_type_speed')||'55'); const typingSpeed=(speed!==null?speed:sp);
   hideTyping(); showChat(); const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
@@ -485,12 +455,14 @@ function typeWriteBot(text,speed=null){
     msg.message+=text[i++]; body.textContent=msg.message; body.appendChild(cursor); autoScroll(true); }, typingSpeed);
 }
 
-/* Routing */
+/* ========= Routing ========= */
+function showLanding(){ document.getElementById('landing').style.display='flex'; document.getElementById('chat-shell').style.display='none'; }
+function showChat(){ document.getElementById('landing').style.display='none'; document.getElementById('chat-shell').style.display='flex'; }
 function goToChat(id){ if(!id) return; if(currentTopicId!==id){ currentTopicId=id; saveTopicsToLocal(); renderHistory(); renderChat(); } showChat(); const want='#/chat/'+encodeURIComponent(id); if(location.hash!==want) location.hash=want; }
 function handleRoute(){ const m=location.hash.match(/^#\/chat\/(.+)$/); if(m){ const id=decodeURIComponent(m[1]); const t=(topics||[]).find(x=>x.id===id); if(t){ goToChat(id); } else { showLanding(); } } else { showLanding(); } }
 window.addEventListener('hashchange', handleRoute);
 
-/* Auth + profile */
+/* ========= Auth + profile ========= */
 async function checkLoginAndOpen(){
   if(!token){ showAuth('login'); return; }
   try{
@@ -503,8 +475,19 @@ async function checkLoginAndOpen(){
     hideAuth(); renderHistory(); renderChat(); handleRoute(); updateUsage();
   }
 }
+function showAuth(screen='login'){ document.getElementById('auth-overlay').style.display='flex'; document.getElementById('app').style.display='none';
+  ['login','register','verify'].forEach(s=>document.getElementById(s+'-screen').style.display = (s===screen)?'block':'none'); }
+function hideAuth(){ document.getElementById('auth-overlay').style.display='none'; document.getElementById('app').style.display='flex'; }
+function setDisplayName(name){
+  const chip=document.getElementById('settings-username'); const av=document.getElementById('settings-avatar');
+  if(chip) chip.innerText=name;
+  if(av){ const url=localStorage.getItem('user_avatar_url'); av.innerHTML=''; if(url){ const i=new Image(); i.src=url; i.alt=(name||'U'); av.appendChild(i);} else { av.textContent=(name||'U').trim().slice(0,2).toUpperCase(); } }
+  const up=document.getElementById('up-name'); const upa=document.getElementById('up-avatar');
+  if(up) up.innerText=name; if(upa){ const url2=localStorage.getItem('user_avatar_url'); upa.innerHTML=''; if(url2){ const i2=new Image(); i2.src=url2; i2.alt=name; upa.appendChild(i2);} else { upa.textContent=(name||'U').trim().slice(0,2).toUpperCase(); } }
+}
+function setAccountInfo({email='',mobile=''}){ const em=document.getElementById('ac-email'); const mo=document.getElementById('ac-mobile'); if(em) em.value=email; if(mo) mo.value=mobile; }
 
-/* Auth handlers */
+/* ========= Auth handlers ========= */
 document.getElementById('login-submit').addEventListener('click', async ()=>{
   const identifier=document.getElementById('login-identifier').value.trim(); const password=document.getElementById('login-password').value;
   if(!identifier||!password){ banner('Enter identifier & password'); return; }
@@ -554,14 +537,13 @@ document.getElementById('verify-resend').addEventListener('click', async ()=>{
   try{ const r=await fetch(api('/api/send-otp'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier:ident})}); const d=await r.json(); banner(d.message||d.error||'Done'); }catch{ banner('Server unreachable'); }
 });
 
-/* Landing */
+/* ========= Landing + composer ========= */
 const landingInput=document.getElementById('landing-input'); const landingStart=document.getElementById('landing-start');
 document.getElementById('landing-open-history').addEventListener('click', ()=>{ if(!currentTopicId && topics[0]) currentTopicId=topics[0].id; if(currentTopicId) location.hash='#/chat/'+encodeURIComponent(currentTopicId); renderHistory(); renderChat(); });
 landingStart.addEventListener('click', async ()=>{ const text=(landingInput.value||'').trim(); if(!text){landingInput.focus(); return;} const id=newTopic('New Chat'); location.hash='#/chat/'+encodeURIComponent(id); appendMessage('user',text); landingInput.value=''; autosize(landingInput); await sendToServer(text); });
 landingInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); landingStart.click(); }});
 landingInput.addEventListener('input', ()=>autosize(landingInput));
 
-/* Composer */
 const mainInput=document.getElementById('main-input'); const sendBtn=document.getElementById('send-btn');
 function autosize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,160)+'px'; }
 function updateSendState(){ sendBtn.disabled = sending || !mainInput.value.trim().length; }
@@ -572,14 +554,18 @@ sendBtn.addEventListener('click', async ()=>{ const text=mainInput.value.trim();
 function restoreDraft(){ const d=getDraft(); if(d){ mainInput.value=d; autosize(mainInput); } updateSendState(); }
 restoreDraft();
 
-/* Chat send */
+/* ========= Draft helpers ========= */
+function draftKey(){ return 'draft_'+(currentTopicId||'global') }
+function setDraft(v){ try{ localStorage.setItem(draftKey(), v) }catch{} }
+function getDraft(){ try{ return localStorage.getItem(draftKey())||'' }catch{ return '' } }
+
+/* ========= Chat send (engine1) ========= */
 async function sendToServer(text){
   let attempts=0,lastErr=null; sending=true; updateSendState(); showChat(); showTyping();
   try{
     while(attempts<2){
       try{
-        const res=await authFetch('/api/chat',{method:'POST',body:JSON.stringify({message:text})},{timeoutMs:15000});
-        let data=null; try{ data=await res.json(); }catch{}
+        const data = await askEngine1(text,'web');
         hideTyping();
         const reply = pickResponse(data) || 'No response';
         typeWriteBot(reply); serverOnline=true; updateMeta(); return;
@@ -589,7 +575,7 @@ async function sendToServer(text){
   } finally { sending=false; updateSendState(); }
 }
 
-/* Scroll pill */
+/* ========= Scroll helpers ========= */
 const chatArea=document.getElementById('chat-area'); const toBottom=document.getElementById('to-bottom');
 function isAtBottom(){ return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 8 }
 function autoScroll(force=false){ if(force || isAtBottom()) chatArea.scrollTop=chatArea.scrollHeight; toggleBottomPill(); }
@@ -597,38 +583,38 @@ function toggleBottomPill(){ toBottom.classList.toggle('show', !isAtBottom()); }
 chatArea.addEventListener('scroll', toggleBottomPill);
 toBottom.addEventListener('click', ()=> autoScroll(true));
 
-/* Settings + userpage */
+/* ========= Settings + userpage ========= */
 const settingsHeader=document.getElementById('settings-header'); const settingsPanel=document.getElementById('settings-panel'); const settingsCaret=document.getElementById('settings-caret');
-const userPage=document.getElementById('userpage'); const userPageClose=document.getElementById('userpage-close');
+const userPage=document.getElementById('userpage');
 settingsHeader.addEventListener('click', ()=>{ userPage.classList.add('show'); userPage.querySelectorAll('.aside .nav button').forEach(b=>b.classList.remove('active')); const btn=userPage.querySelector('.aside .nav button[data-tab="account"]'); if(btn) btn.classList.add('active');
   userPage.querySelectorAll('.main section').forEach(sec=>{ sec.style.display=(sec.getAttribute('data-panel')==='account')?'block':'none'; }); loadUserPage(); });
 settingsCaret.addEventListener('click', (e)=>{ e.stopPropagation(); const open=settingsPanel.style.display==='block'; settingsPanel.style.display=open?'none':'block'; settingsCaret.classList.toggle('fa-chevron-up', !open); });
-userPage.querySelector('.backdrop').addEventListener('click', ()=> userPage.classList.remove('show'));
-userPageClose.addEventListener('click', ()=> userPage.classList.remove('show'));
+userPage.querySelector('.backdrop')?.addEventListener('click', ()=> userPage.classList.remove('show'));
+document.getElementById('userpage-close').addEventListener('click', ()=> userPage.classList.remove('show'));
 document.getElementById('profile-open').addEventListener('click', ()=>{ userPage.classList.add('show'); loadUserPage(); });
 Array.from(userPage.querySelectorAll('.aside .nav button[data-tab]')).forEach(btn=>{
   btn.addEventListener('click',()=>{ userPage.querySelectorAll('.aside .nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab=btn.getAttribute('data-tab'); userPage.querySelectorAll('.main section').forEach(sec=>{ sec.style.display=(sec.getAttribute('data-panel')===tab)?'block':'none'; }); });
 });
 
-/* Export */
+/* ========= Export ========= */
 document.getElementById('export-topic').addEventListener('click', ()=>{ const t=topics.find(x=>x.id===currentTopicId); if(!t) return banner('No conversation to export.');
   let out=''; t.messages.forEach(m=>{ const who=m.from==='user'?'You':'VedSAAS'; out+=`${who} • ${formatFull(m.timestamp)}\n${m.message}\n\n`; });
   const blob=new Blob([out],{type:'text/plain;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${(t.title||'chat').replace(/\s+/g,'_')}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
 
-/* Usage */
+/* ========= Usage ========= */
 function renderStorageUsage(){ const size=(JSON.stringify(topics||[]).length||0); const kb=Math.round(size/1024);
   const el=document.getElementById('usg-local'); if(el) el.innerText=`${kb} KB`; const meta=document.getElementById('meta-info'); if(meta){ meta.innerText=`${serverOnline?'Online':'Offline'} • Local: ${kb} KB`; meta.style.color=serverOnline?'#9fe870':'#ffb3b3'; } }
 function updateUsage(){ const conv=topics.length; const msg=topics.reduce((n,t)=>n+(t.messages?.length||0),0); const last=topics[0]?.messages?.slice(-1)[0]?.timestamp||Date.now();
   const c1=document.getElementById('usg-conv'); if(c1) c1.innerText=conv; const c2=document.getElementById('usg-msg'); if(c2) c2.innerText=msg; const c3=document.getElementById('usg-last'); if(c3) c3.innerText=new Date(last).toLocaleString(); renderStorageUsage(); }
 
-/* Optional: server history */
+/* ========= Optional: load server history ========= */
 async function loadHistoryFromServer(){ try{ const res=await authFetch('/api/chat/history'); const data=await res.json(); const h=Array.isArray(data.history)?data.history:(data||[]);
   if(h.length){ const serverTopic={id:'server_'+Date.now(),title:'Server History',created_at:Date.now(),messages:h.map(it=>({id:uid(),from:it.from==='VedSAAS'?'bot':'user',message:it.message,timestamp:it.timestamp||Date.now()}))};
     topics=topics.filter(t=>t.id!==serverTopic.id); topics.unshift(serverTopic); saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); } }catch{} }
 
-/* Theme + prefs + profile */
+/* ========= Theme + prefs ========= */
 document.getElementById('dark-toggle').addEventListener('click', ()=> document.body.classList.toggle('dark-mode'));
 async function doLogout(){ try{ await fetch(api('/api/logout'),{method:'POST',credentials:'include'});}catch{} try{ localStorage.clear(); }catch{} token=null; try{ document.getElementById('userpage').classList.remove('show'); }catch{} showAuth('login'); banner('Logged out'); }
 document.getElementById('logout-btn').addEventListener('click', doLogout);
@@ -638,33 +624,6 @@ document.getElementById('refresh-history').addEventListener('click', ()=> loadHi
 document.getElementById('top-delete-chat').addEventListener('click', deleteCurrentChat);
 document.getElementById('delete-topic').addEventListener('click', deleteCurrentChat);
 document.getElementById('clear-all-chats').addEventListener('click', clearAllChats);
-
-async function loadUserPage(){
-  const nameLS=localStorage.getItem('user_name')||'User', handleLS=localStorage.getItem('user_handle')||'', emailLS=localStorage.getItem('user_email')||'', mobileLS=localStorage.getItem('user_mobile')||'', planLS=localStorage.getItem('user_plan')||'Free';
-  const pfName=document.getElementById('pf-name'), pfHandle=document.getElementById('pf-handle'), acEmail=document.getElementById('ac-email'), acMobile=document.getElementById('ac-mobile'), planLbl=document.getElementById('plan-label'), acPlanLbl=document.getElementById('ac-plan-label');
-  if(pfName) pfName.value=nameLS; if(pfHandle) pfHandle.value=handleLS; if(acEmail) acEmail.value=emailLS; if(acMobile) acMobile.value=mobileLS;
-  if(planLbl) planLbl.innerHTML=`<i class="fas fa-crown"></i><span style="margin-left:6px">${planLS}</span>`; if(acPlanLbl) acPlanLbl.innerText=planLS;
-  const langPref=localStorage.getItem('pref_lang')||'auto', typePref=localStorage.getItem('pref_type_speed')||'55';
-  const selLang=document.getElementById('pref-lang'), selType=document.getElementById('pref-type-speed'); if(selLang) selLang.value=langPref; if(selType) selType.value=typePref;
-  if(token){ try{ const r=await authFetch('/api/user-profile'); if(r.ok){ const d=await r.json();
-      if(d.name){ (pfName||{}).value=d.name; localStorage.setItem('user_name',d.name); setDisplayName(d.name); }
-      if(d.handle){ (pfHandle||{}).value=d.handle; localStorage.setItem('user_handle',d.handle); }
-      if(d.email){ (acEmail||{}).value=d.email; localStorage.setItem('user_email',d.email); }
-      if(d.mobile){ (acMobile||{}).value=d.mobile; localStorage.setItem('user_mobile',d.mobile); }
-      if(d.plan){ if(planLbl) planLbl.innerHTML=`<i class="fas fa-crown"></i><span style="margin-left:6px">${d.plan}</span>`; if(acPlanLbl) acPlanLbl.innerText=d.plan; localStorage.setItem('user_plan',d.plan); }
-      if(d.avatar_url){ localStorage.setItem('user_avatar_url', d.avatar_url); setDisplayName(localStorage.getItem('user_name')||'User'); }
-  } }catch{} }
-}
-document.getElementById('pf-save').addEventListener('click', async ()=>{ const name=document.getElementById('pf-name').value.trim()||'User'; const handle=document.getElementById('pf-handle').value.trim();
-  localStorage.setItem('user_name',name); localStorage.setItem('user_handle',handle); setDisplayName(name);
-  if(token){ try{ const r=await authFetch('/api/user/profile',{method:'POST',body:JSON.stringify({name,handle})}); if(!r.ok){ const d=await r.json().catch(()=>({})); banner(d.error||'Saved locally'); } else banner('Profile saved'); }catch{ banner('Saved locally'); } } else { banner('Profile saved locally'); }
-});
-document.getElementById('pf-avatar').addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return;
-  const url=URL.createObjectURL(file); localStorage.setItem('user_avatar_url',url); setDisplayName(localStorage.getItem('user_name')||'User');
-  if(token){ try{ const fd=new FormData(); fd.append('avatar',file);
-    const r=await fetch(api('/api/user/avatar'),{method:'POST',body:fd,credentials:'include',headers: token?{'Authorization':'Bearer '+token}:{}}); if(r.ok){ const d=await r.json().catch(()=>({})); if(d.url){ localStorage.setItem('user_avatar_url',d.url); setDisplayName(localStorage.getItem('user_name')||'User'); } banner('Avatar updated'); } else { banner('Avatar set locally'); } }catch{ banner('Avatar set locally'); } }
-});
-document.getElementById('pf-avatar-remove').addEventListener('click', ()=>{ localStorage.removeItem('user_avatar_url'); setDisplayName(localStorage.getItem('user_name')||'User'); banner('Avatar removed'); });
 document.getElementById('pref-theme-dark').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','dark'); document.body.classList.add('dark-mode'); banner('Theme: Dark'); });
 document.getElementById('pref-theme-light').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','light'); document.body.classList.remove('dark-mode'); banner('Theme: Light'); });
 document.getElementById('pref-theme-system').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','system'); const prefersDark=matchMedia('(prefers-color-scheme: dark)').matches; document.body.classList.toggle('dark-mode', prefersDark); banner('Theme: System'); });
@@ -673,9 +632,8 @@ document.getElementById('pref-save').addEventListener('click', async ()=>{ const
   if(token){ try{ await authFetch('/api/user/preferences',{method:'POST',body:JSON.stringify({lang, typing_speed:Number(speed)})}); }catch{} }
 });
 document.getElementById('lang-toggle').addEventListener('click', ()=>{ const cur=localStorage.getItem('pref_lang')||'auto'; const seq=['auto','en','hi']; const next=seq[(seq.indexOf(cur)+1)%seq.length]; localStorage.setItem('pref_lang',next); banner('Language: '+next.toUpperCase()); });
-document.getElementById('ac-upgrade').addEventListener('click', ()=>{ banner('Upgrade flow not enabled'); });
 
-/* Boot */
+/* ========= Boot ========= */
 (function boot(){
   loadTopicsFromLocal();
   document.getElementById('app').style.display='flex';
@@ -689,7 +647,3 @@ document.getElementById('ac-upgrade').addEventListener('click', ()=>{ banner('Up
 </script>
 </body>
 </html>
-
-
-
-
