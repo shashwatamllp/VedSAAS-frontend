@@ -291,6 +291,100 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
 <script>
+  /* ===== Chat UI wiring (ready to paste) ===== */
+
+/* DOM refs */
+const $msgs = document.getElementById('messages');
+const $input = document.getElementById('composer');
+const $send  = document.getElementById('send');
+const $topic = document.getElementById('topic-title');
+
+/* Local state */
+try { topics = JSON.parse(localStorage.getItem('topics')||'[]') || []; } catch { topics = []; }
+if (!currentTopicId) currentTopicId = topics[0]?.id || null;
+
+/* Helpers: render + storage */
+function saveLocal(){
+  tryTrimForQuota();
+  localStorage.setItem('topics', JSON.stringify(topics));
+  updateMeta();
+}
+function ensureTopic(){
+  if (currentTopicId && topics.find(t=>t.id===currentTopicId)) return;
+  const t = { id: uid(), title: 'New chat', createdAt: Date.now(), messages: [] };
+  topics.unshift(t);
+  currentTopicId = t.id;
+}
+function getTopic(){ ensureTopic(); return topics.find(t=>t.id===currentTopicId); }
+
+function renderBubble(role, htmlText, meta=''){
+  const wrap = document.createElement('div');
+  wrap.className = `msg msg-${role}`;
+  wrap.innerHTML = `
+    <div class="msg-inner">
+      <div class="msg-text">${htmlText}</div>
+      ${meta ? `<div class="msg-meta">${esc(meta)}</div>` : ''}
+    </div>`;
+  $msgs.appendChild(wrap);
+  $msgs.scrollTop = $msgs.scrollHeight;
+}
+
+function renderUserBubble(text){
+  renderBubble('user', mdLite(text), formatFull());
+}
+function renderAssistantBubble(text, meta=''){
+  renderBubble('assistant', mdLite(text), meta);
+}
+
+function topicTitleFromFirstUser(msg){
+  const s=(msg||'').trim().slice(0,60);
+  if (!s) return 'New chat';
+  return s.replace(/\s+/g,' ').trim();
+}
+
+/* Ask flow */
+async function handleSend(){
+  if (sending) return;
+  const q = String($input.value||'').trim();
+  if (!q) return;
+  sending = true; $send.disabled = true;
+
+  const t = getTopic();
+  if (!t.messages.length) t.title = topicTitleFromFirstUser(q);
+  if ($topic) $topic.textContent = t.title;
+
+  // UI: user bubble
+  renderUserBubble(q);
+  t.messages.push({ id: uid(), role:'user', text:q, ts:Date.now() });
+  saveLocal();
+
+  try{
+    const resp = await askEngine1(q, 'web');
+    const text = resp?.reply ?? (resp?.echo ? JSON.stringify(resp.echo) : '');
+    const meta = resp?.mode ? `mode:${resp.mode}${resp.intent? ' • intent:'+resp.intent:''}${resp.conf!=null? ' • conf:'+String(resp.conf):''}` : '';
+    const finalText = text || '[empty reply]';
+    renderAssistantBubble(finalText, meta);
+    t.messages.push({ id: uid(), role:'assistant', text:finalText, meta, ts:Date.now() });
+    saveLocal();
+  }catch(e){
+    const err = String(e?.message||e);
+    renderAssistantBubble('Error: '+esc(err));
+    banner('Send failed');
+  }finally{
+    $input.value=''; $input.focus(); sending=false; $send.disabled=false;
+  }
+}
+
+/* Wire events */
+if ($send) $send.addEventListener('click', handleSend);
+if ($input) $input.addEventListener('keydown', e=>{
+  if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
+});
+
+/* Boot */
+startPinger();
+updateMeta();
+
 /* ===== API base normalize ===== */
 const API_BASE = (() => {
   try {
@@ -685,4 +779,5 @@ document.getElementById('ac-upgrade').addEventListener('click', ()=>{ banner('Up
 </script>
 </body>
 </html>
+
 
