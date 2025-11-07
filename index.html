@@ -133,7 +133,7 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
   <div class="main">
     <div class="rail">
       <div class="topbar">
-        <h1>VedSAAS</h1>
+        <h1 id="brand-title"></h1>
         <div class="top-controls">
           <div class="meta" id="meta-info">Welcome</div>
           <button class="btn" id="refresh-history" title="Reload history"><i class="fas fa-sync"></i></button>
@@ -291,6 +291,9 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
 <script>
+/* ===== Brand constant ===== */
+const ASSISTANT_NAME = 'VedSAAS';
+
 /* ===== API base normalize ===== */
 const API_BASE = (() => {
   const FALLBACK = 'http://127.0.0.1:8000';
@@ -338,9 +341,25 @@ function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'
 function uid(){ return Math.random().toString(36).slice(2,9) }
 function pickResponse(o){
   if(!o||typeof o!=='object') return '';
-  // cover common keys
   const c = o.answer ?? o.response ?? o.reply ?? o.message ?? o.text ?? o.output ?? (o.data && (o.data.answer||o.data.message));
   return String(c ?? '');
+}
+
+/* ===== Brand enforcement ===== */
+function sanitizeBotText(t){
+  if(!t) return '';
+  let s = String(t);
+
+  // “I'm an AI assistant/chatbot/model …” → VedSAAS
+  s = s.replace(/\bI(?:'m| am)\s+(?:an?\s+)?(?:AI\s+)?(?:assistant|chatbot|model)\b/gi, ASSISTANT_NAME);
+  // “I don't have a name …” → VedSAAS
+  s = s.replace(/\bI\s+(?:do\s+not|don't)\s+have\s+(?:a|any)\s+(?:personal\s+)?name\b[^.!?]*[.!?]?/gi, `I am ${ASSISTANT_NAME}.`);
+  // generic “an AI assistant” → VedSAAS
+  s = s.replace(/\ban AI assistant\b/gi, ASSISTANT_NAME);
+  // “my name is …” → VedSAAS
+  s = s.replace(/\bmy\s+name\s+is\b[^.!?]*[.!?]?/gi, `My name is ${ASSISTANT_NAME}.`);
+
+  return s;
 }
 
 /* Server status with multi-probe */
@@ -411,7 +430,7 @@ function renderHistory(){
 /* Messages */
 function messageNode(m){
   const wrap=document.createElement('div'); wrap.className='message-row '+(m.from==='user'?'from-user':'from-bot'); wrap.dataset.mid=m.id;
-  const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${m.from==='user'?'You':'VedSAAS'} • ${formatFull(m.timestamp)}`;
+  const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${m.from==='user'?'You':ASSISTANT_NAME} • ${formatFull(m.timestamp)}`;
   const body=document.createElement('div'); body.className='msg-body'; body.innerHTML=mdLite(String(m.message??''));
   const act=document.createElement('div'); act.className='msg-actions';
   const btnCopy=document.createElement('button'); btnCopy.innerHTML='<i class="fas fa-copy"></i>'; btnCopy.title='Copy'; btnCopy.onclick=()=>{ navigator.clipboard.writeText(String(m.message??'')); banner('Copied'); };
@@ -443,7 +462,7 @@ function clearAllChats(){ if(!topics.length) return banner('No chats to clear.')
 }
 
 /* Typing */
-function showTyping(){ let tip=document.querySelector('.typing-row'); if(!tip){ tip=document.createElement('div'); tip.className='typing-row'; tip.innerHTML=`<span class="dots"><i></i><i></i><i></i></span> <span style="opacity:.8">VedSAAS is typing…</span>`; }
+function showTyping(){ let tip=document.querySelector('.typing-row'); if(!tip){ tip=document.createElement('div'); tip.className='typing-row'; tip.innerHTML=`<span class="dots"><i></i><i></i><i></i></span> <span style="opacity:.8">${ASSISTANT_NAME} is typing…</span>`; }
   const area=document.getElementById('chat-area'); if(tip.parentElement!==area) area.appendChild(tip); autoScroll(true); }
 function hideTyping(){ const tip=document.querySelector('.typing-row'); if(tip&&tip.parentElement) tip.remove(); }
 
@@ -453,13 +472,16 @@ function typeWriteBot(text,speed=null){
   hideTyping(); showChat(); const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
   const msg={id:uid(),from:'bot',message:'',timestamp:Date.now()}; t.messages.push(msg); saveTopicsToLocal(); renderChat();
   const area=document.getElementById('chat-area'); let el=area.querySelector(`.message-row.from-bot[data-mid="${msg.id}"]`);
-  if(!el){ const label=document.createElement('div'); label.className='msg-label'; label.innerText=`VedSAAS • ${formatFull(msg.timestamp)}`;
+  if(!el){ const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${ASSISTANT_NAME} • ${formatFull(msg.timestamp)}`;
     el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); area.appendChild(el); }
   const body=el.querySelector('.msg-body'); const safeMD=s=>{ try{return mdLite(s);}catch(_){ const d=document.createElement('div'); d.innerText=s; return d.innerHTML; } };
-  if(typingSpeed<=0){ msg.message=text; saveTopicsToLocal(); body.innerHTML=safeMD(text); autoScroll(true); return; }
+
+  const cleaned = sanitizeBotText(text);
+  if(typingSpeed<=0){ msg.message=cleaned; saveTopicsToLocal(); body.innerHTML=safeMD(cleaned); autoScroll(true); return; }
   const cursor=document.createElement('span'); cursor.className='typing-cursor'; body.textContent=''; body.appendChild(cursor);
-  let i=0; const timer=setInterval(()=>{ if(i>=text.length){ clearInterval(timer); msg.message=text; saveTopicsToLocal(); body.innerHTML=safeMD(text); autoScroll(true); return; }
-    msg.message+=text[i++]; body.textContent=msg.message; body.appendChild(cursor); autoScroll(true); }, typingSpeed);
+  let i=0; const src=cleaned;
+  const timer=setInterval(()=>{ if(i>=src.length){ clearInterval(timer); msg.message=src; saveTopicsToLocal(); body.innerHTML=safeMD(src); autoScroll(true); return; }
+    msg.message+=src[i++]; body.textContent=msg.message; body.appendChild(cursor); autoScroll(true); }, typingSpeed);
 }
 
 /* Routing */
@@ -553,17 +575,19 @@ restoreDraft();
 async function sendToServer(text){
   let attempts=0,lastErr=null; sending=true; updateSendState(); showChat(); showTyping();
   try{
+    const langPref = localStorage.getItem('pref_lang') || 'auto';
+
     const tryOnce = async (path, bodyObj) => {
-      const res = await authFetch(path,{method:'POST',body:JSON.stringify(bodyObj)},{timeoutMs:15000});
+      const body = {
+        assistant: ASSISTANT_NAME,
+        assistant_name: ASSISTANT_NAME,
+        lang: langPref,
+        ...bodyObj
+      };
+      const res = await authFetch(path,{method:'POST',body:JSON.stringify(body)},{timeoutMs:15000});
       let data=null; try{ data=await res.json(); }catch{}
       const reply = pickResponse(data) || '';
-      if(!reply && data && typeof data==='object'){
-        // common Engine1 shapes
-        const r2 = data.result || data.data || {};
-        const fallback = r2.answer || r2.message || r2.reply || '';
-        return String(fallback||'');
-      }
-      return String(reply||'');
+      return sanitizeBotText(reply);
     };
 
     // preferred Engine1 route
@@ -578,7 +602,7 @@ async function sendToServer(text){
       if(reply2){ hideTyping(); typeWriteBot(reply2); serverOnline=true; updateMeta(); return; }
     }catch(e2){ lastErr=e2; }
 
-    // one more attempt if temporary failure
+    // retry once
     while(attempts<1){
       attempts++;
       await new Promise(r=>setTimeout(r,600));
@@ -619,7 +643,7 @@ Array.from(userPage.querySelectorAll('.aside .nav button[data-tab]')).forEach(bt
 
 /* Export */
 document.getElementById('export-topic').addEventListener('click', ()=>{ const t=topics.find(x=>x.id===currentTopicId); if(!t) return banner('No conversation to export.');
-  let out=''; t.messages.forEach(m=>{ const who=m.from==='user'?'You':'VedSAAS'; out+=`${who} • ${formatFull(m.timestamp)}\n${m.message}\n\n`; });
+  let out=''; t.messages.forEach(m=>{ const who=m.from==='user'?'You':ASSISTANT_NAME; out+=`${who} • ${formatFull(m.timestamp)}\n${m.message}\n\n`; });
   const blob=new Blob([out],{type:'text/plain;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${(t.title||'chat').replace(/\s+/g,'_')}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
 
@@ -631,7 +655,7 @@ function updateUsage(){ const conv=topics.length; const msg=topics.reduce((n,t)=
 
 /* Optional: server history */
 async function loadHistoryFromServer(){ try{ const res=await authFetch('/api/chat/history'); const data=await res.json(); const h=Array.isArray(data.history)?data.history:(data||[]);
-  if(h.length){ const serverTopic={id:'server_'+Date.now(),title:'Server History',created_at:Date.now(),messages:h.map(it=>({id:uid(),from:it.from==='VedSAAS'?'bot':'user',message:it.message,timestamp:it.timestamp||Date.now()}))};
+  if(h.length){ const serverTopic={id:'server_'+Date.now(),title:'Server History',created_at:Date.now(),messages:h.map(it=>({id:uid(),from:it.from===ASSISTANT_NAME?'bot':(it.from==='VedSAAS'?'bot':'user'),message:it.message,timestamp:it.timestamp||Date.now()}))};
     topics=topics.filter(t=>t.id!==serverTopic.id); topics.unshift(serverTopic); saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); } }catch{} }
 
 /* Theme + prefs + profile */
@@ -678,11 +702,10 @@ document.getElementById('pref-save').addEventListener('click', async ()=>{ const
   localStorage.setItem('pref_lang',lang); localStorage.setItem('pref_type_speed',String(speed)); banner('Preferences saved');
   if(token){ try{ await authFetch('/api/user/preferences',{method:'POST',body:JSON.stringify({lang, typing_speed:Number(speed)})}); }catch{} }
 });
-document.getElementById('lang-toggle').addEventListener('click', ()=>{ const cur=localStorage.getItem('pref_lang')||'auto'; const seq=['auto','en','hi']; const next=seq[(seq.indexOf(cur)+1)%seq.length]; localStorage.setItem('pref_lang',next); banner('Language: '+next.toUpperCase()); });
-document.getElementById('ac-upgrade').addEventListener('click', ()=>{ banner('Upgrade flow not enabled'); });
 
 /* Boot */
 (function boot(){
+  document.getElementById('brand-title').textContent = ASSISTANT_NAME;
   loadTopicsFromLocal();
   document.getElementById('app').style.display='flex';
   renderHistory(); renderChat(); handleRoute(); updateUsage();
@@ -695,4 +718,3 @@ document.getElementById('ac-upgrade').addEventListener('click', ()=>{ banner('Up
 </script>
 </body>
 </html>
-
