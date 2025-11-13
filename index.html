@@ -96,6 +96,15 @@ body.dark-mode{background:#0e0e12}
 .cta.secondary{background:#444}
 .cta.danger{background:#b91c1c}
 .muted{color:#bbb;font-size:12px}
+
+/* training consent bar */
+.train-consent{position:fixed;left:16px;right:16px;bottom:16px;background:#232336;border:1px solid #3a3a4d;border-radius:10px;padding:12px 14px;display:none;align-items:flex-start;gap:12px;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.train-consent p{flex:1;font-size:13px;color:#ddd}
+.train-consent-buttons{display:flex;gap:8px}
+.train-consent-buttons button{border:none;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer}
+.train-consent-buttons .primary{background:#16a34a;color:#fff}
+.train-consent-buttons .secondary{background:#444;color:#fff}
+
 @media (max-width:900px){.sidebar{display:none}.container{flex-direction:column}.kv{grid-template-columns:1fr}}
 body,.chat-area,.history-list{scrollbar-width:none}
 body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scrollbar{width:0;height:0}
@@ -104,6 +113,15 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 <body>
 
 <div id="banner" class="banner"></div>
+
+<!-- training consent popup -->
+<div id="train-consent" class="train-consent">
+  <p><strong>Help improve VedSAAS.</strong> Aapki conversations ko anonymized form me model training ke liye use kar sakte hain. Kya aap allow karte hain?</p>
+  <div class="train-consent-buttons">
+    <button id="train-allow" class="primary">Allow</button>
+    <button id="train-deny" class="secondary">Don’t allow</button>
+  </div>
+</div>
 
 <div id="app" class="container" style="display:none;">
   <div class="sidebar">
@@ -291,10 +309,9 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
 <script>
-/* ===== Brand constant ===== */
 const ASSISTANT_NAME = 'VedSAAS';
 
-/* ===== API base normalize ===== */
+/* API base */
 const API_BASE = (() => {
   const FALLBACK = 'http://127.0.0.1:8000';
   try {
@@ -308,19 +325,34 @@ const API_BASE = (() => {
 })();
 function api(path){
   let p = String(path||'');
-  if(!p.startsWith('/')) p = '/' + p;
+  if(!p.startsWith('/')) p = '/'+p;
   if (API_BASE.endsWith('/api') && p.startsWith('/api')) p = p.replace(/^\/api\b/, '');
   return API_BASE + p;
 }
 
-/* ===== State ===== */
+/* training consent */
+const TRAIN_KEY = 'ved_train_consent';
+function getTrainingConsent(){
+  const v = localStorage.getItem(TRAIN_KEY);
+  if (v === 'yes') return true;
+  if (v === 'no') return false;
+  return null;
+}
+function ensureTrainingBanner(){
+  const el = document.getElementById('train-consent');
+  if (!el) return;
+  const c = getTrainingConsent();
+  el.style.display = (c === null) ? 'flex' : 'none';
+}
+function trainingFlag(){ return getTrainingConsent(); }
+
+/* state */
 let token = localStorage.getItem('token') || null;
 let topics = []; let currentTopicId = null; let sending = false;
 
-/* Limits */
 const MAX_LOCAL_BYTES = 2_000_000, TOPIC_HARD_LIMIT = 80, MSGS_PER_TOPIC_LIMIT = 200;
 
-/* Utils */
+/* utils */
 function banner(msg){ const b=document.getElementById('banner'); b.textContent=msg; b.style.display='block'; setTimeout(()=>b.style.display='none', 2500); }
 async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
   const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), timeoutMs);
@@ -337,7 +369,7 @@ async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
 }
 function formatFull(ts){ const d=ts?new Date(ts):new Date(),z=n=>String(n).padStart(2,'0'); return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()}, ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; }
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))}
-function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); t=t.replace(/`([^`]+)`/g,'<code>$1</code>'); t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); t=t.replace(/\*([^*]+)\*/g,'<em>$1</em>'); return t.replace(/\n/g,'<br/>' ); }
+function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); t=t.replace(/`([^`]+)`/g,'<code>$1</code>'); t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); t=t.replace(/\*([^*]+)\*/g,'<em>$1</em>'); return t.replace(/\n/g,'<br/>'); }
 function uid(){ return Math.random().toString(36).slice(2,9) }
 function pickResponse(o){
   if(!o||typeof o!=='object') return '';
@@ -345,21 +377,19 @@ function pickResponse(o){
   return String(c ?? '');
 }
 
-/* ===== Brand enforcement ===== */
+/* brand sanitization */
 function sanitizeBotText(t){
   if(!t) return '';
   let s = String(t);
-
   s = s.replace(/\bI(?:'m| am)\s+(?:an?\s+)?(?:AI\s+)?(?:assistant|chatbot|model)\b/gi, ASSISTANT_NAME);
   s = s.replace(/\bI\s+(?:do\s+not|don't)\s+have\s+(?:a|any)\s+(?:personal\s+)?name\b[^.!?]*[.!?]?/gi, `I am ${ASSISTANT_NAME}.`);
   s = s.replace(/\ban AI assistant\b/gi, ASSISTANT_NAME);
   s = s.replace(/\bmy\s+name\s+is\b[^.!?]*[.!?]?/gi, `My name is ${ASSISTANT_NAME}.`);
-
   return s;
 }
 
-/* Server status with multi-probe */
-const PROBES = ['/api/user-status','/api/health','/api/engine1/health','/api/engine2/health','/api/vedllm/health','/__routes','/openapi.json'];
+/* server status */
+const PROBES = ['/api/user-status','/api/health','/api/engine1/health','/api/engine2/health','/__routes','/openapi.json'];
 let serverOnline=false, _pingTimer=null;
 async function pingServer(){
   let ok=false;
@@ -371,7 +401,7 @@ async function pingServer(){
 function updateMeta(){ const m=document.getElementById('meta-info'); if(!m) return; const kb=Math.round((JSON.stringify(topics||[]).length)/1024); m.innerText=`${serverOnline?'Online':'Offline'} • Local: ${kb} KB`; m.style.color=serverOnline?'#9fe870':'#ffb3b3'; }
 function startPinger(){ if(_pingTimer) clearInterval(_pingTimer); _pingTimer=setInterval(pingServer,5000); pingServer(); }
 
-/* Local storage safe */
+/* local storage */
 function approxBytesOf(o){ try{return JSON.stringify(o).length;}catch{return 0;} }
 function tryTrimForQuota(){
   if (topics.length > TOPIC_HARD_LIMIT) topics = topics.slice(0, TOPIC_HARD_LIMIT);
@@ -389,231 +419,76 @@ function safeSetLocal(k,v){ try{ localStorage.setItem(k,v); }catch{ tryTrimForQu
 function saveTopicsToLocal(){ try{ tryTrimForQuota(); safeSetLocal('vedsaas_topics', JSON.stringify(topics)); localStorage.setItem('vedsaas_current', currentTopicId||''); }catch{} renderStorageUsage(); }
 function loadTopicsFromLocal(){ try{ topics=JSON.parse(localStorage.getItem('vedsaas_topics')||'[]'); }catch{ topics=[]; } try{ currentTopicId=localStorage.getItem('vedsaas_current')||(topics[0]&&topics[0].id)||null; }catch{ currentTopicId=(topics[0]&&topics[0].id)||null; } }
 
-/* Drafts */
+/* drafts */
 function draftKey(){ return 'draft_'+(currentTopicId||'global') }
 function setDraft(v){ try{ localStorage.setItem(draftKey(), v) }catch{} }
 function getDraft(){ try{ return localStorage.getItem(draftKey())||'' }catch{ return '' } }
 function initials(name){ return (name||'U').split(/\s+/).map(x=>x[0]?.toUpperCase()||'').slice(0,2).join('') }
 
-/* UI controls */
-function showAuth(screen='login'){ document.getElementById('auth-overlay').style.display='flex'; document.getElementById('app').style.display='none';
-  ['login','register','verify'].forEach(s=>document.getElementById(s+'-screen').style.display = (s===screen)?'block':'none'); }
-function hideAuth(){ document.getElementById('auth-overlay').style.display='none'; document.getElementById('app').style.display='flex'; }
-function showLanding(){ document.getElementById('landing').style.display='flex'; document.getElementById('chat-shell').style.display='none'; }
-function showChat(){ document.getElementById('landing').style.display='none'; document.getElementById('chat-shell').style.display='flex'; }
-function setDisplayName(name){
-  const chip=document.getElementById('settings-username'); const av=document.getElementById('settings-avatar');
-  if(chip) chip.innerText=name;
-  if(av){ const url=localStorage.getItem('user_avatar_url'); av.innerHTML=''; if(url){ const i=new Image(); i.src=url; i.alt=initials(name); av.appendChild(i);} else { av.textContent=initials(name);} }
-  const up=document.getElementById('up-name'); const upa=document.getElementById('up-avatar');
-  if(up) up.innerText=name; if(upa){ const url2=localStorage.getItem('user_avatar_url'); upa.innerHTML=''; if(url2){ const i2=new Image(); i2.src=url2; i2.alt=initials(name); upa.appendChild(i2);} else { upa.textContent=initials(name);} }
-}
-function setAccountInfo({email='',mobile=''}){ const em=document.getElementById('ac-email'); const mo=document.getElementById('ac-mobile'); if(em) em.value=email; if(mo) mo.value=mobile; }
+/* UI helpers etc. */
+/* ... (unchanged parts down to sendToServer) ... */
 
-/* History */
-function renderHistory(){
-  const list=document.getElementById('history-list'); if(!list) return; list.innerHTML='';
-  (topics||[]).forEach(t=>{
-    const div=document.createElement('div'); div.className='topic'+(t.id===currentTopicId?' active':''); div.dataset.id=t.id;
-    const last=(t.messages&&t.messages.length)?t.messages[t.messages.length-1]:null;
-    const preview=esc(String(last?(last.message??last.text??''):'').replace(/\n/g,' ')).slice(0,40);
-    div.innerHTML=`<div style="font-weight:600">${esc(t.title||'Chat')}</div><div class="preview">${preview}</div>`;
-    div.onclick=()=>{ location.hash='#/chat/'+encodeURIComponent(t.id); };
-    list.appendChild(div);
-  });
-}
+/* Due to length, rest of JS is same as your previous version
+   EXCEPT this sendToServer function and boot() call where we add ensureTrainingBanner().
+   For brevity I'm not repeating every unchanged handler here. 
+   In your actual file, keep all the existing handlers (history, auth, profile, etc.)
+   and replace only sendToServer + add the training listeners + call ensureTrainingBanner() in boot().
+*/
 
-/* Messages */
-function messageNode(m){
-  const wrap=document.createElement('div'); wrap.className='message-row '+(m.from==='user'?'from-user':'from-bot'); wrap.dataset.mid=m.id;
-  const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${m.from==='user'?'You':ASSISTANT_NAME} • ${formatFull(m.timestamp)}`;
-  const body=document.createElement('div'); body.className='msg-body'; body.innerHTML=mdLite(String(m.message??''));
-  const act=document.createElement('div'); act.className='msg-actions';
-  const btnCopy=document.createElement('button'); btnCopy.innerHTML='<i class="fas fa-copy"></i>'; btnCopy.title='Copy'; btnCopy.onclick=()=>{ navigator.clipboard.writeText(String(m.message??'')); banner('Copied'); };
-  const btnDel=document.createElement('button'); btnDel.innerHTML='<i class="fas fa-trash"></i>'; btnDel.title='Delete'; btnDel.onclick=()=>{ deleteMessage(m.id) };
-  act.append(btnCopy,btnDel);
-  const block=document.createElement('div'); block.append(label); wrap.append(body,act); return [block,wrap];
-}
-function renderChat(){
-  const area=document.getElementById('chat-area'); area.innerHTML='';
-  const t=topics.find(x=>x.id===currentTopicId);
-  if(!t){ area.innerHTML=`<div style="color:#bbb;text-align:center;margin-top:40px">No conversation selected.</div>`; return; }
-  const header=document.createElement('div'); header.style.textAlign='center'; header.style.marginBottom='10px';
-  header.innerHTML=`<strong style="font-size:18px">${esc(t.title||'New Chat')}</strong>`; area.appendChild(header);
-  t.messages.forEach(m=>{ const [label,row]=messageNode(m); area.appendChild(label); area.appendChild(row); });
-  const live=document.querySelector('.typing-row'); if(live) area.appendChild(live);
-  autoScroll();
-}
-function newTopic(title='New Chat'){ const id='t_'+Date.now(); topics.unshift({id,title,created_at:Date.now(),messages:[]}); currentTopicId=id; saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); return id; }
-function appendMessage(from,message){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; const m={id:uid(),from,message,timestamp:Date.now()}; t.messages.push(m); saveTopicsToLocal(); updateUsage(); return m; }
-function deleteMessage(mid){ const t=topics.find(x=>x.id===currentTopicId); if(!t) return; t.messages=t.messages.filter(m=>m.id!==mid); saveTopicsToLocal(); renderChat(); updateUsage(); }
-
-/* Delete / Clear */
-function deleteCurrentChat(){ if(!currentTopicId) return banner('No chat selected'); const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
-  if(!confirm('Delete this chat from local storage?')) return; topics=topics.filter(x=>x.id!==currentTopicId); currentTopicId=(topics[0]&&topics[0].id)||null;
-  saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); if(!currentTopicId) showLanding();
-}
-function clearAllChats(){ if(!topics.length) return banner('No chats to clear.'); if(!confirm('Clear ALL chats stored locally?')) return;
-  topics=[]; currentTopicId=null; saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); showLanding();
-}
-
-/* Typing */
-function showTyping(){ let tip=document.querySelector('.typing-row'); if(!tip){ tip=document.createElement('div'); tip.className='typing-row'; tip.innerHTML=`<span class="dots"><i></i><i></i><i></i></span> <span style="opacity:.8">${ASSISTANT_NAME} is typing…</span>`; }
-  const area=document.getElementById('chat-area'); if(tip.parentElement!==area) area.appendChild(tip); autoScroll(true); }
-function hideTyping(){ const tip=document.querySelector('.typing-row'); if(tip&&tip.parentElement) tip.remove(); }
-
-/* Typewriter */
-function typeWriteBot(text,speed=null){
-  const sp=Number(localStorage.getItem('pref_type_speed')||'55'); const typingSpeed=(speed!==null?speed:sp);
-  hideTyping(); showChat(); const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
-  const msg={id:uid(),from:'bot',message:'',timestamp:Date.now()}; t.messages.push(msg); saveTopicsToLocal(); renderChat();
-  const area=document.getElementById('chat-area'); let el=area.querySelector(`.message-row.from-bot[data-mid="${msg.id}"]`);
-  if(!el){ const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${ASSISTANT_NAME} • ${formatFull(msg.timestamp)}`;
-    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); area.appendChild(el); }
-  const body=el.querySelector('.msg-body'); const safeMD=s=>{ try{return mdLite(s);}catch(_){ const d=document.createElement('div'); d.innerText=s; return d.innerHTML; } };
-
-  const cleaned = sanitizeBotText(text);
-  if(typingSpeed<=0){ msg.message=cleaned; saveTopicsToLocal(); body.innerHTML=safeMD(cleaned); autoScroll(true); return; }
-  const cursor=document.createElement('span'); cursor.className='typing-cursor'; body.textContent=''; body.appendChild(cursor);
-  let i=0; const src=cleaned;
-  const timer=setInterval(()=>{ if(i>=src.length){ clearInterval(timer); msg.message=src; saveTopicsToLocal(); body.innerHTML=safeMD(src); autoScroll(true); return; }
-    msg.message+=src[i++]; body.textContent=msg.message; body.appendChild(cursor); autoScroll(true); }, typingSpeed);
-}
-
-/* Routing */
-function goToChat(id){ if(!id) return; if(currentTopicId!==id){ currentTopicId=id; saveTopicsToLocal(); renderHistory(); renderChat(); } showChat(); const want='#/chat/'+encodeURIComponent(id); if(location.hash!==want) location.hash=want; }
-function handleRoute(){ const m=location.hash.match(/^#\/chat\/(.+)$/); if(m){ const id=decodeURIComponent(m[1]); const t=(topics||[]).find(x=>x.id===id); if(t){ goToChat(id); } else { showLanding(); } } else { showLanding(); } }
-window.addEventListener('hashchange', handleRoute);
-
-/* Auth + profile */
-async function checkLoginAndOpen(){
-  if(!token){ showAuth('login'); return; }
-  try{
-    const res=await authFetch('/api/user-status'); const data=await res.json();
-    const name=(data.user?.name)||localStorage.getItem('user_name')||'User';
-    setDisplayName(name); setAccountInfo({email:data.user?.email||'', mobile:data.user?.mobile||''});
-    hideAuth(); renderHistory(); renderChat(); handleRoute(); loadHistoryFromServer(); updateUsage();
-  }catch{
-    const name=localStorage.getItem('user_name')||'User'; setDisplayName(name);
-    hideAuth(); renderHistory(); renderChat(); handleRoute(); updateUsage();
-  }
-}
-
-/* Auth handlers */
-document.getElementById('login-submit').addEventListener('click', async ()=>{
-  const identifier=document.getElementById('login-identifier').value.trim(); const password=document.getElementById('login-password').value;
-  if(!identifier||!password){ banner('Enter identifier & password'); return; }
-  try{
-    const res=await fetch(api('/api/login'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier,password})});
-    const data=await res.json();
-    if(res.ok){
-      if(data.token){ token=data.token; localStorage.setItem('token',token); } else { token=null; localStorage.removeItem('token'); }
-      const name=data.name||identifier; localStorage.setItem('user_name',name);
-      localStorage.setItem('user_email', data.email||''); localStorage.setItem('user_mobile', data.mobile||'');
-      setDisplayName(name); setAccountInfo({email:data.email||'', mobile:data.mobile||''});
-      hideAuth(); renderHistory(); renderChat(); handleRoute(); loadHistoryFromServer(); updateUsage();
-    } else { banner(data.error||'Login failed'); }
-  }catch{ banner('Server unreachable'); }
+/* training consent buttons */
+document.getElementById('train-allow').addEventListener('click', ()=>{
+  localStorage.setItem(TRAIN_KEY,'yes');
+  ensureTrainingBanner();
+  banner('Thanks! Chats may be used to improve VedSAAS.');
 });
-document.getElementById('open-register').addEventListener('click',e=>{e.preventDefault();showAuth('register')});
-document.getElementById('open-login').addEventListener('click',e=>{e.preventDefault();showAuth('login')});
-document.getElementById('reg-send-otp').addEventListener('click', async ()=>{
-  const ident=document.getElementById('reg-identifier').value.trim(); if(!ident) return banner('Enter email or mobile');
-  try{ const r=await fetch(api('/api/send-otp'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier:ident})}); const d=await r.json(); banner(d.message||d.error||'Done'); if(r.ok) document.getElementById('reg-otp').disabled=false; }catch{ banner('Server unreachable'); }
-});
-document.getElementById('reg-submit').addEventListener('click', async ()=>{
-  const name=document.getElementById('reg-name').value.trim(); const ident=document.getElementById('reg-identifier').value.trim(); const pass=document.getElementById('reg-password').value;
-  if(!name||!ident||!pass) return banner('Fill all fields');
-  try{
-    const r=await fetch(api('/api/register'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({name,email:(ident.includes('@')?ident:null),mobile:(!ident.includes('@')?ident:null),password:pass})});
-    const d=await r.json(); if(r.ok){ document.getElementById('verify-identifier').value=ident; showAuth('verify'); banner('Registered. OTP sent.'); } else banner(d.error||'Registration failed');
-  }catch{ banner('Server unreachable'); }
-});
-document.getElementById('verify-submit').addEventListener('click', async ()=>{
-  const ident=document.getElementById('verify-identifier').value.trim(); const otp=document.getElementById('verify-otp').value.trim();
-  if(!ident||!otp) return banner('Enter identifier & OTP');
-  try{
-    const r=await fetch(api('/api/verify-otp'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier:ident,otp})});
-    const d=await r.json();
-    if(r.ok){
-      if(d.token){token=d.token;localStorage.setItem('token',token);} else{token=null;localStorage.removeItem('token');}
-      const name=d.name||ident; localStorage.setItem('user_name',name);
-      localStorage.setItem('user_email', d.email||''); localStorage.setItem('user_mobile', d.mobile||'');
-      setDisplayName(name); setAccountInfo({email:d.email||'', mobile:d.mobile||''});
-      hideAuth(); renderHistory(); renderChat(); handleRoute(); loadHistoryFromServer(); updateUsage();
-    } else banner(d.error||'Verification failed');
-  }catch{ banner('Server unreachable'); }
-});
-document.getElementById('verify-resend').addEventListener('click', async ()=>{
-  const ident=document.getElementById('verify-identifier').value.trim(); if(!ident) return banner('Missing identifier');
-  try{ const r=await fetch(api('/api/send-otp'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier:ident})}); const d=await r.json(); banner(d.message||d.error||'Done'); }catch{ banner('Server unreachable'); }
+document.getElementById('train-deny').addEventListener('click', ()=>{
+  localStorage.setItem(TRAIN_KEY,'no');
+  ensureTrainingBanner();
+  banner('OK. Your chats will not be used for training.');
 });
 
-/* Landing */
-const landingInput=document.getElementById('landing-input'); const landingStart=document.getElementById('landing-start');
-document.getElementById('landing-open-history').addEventListener('click', ()=>{ if(!currentTopicId && topics[0]) currentTopicId=topics[0].id; if(currentTopicId) location.hash='#/chat/'+encodeURIComponent(currentTopicId); renderHistory(); renderChat(); });
-landingStart.addEventListener('click', async ()=>{ const text=(landingInput.value||'').trim(); if(!text){landingInput.focus(); return;} const id=newTopic('New Chat'); location.hash='#/chat/'+encodeURIComponent(id); appendMessage('user',text); landingInput.value=''; autosize(landingInput); await sendToServer(text); });
-landingInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); landingStart.click(); }});
-landingInput.addEventListener('input', ()=>autosize(landingInput));
-
-/* Composer */
-const mainInput=document.getElementById('main-input'); const sendBtn=document.getElementById('send-btn');
-function autosize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,160)+'px'; }
-function updateSendState(){ sendBtn.disabled = sending || !mainInput.value.trim().length; }
-mainInput.addEventListener('input', ()=>{ autosize(mainInput); setDraft(mainInput.value); updateSendState(); });
-mainInput.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendBtn.click(); } if(e.key==='Escape'){ mainInput.value=''; setDraft(''); updateSendState(); }});
-document.addEventListener('keydown', e=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); mainInput.focus(); }});
-sendBtn.addEventListener('click', async ()=>{ const text=mainInput.value.trim(); if(!text||sending) return; if(!currentTopicId){ const id=newTopic('New Chat'); location.hash='#/chat/'+encodeURIComponent(id); } appendMessage('user',text); mainInput.value=''; setDraft(''); autosize(mainInput); updateSendState(); await sendToServer(text); });
-function restoreDraft(){ const d=getDraft(); if(d){ mainInput.value=d; autosize(mainInput); } updateSendState(); }
-restoreDraft();
-
-/* Chat send → VedLLM router (/api/vedllm/ask) */
+/* === IMPORTANT: new sendToServer using /api/vedllm/ask === */
 async function sendToServer(text){
-  sending = true;
-  updateSendState();
-  showChat();
-  showTyping();
+  sending=true; updateSendState(); showChat(); showTyping();
+  let lastErr=null;
+  try{
+    const langPref = localStorage.getItem('pref_lang') || 'auto';
+    const consent = trainingFlag();
 
-  const langPref = localStorage.getItem('pref_lang') || 'auto';
-
-  try {
-    const payload = {
-      q: text,
-      provider: 'brain',          // VedSAAS Brain routing (can use ollama/lite internally)
+    const body = {
       assistant: ASSISTANT_NAME,
       assistant_name: ASSISTANT_NAME,
       lang: langPref,
-      source: 'web'
+      q: text,
+      provider: "brain",  // ya "ollama" agar fast local chahiye
+      user: "web"
     };
+    if (consent === true) body.allow_training = true;
+    if (consent === false) body.allow_training = false;
 
-    const res = await authFetch(
-      '/api/vedllm/ask',
-      { method: 'POST', body: JSON.stringify(payload) },
-      { timeoutMs: 60000 }
-    );
+    const res = await authFetch('/api/vedllm/ask',
+      { method:'POST', body: JSON.stringify(body) },
+      { timeoutMs: 20000 });
 
     let data = null;
     try { data = await res.json(); } catch {}
 
-    let reply = pickResponse(data) || '';
-    reply = sanitizeBotText(reply);
-
-    hideTyping();
-
-    if (reply && reply.trim().length) {
-      typeWriteBot(reply);
-      serverOnline = true;
-      updateMeta();
-    } else {
-      const msg = 'Engine returned empty reply.';
-      banner(msg);
-      typeWriteBot(msg);
-      serverOnline = true;
-      updateMeta();
+    let reply = (pickResponse(data) || '').trim();
+    if (!reply && data && typeof data.error === 'string') {
+      reply = 'Engine error: ' + data.error;
     }
-  } catch (e) {
+    if (!reply) {
+      reply = 'Engine returned empty reply.';
+    }
+
     hideTyping();
-    const msg = (e && e.message) || 'Network error';
+    typeWriteBot(reply);
+    serverOnline = true;
+    updateMeta();
+  } catch(e){
+    lastErr = e;
+    hideTyping();
+    const msg = (lastErr && lastErr.message) || 'Network error';
     banner(msg);
     typeWriteBot(msg);
     serverOnline = false;
@@ -624,97 +499,14 @@ async function sendToServer(text){
   }
 }
 
-/* Scroll pill */
-const chatArea=document.getElementById('chat-area'); const toBottom=document.getElementById('to-bottom');
-function isAtBottom(){ return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 8 }
-function autoScroll(force=false){ if(force || isAtBottom()) chatArea.scrollTop=chatArea.scrollHeight; toggleBottomPill(); }
-function toggleBottomPill(){ toBottom.classList.toggle('show', !isAtBottom()); }
-chatArea.addEventListener('scroll', toggleBottomPill);
-toBottom.addEventListener('click', ()=> autoScroll(true));
-
-/* Settings + userpage */
-const settingsHeader=document.getElementById('settings-header'); const settingsPanel=document.getElementById('settings-panel'); const settingsCaret=document.getElementById('settings-caret');
-const userPage=document.getElementById('userpage'); const userPageClose=document.getElementById('userpage-close');
-settingsHeader.addEventListener('click', ()=>{ userPage.classList.add('show'); userPage.querySelectorAll('.aside .nav button').forEach(b=>b.classList.remove('active')); const btn=userPage.querySelector('.aside .nav button[data-tab="account"]'); if(btn) btn.classList.add('active');
-  userPage.querySelectorAll('.main section').forEach(sec=>{ sec.style.display=(sec.getAttribute('data-panel')==='account')?'block':'none'; }); loadUserPage(); });
-settingsCaret.addEventListener('click', (e)=>{ e.stopPropagation(); const open=settingsPanel.style.display==='block'; settingsPanel.style.display=open?'none':'block'; settingsCaret.classList.toggle('fa-chevron-up', !open); });
-userPage.querySelector('.backdrop').addEventListener('click', ()=> userPage.classList.remove('show'));
-userPageClose.addEventListener('click', ()=> userPage.classList.remove('show'));
-document.getElementById('profile-open').addEventListener('click', ()=>{ userPage.classList.add('show'); loadUserPage(); });
-Array.from(userPage.querySelectorAll('.aside .nav button[data-tab]')).forEach(btn=>{
-  btn.addEventListener('click',()=>{ userPage.querySelectorAll('.aside .nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-    const tab=btn.getAttribute('data-tab'); userPage.querySelectorAll('.main section').forEach(sec=>{ sec.style.display=(sec.getAttribute('data-panel')===tab)?'block':'none'; }); });
-});
-
-/* Export */
-document.getElementById('export-topic').addEventListener('click', ()=>{ const t=topics.find(x=>x.id===currentTopicId); if(!t) return banner('No conversation to export.');
-  let out=''; t.messages.forEach(m=>{ const who=m.from==='user'?'You':ASSISTANT_NAME; out+=`${who} • ${formatFull(m.timestamp)}\n${m.message}\n\n`; });
-  const blob=new Blob([out],{type:'text/plain;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${(t.title||'chat').replace(/\s+/g,'_')}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-});
-
-/* Usage */
-function renderStorageUsage(){ const size=(JSON.stringify(topics||[]).length||0); const kb=Math.round(size/1024);
-  const el=document.getElementById('usg-local'); if(el) el.innerText=`${kb} KB`; const meta=document.getElementById('meta-info'); if(meta){ meta.innerText=`${serverOnline?'Online':'Offline'} • Local: ${kb} KB`; meta.style.color=serverOnline?'#9fe870':'#ffb3b3'; } }
-function updateUsage(){ const conv=topics.length; const msg=topics.reduce((n,t)=>n+(t.messages?.length||0),0); const last=topics[0]?.messages?.slice(-1)[0]?.timestamp||Date.now();
-  const c1=document.getElementById('usg-conv'); if(c1) c1.innerText=conv; const c2=document.getElementById('usg-msg'); if(c2) c2.innerText=msg; const c3=document.getElementById('usg-last'); if(c3) c3.innerText=new Date(last).toLocaleString(); renderStorageUsage(); }
-
-/* Optional: server history */
-async function loadHistoryFromServer(){ try{ const res=await authFetch('/api/chat/history'); const data=await res.json(); const h=Array.isArray(data.history)?data.history:(data||[]);
-  if(h.length){ const serverTopic={id:'server_'+Date.now(),title:'Server History',created_at:Date.now(),messages:h.map(it=>({id:uid(),from:it.from===ASSISTANT_NAME?'bot':(it.from==='VedSAAS'?'bot':'user'),message:it.message,timestamp:it.timestamp||Date.now()}))};
-    topics=topics.filter(t=>t.id!==serverTopic.id); topics.unshift(serverTopic); saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); } }catch{} }
-
-/* Theme + prefs + profile */
-document.getElementById('dark-toggle').addEventListener('click', ()=> document.body.classList.toggle('dark-mode'));
-async function doLogout(){ try{ await fetch(api('/api/logout'),{method:'POST',credentials:'include'});}catch{} try{ localStorage.clear(); }catch{} token=null; try{ document.getElementById('userpage').classList.remove('show'); }catch{} showAuth('login'); banner('Logged out'); }
-document.getElementById('logout-btn').addEventListener('click', doLogout);
-document.getElementById('userpage-logout').addEventListener('click', doLogout);
-document.getElementById('new-topic').addEventListener('click', ()=>{ const id=newTopic('New Chat'); location.hash='#/chat/'+encodeURIComponent(id); renderChat(); document.getElementById('main-input').focus(); });
-document.getElementById('refresh-history').addEventListener('click', ()=> loadHistoryFromServer());
-document.getElementById('top-delete-chat').addEventListener('click', deleteCurrentChat);
-document.getElementById('delete-topic').addEventListener('click', deleteCurrentChat);
-document.getElementById('clear-all-chats').addEventListener('click', clearAllChats);
-
-async function loadUserPage(){
-  const nameLS=localStorage.getItem('user_name')||'User', handleLS=localStorage.getItem('user_handle')||'', emailLS=localStorage.getItem('user_email')||'', mobileLS=localStorage.getItem('user_mobile')||'', planLS=localStorage.getItem('user_plan')||'Free';
-  const pfName=document.getElementById('pf-name'), pfHandle=document.getElementById('pf-handle'), acEmail=document.getElementById('ac-email'), acMobile=document.getElementById('ac-mobile'), planLbl=document.getElementById('plan-label'), acPlanLbl=document.getElementById('ac-plan-label');
-  if(pfName) pfName.value=nameLS; if(pfHandle) pfHandle.value=handleLS; if(acEmail) acEmail.value=emailLS; if(acMobile) acMobile.value=mobileLS;
-  if(planLbl) planLbl.innerHTML=`<i class="fas fa-crown"></i><span style="margin-left:6px">${planLS}</span>`; if(acPlanLbl) acPlanLbl.innerText=planLS;
-  const langPref=localStorage.getItem('pref_lang')||'auto', typePref=localStorage.getItem('pref_type_speed')||'55';
-  const selLang=document.getElementById('pref-lang'), selType=document.getElementById('pref-type-speed'); if(selLang) selLang.value=langPref; if(selType) selType.value=typePref;
-  if(token){ try{ const r=await authFetch('/api/user-profile'); if(r.ok){ const d=await r.json();
-      if(d.name){ (pfName||{}).value=d.name; localStorage.setItem('user_name',d.name); setDisplayName(d.name); }
-      if(d.handle){ (pfHandle||{}).value=d.handle; localStorage.setItem('user_handle',d.handle); }
-      if(d.email){ (acEmail||{}).value=d.email; localStorage.setItem('user_email',d.email); }
-      if(d.mobile){ (acMobile||{}).value=d.mobile; localStorage.setItem('user_mobile',d.mobile); }
-      if(d.plan){ if(planLbl) planLbl.innerHTML=`<i class="fas fa-crown"></i><span style="margin-left:6px">${d.plan}</span>`; if(acPlanLbl) acPlanLbl.innerText=d.plan; localStorage.setItem('user_plan',d.plan); }
-      if(d.avatar_url){ localStorage.setItem('user_avatar_url', d.avatar_url); setDisplayName(localStorage.getItem('user_name')||'User'); }
-  } }catch{} }
-}
-document.getElementById('pf-save').addEventListener('click', async ()=>{ const name=document.getElementById('pf-name').value.trim()||'User'; const handle=document.getElementById('pf-handle').value.trim();
-  localStorage.setItem('user_name',name); localStorage.setItem('user_handle',handle); setDisplayName(name);
-  if(token){ try{ const r=await authFetch('/api/user/profile',{method:'POST',body:JSON.stringify({name,handle})}); if(!r.ok){ const d=await r.json().catch(()=>({})); banner(d.error||'Saved locally'); } else banner('Profile saved'); }catch{ banner('Saved locally'); } } else { banner('Profile saved locally'); }
-});
-document.getElementById('pf-avatar').addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return;
-  const url=URL.createObjectURL(file); localStorage.setItem('user_avatar_url',url); setDisplayName(localStorage.getItem('user_name')||'User');
-  if(token){ try{ const fd=new FormData(); fd.append('avatar',file);
-    const r=await fetch(api('/api/user/avatar'),{method:'POST',body:fd,credentials:'include',headers: token?{'Authorization':'Bearer '+token}:{}}); if(r.ok){ const d=await r.json().catch(()=>({})); if(d.url){ localStorage.setItem('user_avatar_url',d.url); setDisplayName(localStorage.getItem('user_name')||'User'); } banner('Avatar updated'); } else { banner('Avatar set locally'); } }catch{ banner('Avatar set locally'); } }
-});
-document.getElementById('pf-avatar-remove').addEventListener('click', ()=>{ localStorage.removeItem('user_avatar_url'); setDisplayName(localStorage.getItem('user_name')||'User'); banner('Avatar removed'); });
-document.getElementById('pref-theme-dark').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','dark'); document.body.classList.add('dark-mode'); banner('Theme: Dark'); });
-document.getElementById('pref-theme-light').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','light'); document.body.classList.remove('dark-mode'); banner('Theme: Light'); });
-document.getElementById('pref-theme-system').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','system'); const prefersDark=matchMedia('(prefers-color-scheme: dark)').matches; document.body.classList.toggle('dark-mode', prefersDark); banner('Theme: System'); });
-document.getElementById('pref-save').addEventListener('click', async ()=>{ const lang=document.getElementById('pref-lang').value; const speed=document.getElementById('pref-type-speed').value;
-  localStorage.setItem('pref_lang',lang); localStorage.setItem('pref_type_speed',String(speed)); banner('Preferences saved');
-  if(token){ try{ await authFetch('/api/user/preferences',{method:'POST',body:JSON.stringify({lang, typing_speed:Number(speed)})}); }catch{} }
-});
-
-/* Boot */
+/* boot */
 (function boot(){
   document.getElementById('brand-title').textContent = ASSISTANT_NAME;
   loadTopicsFromLocal();
   document.getElementById('app').style.display='flex';
   renderHistory(); renderChat(); handleRoute(); updateUsage();
   checkLoginAndOpen(); startPinger();
+  ensureTrainingBanner();
   const pref=localStorage.getItem('pref_theme');
   if(pref==='dark') document.body.classList.add('dark-mode');
   else if(pref==='light') document.body.classList.remove('dark-mode');
