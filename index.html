@@ -272,6 +272,7 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
         <div class="kv"><label>Typing animation</label>
           <select id="pref-type-speed" class="ip"><option value="75">Slow (VedSAAS-like)</option><option value="40">Normal</option><option value="15">Fast</option><option value="0">Instant</option></select>
         </div>
+        <!-- NEW: Training consent preference -->
         <div class="kv"><label>Training consent</label>
           <select id="pref-train-consent" class="ip">
             <option value="unset">Ask me every time</option>
@@ -295,7 +296,7 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
   </div>
 </div>
 
-<!-- Training consent popup -->
+<!-- NEW: Training consent popup -->
 <div id="consent-overlay" class="overlay" style="display:none;">
   <div class="auth-box">
     <h2>Help improve VedSAAS</h2>
@@ -503,7 +504,7 @@ function typeWriteBot(text,speed=null){
   const msg={id:uid(),from:'bot',message:'',timestamp:Date.now()}; t.messages.push(msg); saveTopicsToLocal(); renderChat();
   const area=document.getElementById('chat-area'); let el=area.querySelector(`.message-row.from-bot[data-mid="${msg.id}"]`);
   if(!el){ const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${ASSISTANT_NAME} • ${formatFull(msg.timestamp)}`;
-    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); }
+    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); area.appendChild(el); }
   const body=el.querySelector('.msg-body'); const safeMD=s=>{ try{return mdLite(s);}catch(_){ const d=document.createElement('div'); d.innerText=s; return d.innerHTML; } };
 
   const cleaned = sanitizeBotText(text);
@@ -521,7 +522,7 @@ window.addEventListener('hashchange', handleRoute);
 
 /* Auth + profile */
 async function checkLoginAndOpen(){
-  if(!token){ showAuth('login'); maybeShowConsent(); return; }
+  if(!token){ showAuth('login'); return; }
   try{
     const res=await authFetch('/api/user-status'); const data=await res.json();
     const name=(data.user?.name)||localStorage.getItem('user_name')||'User';
@@ -586,12 +587,12 @@ document.getElementById('verify-resend').addEventListener('click', async ()=>{
 /* Consent popup buttons */
 document.getElementById('consent-yes').addEventListener('click', ()=>{
   localStorage.setItem('train_consent','yes');
-  document.getElementById('consent-overlay').style.display='none';
+  const ov=document.getElementById('consent-overlay'); if(ov) ov.style.display='none';
   banner('Thanks for helping improve VedSAAS.');
 });
 document.getElementById('consent-no').addEventListener('click', ()=>{
   localStorage.setItem('train_consent','no');
-  document.getElementById('consent-overlay').style.display='none';
+  const ov=document.getElementById('consent-overlay'); if(ov) ov.style.display='none';
   banner('Your chats will not be used for training.');
 });
 
@@ -613,7 +614,7 @@ sendBtn.addEventListener('click', async ()=>{ const text=mainInput.value.trim();
 function restoreDraft(){ const d=getDraft(); if(d){ mainInput.value=d; autosize(mainInput); } updateSendState(); }
 restoreDraft();
 
-/* Chat send (Engine1-first, then legacy /api/chat) */
+/* Chat send (Engine1-first, then legacy /api/chat), with consent */
 async function sendToServer(text){
   let attempts=0,lastErr=null; sending=true; updateSendState(); showChat(); showTyping();
   try{
@@ -634,16 +635,19 @@ async function sendToServer(text){
       return sanitizeBotText(reply);
     };
 
+    // preferred Engine1 route
     try{
       const reply1 = await tryOnce('/api/engine1/ask', {query:text, user:'web'});
       if(reply1){ hideTyping(); typeWriteBot(reply1); serverOnline=true; updateMeta(); return; }
     }catch(e){ lastErr=e; }
 
+    // fallback legacy route
     try{
       const reply2 = await tryOnce('/api/chat', {message:text});
       if(reply2){ hideTyping(); typeWriteBot(reply2); serverOnline=true; updateMeta(); return; }
     }catch(e2){ lastErr=e2; }
 
+    // retry once
     while(attempts<1){
       attempts++;
       await new Promise(r=>setTimeout(r,600));
@@ -715,9 +719,9 @@ async function loadUserPage(){
   const pfName=document.getElementById('pf-name'), pfHandle=document.getElementById('pf-handle'), acEmail=document.getElementById('ac-email'), acMobile=document.getElementById('ac-mobile'), planLbl=document.getElementById('plan-label'), acPlanLbl=document.getElementById('ac-plan-label');
   if(pfName) pfName.value=nameLS; if(pfHandle) pfHandle.value=handleLS; if(acEmail) acEmail.value=emailLS; if(acMobile) acMobile.value=mobileLS;
   if(planLbl) planLbl.innerHTML=`<i class="fas fa-crown"></i><span style="margin-left:6px">${planLS}</span>`; if(acPlanLbl) acPlanLbl.innerText=planLS;
-  const langPref=localStorage.getItem('pref_lang')||'auto', typePref=localStorage.getItem('pref_type_speed')||'55', trainPref=currentConsentValue();
+  const langPref=localStorage.getItem('pref_lang')||'auto', typePref=localStorage.getItem('pref_type_speed')||'55';
   const selLang=document.getElementById('pref-lang'), selType=document.getElementById('pref-type-speed'), selTrain=document.getElementById('pref-train-consent');
-  if(selLang) selLang.value=langPref; if(selType) selType.value=typePref; if(selTrain) selTrain.value=trainPref;
+  if(selLang) selLang.value=langPref; if(selType) selType.value=typePref; if(selTrain) selTrain.value=currentConsentValue();
   if(token){ try{ const r=await authFetch('/api/user-profile'); if(r.ok){ const d=await r.json();
       if(d.name){ (pfName||{}).value=d.name; localStorage.setItem('user_name',d.name); setDisplayName(d.name); }
       if(d.handle){ (pfHandle||{}).value=d.handle; localStorage.setItem('user_handle',d.handle); }
@@ -740,11 +744,19 @@ document.getElementById('pf-avatar-remove').addEventListener('click', ()=>{ loca
 document.getElementById('pref-theme-dark').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','dark'); document.body.classList.add('dark-mode'); banner('Theme: Dark'); });
 document.getElementById('pref-theme-light').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','light'); document.body.classList.remove('dark-mode'); banner('Theme: Light'); });
 document.getElementById('pref-theme-system').addEventListener('click', ()=>{ localStorage.setItem('pref_theme','system'); const prefersDark=matchMedia('(prefers-color-scheme: dark)').matches; document.body.classList.toggle('dark-mode', prefersDark); banner('Theme: System'); });
-document.getElementById('pref-save').addEventListener('click', async ()=>{ const lang=document.getElementById('pref-lang').value; const speed=document.getElementById('pref-type-speed').value; const train=document.getElementById('pref-train-consent').value;
-  localStorage.setItem('pref_lang',lang); localStorage.setItem('pref_type_speed',String(speed));
+document.getElementById('pref-save').addEventListener('click', async ()=>{ 
+  const lang=document.getElementById('pref-lang').value; 
+  const speed=document.getElementById('pref-type-speed').value;
+  const train=document.getElementById('pref-train-consent').value;
+  localStorage.setItem('pref_lang',lang); 
+  localStorage.setItem('pref_type_speed',String(speed));
   if(train==='unset'){ localStorage.setItem('train_consent','unset'); } else { localStorage.setItem('train_consent',train); }
   banner('Preferences saved'); maybeShowConsent();
-  if(token){ try{ await authFetch('/api/user/preferences',{method:'POST',body:JSON.stringify({lang, typing_speed:Number(speed), train_consent:train})}); }catch{} }
+  if(token){ 
+    try{ 
+      await authFetch('/api/user/preferences',{method:'POST',body:JSON.stringify({lang, typing_speed:Number(speed), train_consent:train})}); 
+    }catch{} 
+  }
 });
 
 /* Boot */
