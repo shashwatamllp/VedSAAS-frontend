@@ -363,15 +363,7 @@ function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'
 function uid(){ return Math.random().toString(36).slice(2,9) }
 function pickResponse(o){
   if(!o||typeof o!=='object') return '';
-  const c =
-    o.answer ??
-    o.response ??
-    o.reply ??
-    o.message ??
-    o.text ??
-    o.output ??
-    (o.data && (o.data.answer || o.data.message)) ??
-    (Array.isArray(o.choices) && o.choices[0] && o.choices[0].message && o.choices[0].message.content);
+  const c = o.answer ?? o.response ?? o.reply ?? o.message ?? o.text ?? o.output ?? (o.data && (o.data.answer||o.data.message));
   return String(c ?? '');
 }
 
@@ -425,6 +417,18 @@ function setDraft(v){ try{ localStorage.setItem(draftKey(), v) }catch{} }
 function getDraft(){ try{ return localStorage.getItem(draftKey())||'' }catch{ return '' } }
 function initials(name){ return (name||'U').split(/\s+/).map(x=>x[0]?.toUpperCase()||'').slice(0,2).join('') }
 
+/* Training consent helpers */
+function currentConsentValue(){
+  const v = localStorage.getItem('train_consent');
+  return v && v !== 'unset' ? v : 'unset';
+}
+function maybeShowConsent(){
+  const overlay = document.getElementById('consent-overlay');
+  if(!overlay) return;
+  const v = currentConsentValue();
+  overlay.style.display = (v === 'unset') ? 'flex' : 'none';
+}
+
 /* UI controls */
 function showAuth(screen='login'){ document.getElementById('auth-overlay').style.display='flex'; document.getElementById('app').style.display='none';
   ['login','register','verify'].forEach(s=>document.getElementById(s+'-screen').style.display = (s===screen)?'block':'none'); }
@@ -439,19 +443,6 @@ function setDisplayName(name){
   if(up) up.innerText=name; if(upa){ const url2=localStorage.getItem('user_avatar_url'); upa.innerHTML=''; if(url2){ const i2=new Image(); i2.src=url2; i2.alt=initials(name); upa.appendChild(i2);} else { upa.textContent=initials(name);} }
 }
 function setAccountInfo({email='',mobile=''}){ const em=document.getElementById('ac-email'); const mo=document.getElementById('ac-mobile'); if(em) em.value=email; if(mo) mo.value=mobile; }
-
-/* Training consent helpers */
-function currentConsentValue(){
-  const v = localStorage.getItem('train_consent');
-  return v && v !== 'unset' ? v : 'unset';
-}
-function maybeShowConsent(){
-  const overlay = document.getElementById('consent-overlay');
-  if(!overlay) return;
-  const v = currentConsentValue();
-  if(v === 'unset'){ overlay.style.display = 'flex'; }
-  else { overlay.style.display = 'none'; }
-}
 
 /* History */
 function renderHistory(){
@@ -512,7 +503,7 @@ function typeWriteBot(text,speed=null){
   const msg={id:uid(),from:'bot',message:'',timestamp:Date.now()}; t.messages.push(msg); saveTopicsToLocal(); renderChat();
   const area=document.getElementById('chat-area'); let el=area.querySelector(`.message-row.from-bot[data-mid="${msg.id}"]`);
   if(!el){ const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${ASSISTANT_NAME} • ${formatFull(msg.timestamp)}`;
-    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); area.appendChild(el); }
+    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); }
   const body=el.querySelector('.msg-body'); const safeMD=s=>{ try{return mdLite(s);}catch(_){ const d=document.createElement('div'); d.innerText=s; return d.innerHTML; } };
 
   const cleaned = sanitizeBotText(text);
@@ -530,7 +521,7 @@ window.addEventListener('hashchange', handleRoute);
 
 /* Auth + profile */
 async function checkLoginAndOpen(){
-  if(!token){ showAuth('login'); return; }
+  if(!token){ showAuth('login'); maybeShowConsent(); return; }
   try{
     const res=await authFetch('/api/user-status'); const data=await res.json();
     const name=(data.user?.name)||localStorage.getItem('user_name')||'User';
@@ -622,46 +613,51 @@ sendBtn.addEventListener('click', async ()=>{ const text=mainInput.value.trim();
 function restoreDraft(){ const d=getDraft(); if(d){ mainInput.value=d; autosize(mainInput); } updateSendState(); }
 restoreDraft();
 
-/* Chat send – ONLY /api/engine1/ask, no /api/chat fallback */
+/* Chat send (Engine1-first, then legacy /api/chat) */
 async function sendToServer(text){
-  sending=true; updateSendState(); showChat(); showTyping();
-  const langPref = localStorage.getItem('pref_lang') || 'auto';
-  const consent = currentConsentValue();
-
+  let attempts=0,lastErr=null; sending=true; updateSendState(); showChat(); showTyping();
   try{
-    const body = {
-      assistant: ASSISTANT_NAME,
-      assistant_name: ASSISTANT_NAME,
-      lang: langPref,
-      consent,
-      query: text,
-      user: 'web'
+    const langPref = localStorage.getItem('pref_lang') || 'auto';
+    const consent = currentConsentValue();
+
+    const tryOnce = async (path, bodyObj) => {
+      const body = {
+        assistant: ASSISTANT_NAME,
+        assistant_name: ASSISTANT_NAME,
+        lang: langPref,
+        consent,
+        ...bodyObj
+      };
+      const res = await authFetch(path,{method:'POST',body:JSON.stringify(body)},{timeoutMs:15000});
+      let data=null; try{ data=await res.json(); }catch{}
+      const reply = pickResponse(data) || '';
+      return sanitizeBotText(reply);
     };
-    const res = await authFetch('/api/engine1/ask',{method:'POST',body:JSON.stringify(body)},{timeoutMs:15000});
-    let data=null; try{ data = await res.json(); }catch{}
-    let reply = pickResponse(data);
-    if(!reply && data && (data.detail || data.error)){
-      reply = String(data.detail || data.error);
+
+    try{
+      const reply1 = await tryOnce('/api/engine1/ask', {query:text, user:'web'});
+      if(reply1){ hideTyping(); typeWriteBot(reply1); serverOnline=true; updateMeta(); return; }
+    }catch(e){ lastErr=e; }
+
+    try{
+      const reply2 = await tryOnce('/api/chat', {message:text});
+      if(reply2){ hideTyping(); typeWriteBot(reply2); serverOnline=true; updateMeta(); return; }
+    }catch(e2){ lastErr=e2; }
+
+    while(attempts<1){
+      attempts++;
+      await new Promise(r=>setTimeout(r,600));
+      try{
+        const reply3 = await tryOnce('/api/engine1/ask', {query:text, user:'web'});
+        if(reply3){ hideTyping(); typeWriteBot(reply3); serverOnline=true; updateMeta(); return; }
+      }catch(e3){ lastErr=e3; }
     }
-    if(!reply){
-      reply = 'Engine returned empty reply.';
-    }
-    reply = sanitizeBotText(reply);
+
     hideTyping();
-    typeWriteBot(reply);
-    serverOnline = true;
-    updateMeta();
-  }catch(e){
-    hideTyping();
-    const msg = e && e.message ? e.message : 'Network error';
-    banner(msg);
-    typeWriteBot(msg);
-    serverOnline = false;
-    updateMeta();
-  }finally{
-    sending=false;
-    updateSendState();
-  }
+    const msg = (lastErr&&lastErr.message)||'Network error';
+    banner(msg); typeWriteBot(msg);
+    serverOnline=false; updateMeta();
+  } finally { sending=false; updateSendState(); }
 }
 
 /* Scroll pill */
@@ -719,9 +715,9 @@ async function loadUserPage(){
   const pfName=document.getElementById('pf-name'), pfHandle=document.getElementById('pf-handle'), acEmail=document.getElementById('ac-email'), acMobile=document.getElementById('ac-mobile'), planLbl=document.getElementById('plan-label'), acPlanLbl=document.getElementById('ac-plan-label');
   if(pfName) pfName.value=nameLS; if(pfHandle) pfHandle.value=handleLS; if(acEmail) acEmail.value=emailLS; if(acMobile) acMobile.value=mobileLS;
   if(planLbl) planLbl.innerHTML=`<i class="fas fa-crown"></i><span style="margin-left:6px">${planLS}</span>`; if(acPlanLbl) acPlanLbl.innerText=planLS;
-  const langPref=localStorage.getItem('pref_lang')||'auto', typePref=localStorage.getItem('pref_type_speed')||'55';
+  const langPref=localStorage.getItem('pref_lang')||'auto', typePref=localStorage.getItem('pref_type_speed')||'55', trainPref=currentConsentValue();
   const selLang=document.getElementById('pref-lang'), selType=document.getElementById('pref-type-speed'), selTrain=document.getElementById('pref-train-consent');
-  if(selLang) selLang.value=langPref; if(selType) selType.value=typePref; if(selTrain) selTrain.value=currentConsentValue();
+  if(selLang) selLang.value=langPref; if(selType) selType.value=typePref; if(selTrain) selTrain.value=trainPref;
   if(token){ try{ const r=await authFetch('/api/user-profile'); if(r.ok){ const d=await r.json();
       if(d.name){ (pfName||{}).value=d.name; localStorage.setItem('user_name',d.name); setDisplayName(d.name); }
       if(d.handle){ (pfHandle||{}).value=d.handle; localStorage.setItem('user_handle',d.handle); }
@@ -762,6 +758,7 @@ document.getElementById('pref-save').addEventListener('click', async ()=>{ const
   if(pref==='dark') document.body.classList.add('dark-mode');
   else if(pref==='light') document.body.classList.remove('dark-mode');
   else if(pref==='system'){ const prefersDark=matchMedia('(prefers-color-scheme: dark)').matches; document.body.classList.toggle('dark-mode', prefersDark); }
+  maybeShowConsent();
 })();
 </script>
 </body>
