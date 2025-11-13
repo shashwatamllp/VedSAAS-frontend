@@ -473,7 +473,7 @@ function typeWriteBot(text,speed=null){
   const msg={id:uid(),from:'bot',message:'',timestamp:Date.now()}; t.messages.push(msg); saveTopicsToLocal(); renderChat();
   const area=document.getElementById('chat-area'); let el=area.querySelector(`.message-row.from-bot[data-mid="${msg.id}"]`);
   if(!el){ const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${ASSISTANT_NAME} • ${formatFull(msg.timestamp)}`;
-    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); area.appendChild(el); }
+    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label); }
   const body=el.querySelector('.msg-body'); const safeMD=s=>{ try{return mdLite(s);}catch(_){ const d=document.createElement('div'); d.innerText=s; return d.innerHTML; } };
 
   const cleaned = sanitizeBotText(text);
@@ -571,10 +571,15 @@ sendBtn.addEventListener('click', async ()=>{ const text=mainInput.value.trim();
 function restoreDraft(){ const d=getDraft(); if(d){ mainInput.value=d; autosize(mainInput); } updateSendState(); }
 restoreDraft();
 
-/* Chat send (Engine1-first, then legacy /api/chat) */
+/* Chat send – single Engine1 route (no /api/chat fallback) */
 async function sendToServer(text){
-  let attempts=0,lastErr=null; sending=true; updateSendState(); showChat(); showTyping();
-  try{
+  let attempts = 0, lastErr = null;
+  sending = true;
+  updateSendState();
+  showChat();
+  showTyping();
+
+  try {
     const langPref = localStorage.getItem('pref_lang') || 'auto';
 
     const tryOnce = async (path, bodyObj) => {
@@ -584,39 +589,60 @@ async function sendToServer(text){
         lang: langPref,
         ...bodyObj
       };
-      const res = await authFetch(path,{method:'POST',body:JSON.stringify(body)},{timeoutMs:15000});
-      let data=null; try{ data=await res.json(); }catch{}
+      const res = await authFetch(
+        path,
+        { method: 'POST', body: JSON.stringify(body) },
+        { timeoutMs: 15000 }
+      );
+      let data = null;
+      try { data = await res.json(); } catch {}
       const reply = pickResponse(data) || '';
       return sanitizeBotText(reply);
     };
 
-    // preferred Engine1 route
-    try{
-      const reply1 = await tryOnce('/api/engine1/ask', {query:text, user:'web'});
-      if(reply1){ hideTyping(); typeWriteBot(reply1); serverOnline=true; updateMeta(); return; }
-    }catch(e){ lastErr=e; }
-
-    // fallback legacy route
-    try{
-      const reply2 = await tryOnce('/api/chat', {message:text});
-      if(reply2){ hideTyping(); typeWriteBot(reply2); serverOnline=true; updateMeta(); return; }
-    }catch(e2){ lastErr=e2; }
-
-    // retry once
-    while(attempts<1){
-      attempts++;
-      await new Promise(r=>setTimeout(r,600));
-      try{
-        const reply3 = await tryOnce('/api/engine1/ask', {query:text, user:'web'});
-        if(reply3){ hideTyping(); typeWriteBot(reply3); serverOnline=true; updateMeta(); return; }
-      }catch(e3){ lastErr=e3; }
+    // सिर्फ Engine1 – सही key: q
+    try {
+      const reply1 = await tryOnce('/api/engine1/ask', { q: text, user: 'web' });
+      if (reply1) {
+        hideTyping();
+        typeWriteBot(reply1);
+        serverOnline = true;
+        updateMeta();
+        return;
+      }
+    } catch (e) {
+      lastErr = e;
     }
 
+    // एक छोटा retry (optional)
+    while (attempts < 1) {
+      attempts++;
+      await new Promise(r => setTimeout(r, 600));
+      try {
+        const reply2 = await tryOnce('/api/engine1/ask', { q: text, user: 'web' });
+        if (reply2) {
+          hideTyping();
+          typeWriteBot(reply2);
+          serverOnline = true;
+          updateMeta();
+          return;
+        }
+      } catch (e2) {
+        lastErr = e2;
+      }
+    }
+
+    // सब fail हुआ
     hideTyping();
-    const msg = (lastErr&&lastErr.message)||'Network error';
-    banner(msg); typeWriteBot(msg);
-    serverOnline=false; updateMeta();
-  } finally { sending=false; updateSendState(); }
+    const msg = (lastErr && lastErr.message) || 'Network error';
+    banner(msg);
+    typeWriteBot(msg);
+    serverOnline = false;
+    updateMeta();
+  } finally {
+    sending = false;
+    updateSendState();
+  }
 }
 
 /* Scroll pill */
