@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -308,7 +308,7 @@ const API_BASE = (() => {
 })();
 function api(path){
   let p = String(path||'');
-  if(!p.startsWith('/')) p = '/'+p;
+  if(!p.startsWith('/')) p = '/' + p;
   if (API_BASE.endsWith('/api') && p.startsWith('/api')) p = p.replace(/^\/api\b/, '');
   return API_BASE + p;
 }
@@ -337,7 +337,7 @@ async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
 }
 function formatFull(ts){ const d=ts?new Date(ts):new Date(),z=n=>String(n).padStart(2,'0'); return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()}, ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; }
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))}
-function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); t=t.replace(/`([^`]+)`/g,'<code>$1</code>'); t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); t=t.replace(/\*([^*]+)\*/g,'<em>$1</em>'); return t.replace(/\n/g,'<br/>'); }
+function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); t=t.replace(/`([^`]+)`/g,'<code>$1</code>'); t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); t=t.replace(/\*([^*]+)\*/g,'<em>$1</em>'); return t.replace(/\n/g,'<br/>' ); }
 function uid(){ return Math.random().toString(36).slice(2,9) }
 function pickResponse(o){
   if(!o||typeof o!=='object') return '';
@@ -350,20 +350,16 @@ function sanitizeBotText(t){
   if(!t) return '';
   let s = String(t);
 
-  // “I'm an AI assistant/chatbot/model …” → VedSAAS
   s = s.replace(/\bI(?:'m| am)\s+(?:an?\s+)?(?:AI\s+)?(?:assistant|chatbot|model)\b/gi, ASSISTANT_NAME);
-  // “I don't have a name …” → VedSAAS
   s = s.replace(/\bI\s+(?:do\s+not|don't)\s+have\s+(?:a|any)\s+(?:personal\s+)?name\b[^.!?]*[.!?]?/gi, `I am ${ASSISTANT_NAME}.`);
-  // generic “an AI assistant” → VedSAAS
   s = s.replace(/\ban AI assistant\b/gi, ASSISTANT_NAME);
-  // “my name is …” → VedSAAS
   s = s.replace(/\bmy\s+name\s+is\b[^.!?]*[.!?]?/gi, `My name is ${ASSISTANT_NAME}.`);
 
   return s;
 }
 
 /* Server status with multi-probe */
-const PROBES = ['/api/user-status','/api/health','/api/engine1/health','/api/engine2/health','/__routes','/openapi.json'];
+const PROBES = ['/api/user-status','/api/health','/api/engine1/health','/api/engine2/health','/api/vedllm/health','/__routes','/openapi.json'];
 let serverOnline=false, _pingTimer=null;
 async function pingServer(){
   let ok=false;
@@ -571,52 +567,61 @@ sendBtn.addEventListener('click', async ()=>{ const text=mainInput.value.trim();
 function restoreDraft(){ const d=getDraft(); if(d){ mainInput.value=d; autosize(mainInput); } updateSendState(); }
 restoreDraft();
 
-/* Chat send (Engine1-first, then legacy /api/chat) */
+/* Chat send → VedLLM router (/api/vedllm/ask) */
 async function sendToServer(text){
-  let attempts=0,lastErr=null; sending=true; updateSendState(); showChat(); showTyping();
-  try{
-    const langPref = localStorage.getItem('pref_lang') || 'auto';
+  sending = true;
+  updateSendState();
+  showChat();
+  showTyping();
 
-    const tryOnce = async (path, bodyObj) => {
-      const body = {
-        assistant: ASSISTANT_NAME,
-        assistant_name: ASSISTANT_NAME,
-        lang: langPref,
-        ...bodyObj
-      };
-      const res = await authFetch(path,{method:'POST',body:JSON.stringify(body)},{timeoutMs:15000});
-      let data=null; try{ data=await res.json(); }catch{}
-      const reply = pickResponse(data) || '';
-      return sanitizeBotText(reply);
+  const langPref = localStorage.getItem('pref_lang') || 'auto';
+
+  try {
+    const payload = {
+      q: text,
+      provider: 'brain',          // VedSAAS Brain routing (can use ollama/lite internally)
+      assistant: ASSISTANT_NAME,
+      assistant_name: ASSISTANT_NAME,
+      lang: langPref,
+      source: 'web'
     };
 
-    // preferred Engine1 route
-    try{
-      const reply1 = await tryOnce('/api/engine1/ask', {query:text, user:'web'});
-      if(reply1){ hideTyping(); typeWriteBot(reply1); serverOnline=true; updateMeta(); return; }
-    }catch(e){ lastErr=e; }
+    const res = await authFetch(
+      '/api/vedllm/ask',
+      { method: 'POST', body: JSON.stringify(payload) },
+      { timeoutMs: 60000 }
+    );
 
-    // fallback legacy route
-    try{
-      const reply2 = await tryOnce('/api/chat', {message:text});
-      if(reply2){ hideTyping(); typeWriteBot(reply2); serverOnline=true; updateMeta(); return; }
-    }catch(e2){ lastErr=e2; }
+    let data = null;
+    try { data = await res.json(); } catch {}
 
-    // retry once
-    while(attempts<1){
-      attempts++;
-      await new Promise(r=>setTimeout(r,600));
-      try{
-        const reply3 = await tryOnce('/api/engine1/ask', {query:text, user:'web'});
-        if(reply3){ hideTyping(); typeWriteBot(reply3); serverOnline=true; updateMeta(); return; }
-      }catch(e3){ lastErr=e3; }
-    }
+    let reply = pickResponse(data) || '';
+    reply = sanitizeBotText(reply);
 
     hideTyping();
-    const msg = (lastErr&&lastErr.message)||'Network error';
-    banner(msg); typeWriteBot(msg);
-    serverOnline=false; updateMeta();
-  } finally { sending=false; updateSendState(); }
+
+    if (reply && reply.trim().length) {
+      typeWriteBot(reply);
+      serverOnline = true;
+      updateMeta();
+    } else {
+      const msg = 'Engine returned empty reply.';
+      banner(msg);
+      typeWriteBot(msg);
+      serverOnline = true;
+      updateMeta();
+    }
+  } catch (e) {
+    hideTyping();
+    const msg = (e && e.message) || 'Network error';
+    banner(msg);
+    typeWriteBot(msg);
+    serverOnline = false;
+    updateMeta();
+  } finally {
+    sending = false;
+    updateSendState();
+  }
 }
 
 /* Scroll pill */
