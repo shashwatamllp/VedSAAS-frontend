@@ -8,7 +8,6 @@
 <link rel="icon" href="/favicon.ico"/>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer"/>
-<link rel="stylesheet" href="/public/css/vedsaas-ui.css"/>
 
 <!-- CSP -->
 <meta http-equiv="Content-Security-Policy" content="
@@ -20,6 +19,9 @@
   connect-src 'self' https://vedsaas.com https://*.vedsaas.com https://api.vedsaas.com http://127.0.0.1:8012 http://127.0.0.1:8000;
   frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
 ">
+
+<!-- UI CSS -->
+<link rel="stylesheet" href="/public/css/vedsaas-ui.css"/>
 </head>
 <body>
 
@@ -68,9 +70,7 @@
             <div class="hint">Ask anything. I’ll reply in your language.</div>
             <div class="composer">
               <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
-              <button id="landing-start" class="send-btn" title="Send">
-                <i class="fas fa-paper-plane"></i>
-              </button>
+              <button id="landing-start" class="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
             </div>
             <div class="landing-actions">
               <button id="landing-open-history" class="btn">Open Previous Chats</button>
@@ -83,9 +83,7 @@
           <div class="composer-wrap">
             <div class="composer">
               <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
-              <button id="send-btn" class="send-btn" title="Send" disabled>
-                <i class="fas fa-paper-plane"></i>
-              </button>
+              <button id="send-btn" class="send-btn" title="Send" disabled><i class="fas fa-paper-plane"></i></button>
             </div>
           </div>
         </div>
@@ -130,21 +128,6 @@
   </div>
 </div>
 
-<!-- Training consent popup -->
-<div id="consent-overlay" class="overlay" style="display:none;">
-  <div class="auth-box">
-    <h2>Help improve VedSAAS</h2>
-    <p style="margin:8px 0 10px;font-size:14px;color:#ddd;line-height:1.4;">
-      We would like to use your conversations to train and improve VedSAAS.
-    </p>
-    <p style="font-size:12px;color:#bbb;margin-bottom:10px;line-height:1.4;">
-      If you disagree, your chats will not be used for training. You can change this later in Preferences.
-    </p>
-    <button id="consent-yes">I agree</button>
-    <button id="consent-no" style="margin-top:8px;background:#444;">I disagree</button>
-  </div>
-</div>
-
 <div id="userpage" class="userpage">
   <div class="backdrop"></div>
   <div class="sheet">
@@ -164,12 +147,8 @@
         <button data-tab="preferences"><i class="fas fa-sliders-h"></i> Preferences</button>
         <button data-tab="usage"><i class="fas fa-chart-line"></i> Usage</button>
         <div style="flex:1"></div>
-        <button id="userpage-logout" class="cta danger" style="width:100%;margin-top:8px">
-          <i class="fas fa-right-from-bracket"></i> Logout
-        </button>
-        <button id="userpage-close" class="cta secondary" style="width:100%;margin-top:8px">
-          <i class="fas fa-times"></i> Close
-        </button>
+        <button id="userpage-logout" class="cta danger" style="width:100%;margin-top:8px"><i class="fas fa-right-from-bracket"></i> Logout</button>
+        <button id="userpage-close" class="cta secondary" style="width:100%;margin-top:8px"><i class="fas fa-times"></i> Close</button>
       </div>
     </aside>
     <main class="main">
@@ -180,17 +159,14 @@
         <div class="kv">
           <label>Avatar</label>
           <div class="row">
-            <label class="badge" style="cursor:pointer">
-              <i class="fas fa-upload"></i> Upload
+            <label class="badge" style="cursor:pointer"><i class="fas fa-upload"></i> Upload
               <input id="pf-avatar" type="file" accept="image/*" style="display:none">
             </label>
             <button id="pf-avatar-remove" class="cta secondary">Remove</button>
           </div>
           <div class="muted">Tip: If no avatar, initials are used.</div>
         </div>
-        <div class="actions"><button id="pf-save" class="cta">
-          <i class="fas fa-save"></i> Save</button>
-        </div>
+        <div class="actions"><button id="pf-save" class="cta"><i class="fas fa-save"></i> Save</button></div>
       </section>
 
       <section data-panel="account" style="display:none">
@@ -198,17 +174,12 @@
         <div class="kv"><label>Email</label><input id="ac-email" class="ip" placeholder="email@example.com"/></div>
         <div class="kv"><label>Mobile</label><input id="ac-mobile" class="ip" placeholder="+91-XXXXXXXXXX"/></div>
         <div class="kv"><label>Plan</label>
-          <div class="row">
-            <span class="badge"><i class="fas fa-crown"></i>
-              <span id="ac-plan-label" style="margin-left:6px">Free</span></span>
-            <button id="ac-upgrade" class="cta">Upgrade</button>
-          </div>
+          <div class="row"><span class="badge"><i class="fas fa-crown"></i>
+            <span id="ac-plan-label" style="margin-left:6px">Free</span></span>
+            <button id="ac-upgrade" class="cta">Upgrade</button></div>
         </div>
         <div class="kv"><label>Sessions</label>
-          <div class="card" id="ac-sessions" style="width:100%">
-            <div class="muted">This device • Active now</div>
-            <div class="muted">Chrome • Last used today</div>
-          </div>
+          <div class="card" id="ac-sessions" style="width:100%"><div class="muted">This device • Active now</div><div class="muted">Chrome • Last used today</div></div>
         </div>
       </section>
 
@@ -243,41 +214,40 @@
             <option value="no">Don't use my chats</option>
           </select>
         </div>
-        <div class="actions"><button id="pref-save" class="cta">
-          <i class="fas fa-save"></i> Save</button>
-        </div>
+        <div class="actions"><button id="pref-save" class="cta"><i class="fas fa-save"></i> Save</button></div>
       </section>
 
       <section data-panel="usage" style="display:none">
         <div class="section-title">Usage</div>
         <div class="row">
-          <div class="card" style="min-width:220px">
-            <div class="muted">Conversations</div>
-            <div id="usg-conv" style="font-size:22px;font-weight:700">0</div>
-          </div>
-          <div class="card" style="min-width:220px">
-            <div class="muted">Messages</div>
-            <div id="usg-msg" style="font-size:22px;font-weight:700">0</div>
-          </div>
-          <div class="card" style="min-width:220px">
-            <div class="muted">Local storage</div>
-            <div id="usg-local" style="font-size:22px;font-weight:700">0 KB</div>
-          </div>
-          <div class="card" style="min-width:220px">
-            <div class="muted">Last active</div>
-            <div id="usg-last" style="font-size:22px;font-weight:700">—</div>
-          </div>
+          <div class="card" style="min-width:220px"><div class="muted">Conversations</div><div id="usg-conv" style="font-size:22px;font-weight:700">0</div></div>
+          <div class="card" style="min-width:220px"><div class="muted">Messages</div><div id="usg-msg" style="font-size:22px;font-weight:700">0</div></div>
+          <div class="card" style="min-width:220px"><div class="muted">Local storage</div><div id="usg-local" style="font-size:22px;font-weight:700">0 KB</div></div>
+          <div class="card" style="min-width:220px"><div class="muted">Last active</div><div id="usg-last" style="font-size:22px;font-weight:700">—</div></div>
         </div>
       </section>
     </main>
   </div>
 </div>
 
-<button id="to-bottom" class="to-bottom">
-  <i class="fas fa-angle-down"></i> Latest
-</button>
+<!-- Training consent popup -->
+<div id="consent-overlay" class="overlay" style="display:none;">
+  <div class="auth-box">
+    <h2>Help improve VedSAAS</h2>
+    <p style="margin:8px 0 10px;font-size:14px;color:#ddd;line-height:1.4;">
+      We would like to use your conversations to train and improve VedSAAS.
+    </p>
+    <p style="font-size:12px;color:#bbb;margin-bottom:10px;line-height:1.4;">
+      If you disagree, your chats will not be used for training. You can change this later in Preferences.
+    </p>
+    <button id="consent-yes">I agree</button>
+    <button id="consent-no" style="margin-top:8px;background:#444;">I disagree</button>
+  </div>
+</div>
 
+<button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
+
+<!-- Core JS -->
 <script src="/public/js/vedsaas-core.js" defer></script>
-<script src="/public/js/vedsaas-account.js" defer></script>
 </body>
 </html>
