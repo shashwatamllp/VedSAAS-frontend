@@ -602,7 +602,7 @@ async function sendToServer(text){
 
     // सिर्फ Engine1 – सही key: q
     try {
-      const reply1 = await tryOnce('/api/engine1/ask', { q: text, user: 'web' });
+      const reply1 = await tryOnce('/api/vedllm/ask', { q: text, user: 'web' });
       if (reply1) {
         hideTyping();
         typeWriteBot(reply1);
@@ -744,3 +744,4 @@ document.getElementById('pref-save').addEventListener('click', async ()=>{ const
 </script>
 </body>
 </html>
+
