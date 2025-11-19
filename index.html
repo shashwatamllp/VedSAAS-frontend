@@ -9,25 +9,15 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer"/>
 
-<!-- CSP (patched – keep everything else same) -->
+<!-- CSP -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   img-src 'self' data:;
   style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
   script-src 'self' 'unsafe-inline';
   font-src 'self' https://cdnjs.cloudflare.com;
-  connect-src 'self'
-               https://vedsaas.com
-               https://*.vedsaas.com
-               https://api.vedsaas.com
-               http://127.0.0.1:8012
-               http://127.0.0.1:8000
-               ws://127.0.0.1:8012
-               wss://vedsaas.com;
-  frame-ancestors 'none';
-  base-uri 'self';
-  form-action 'self';
-  upgrade-insecure-requests;
+  connect-src 'self' https://vedsaas.com https://*.vedsaas.com https://api.vedsaas.com http://127.0.0.1:8012 http://127.0.0.1:8000;
+  frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
 ">
 
 <style>
@@ -309,446 +299,326 @@ const API_BASE = (() => {
   const FALLBACK = 'http://127.0.0.1:8000';
   try {
     const meta = document.querySelector('meta[name="ved-api-base"]');
-    const m = meta ? (meta.content || '').trim() : '';
-    if (m) return m.replace(/\/+$/, '');
+    const m = meta ? (meta.content||'').trim() : '';
+    if (m) return m.replace(/\/+$/,'');
     const o = location.origin || '';
     if (!o || o.startsWith('file://')) return FALLBACK;
-    return o.replace(/\/+$/, '');
+    return o.replace(/\/+$/,'');
   } catch { return FALLBACK; }
 })();
-
-/* FIXED — never strip /api twice */
-function api(path) {
-  let p = String(path || '');
-  if (!p.startsWith('/')) p = '/' + p;
-  const base = API_BASE.replace(/\/+$/, '');
-  return base + p;
+function api(path){
+  let p = String(path||'');
+  if(!p.startsWith('/')) p = '/'+p;
+  if (API_BASE.endsWith('/api') && p.startsWith('/api')) p = p.replace(/^\/api\b/, '');
+  return API_BASE + p;
 }
 
 /* ===== State ===== */
 let token = localStorage.getItem('token') || null;
-let topics = [];
-let currentTopicId = null;
-let sending = false;
+let topics = []; let currentTopicId = null; let sending = false;
 
 /* Limits */
-const MAX_LOCAL_BYTES = 2_000_000,
-  TOPIC_HARD_LIMIT = 80,
-  MSGS_PER_TOPIC_LIMIT = 200;
+const MAX_LOCAL_BYTES = 2_000_000, TOPIC_HARD_LIMIT = 80, MSGS_PER_TOPIC_LIMIT = 200;
 
 /* Utils */
-function banner(msg) {
-  const b = document.getElementById('banner');
-  b.textContent = msg;
-  b.style.display = 'block';
-  setTimeout(() => (b.style.display = 'none'), 2500);
-}
-
-/* FIXED — stable timeout & fetch wrapper */
-async function authFetch(path, opts = {}, { timeoutMs = 12000 } = {}) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+function banner(msg){ const b=document.getElementById('banner'); b.textContent=msg; b.style.display='block'; setTimeout(()=>b.style.display='none', 2500); }
+async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
+  const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), timeoutMs);
   const url = api(path);
-
-  const res = await fetch(url, {
-    ...opts,
-    signal: ctrl.signal,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(opts.headers || {}),
-      ...(token ? { Authorization: 'Bearer ' + token } : {})
-    }
-  });
-
+  const res = await fetch(url, { ...opts, signal: ctrl.signal, credentials:'include',
+    headers:{ 'Content-Type':'application/json', ...(opts.headers||{}), ...(token?{'Authorization':'Bearer '+token}:{}) }});
   clearTimeout(t);
-
-  if (!res.ok) {
-    let text = '';
-    try {
-      text = await res.text();
-    } catch {}
-    const snippet = (text || '').slice(0, 160);
-    throw new Error(`HTTP ${res.status} ${res.statusText}${snippet ? ' — ' + snippet : ''}`);
+  if(!res.ok){
+    let text=''; try{ text=await res.text(); }catch{}
+    const snippet=(text||'').slice(0,160);
+    throw new Error(`HTTP ${res.status} ${res.statusText}${snippet? ' — '+snippet:''}`);
   }
   return res;
 }
-
-function formatFull(ts) {
-  const d = ts ? new Date(ts) : new Date(),
-    z = (n) => String(n).padStart(2, '0');
-  return `${z(d.getDate())}/${z(d.getMonth() + 1)}/${d.getFullYear()}, ${z(
-    d.getHours()
-  )}:${z(d.getMinutes())}:${z(d.getSeconds())}`;
-}
-
-function esc(s) {
-  return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-function mdLite(text) {
-  let t = esc(text ?? '');
-  t = t.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  t = t.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  return t.replace(/\n/g, '<br/>');
-}
-
-function uid() {
-  return Math.random().toString(36).slice(2, 9);
-}
-
-function pickResponse(o) {
-  if (!o || typeof o !== 'object') return '';
-  const c =
-    o.answer ??
-    o.response ??
-    o.reply ??
-    o.message ??
-    o.text ??
-    o.output ??
-    (o.data && (o.data.answer || o.data.message));
+function formatFull(ts){ const d=ts?new Date(ts):new Date(),z=n=>String(n).padStart(2,'0'); return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()}, ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; }
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))}
+function mdLite(text){ let t=esc(text??''); t=t.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); t=t.replace(/`([^`]+)`/g,'<code>$1</code>'); t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); t=t.replace(/\*([^*]+)\*/g,'<em>$1</em>'); return t.replace(/\n/g,'<br/>'); }
+function uid(){ return Math.random().toString(36).slice(2,9) }
+function pickResponse(o){
+  if(!o||typeof o!=='object') return '';
+  const c = o.answer ?? o.response ?? o.reply ?? o.message ?? o.text ?? o.output ?? (o.data && (o.data.answer||o.data.message));
   return String(c ?? '');
 }
 
 /* ===== Brand enforcement ===== */
-function sanitizeBotText(t) {
-  if (!t) return '';
+function sanitizeBotText(t){
+  if(!t) return '';
   let s = String(t);
 
   s = s.replace(/\bI(?:'m| am)\s+(?:an?\s+)?(?:AI\s+)?(?:assistant|chatbot|model)\b/gi, ASSISTANT_NAME);
-  s = s.replace(
-    /\bI\s+(?:do\s+not|don't)\s+have\s+(?:a|any)\s+(?:personal\s+)?name\b[^.!?]*[.!?]?/gi,
-    `I am ${ASSISTANT_NAME}.`
-  );
+  s = s.replace(/\bI\s+(?:do\s+not|don't)\s+have\s+(?:a|any)\s+(?:personal\s+)?name\b[^.!?]*[.!?]?/gi, `I am ${ASSISTANT_NAME}.`);
   s = s.replace(/\ban AI assistant\b/gi, ASSISTANT_NAME);
   s = s.replace(/\bmy\s+name\s+is\b[^.!?]*[.!?]?/gi, `My name is ${ASSISTANT_NAME}.`);
 
   return s;
 }
 
-/* ===== Fixed Server Status — NO flickering ===== */
-const PROBES = ['/api/vedllm/health', '/api/health'];
-let serverOnline = false,
-  _pingTimer = null;
-
-async function pingServer() {
-  let ok = false;
-  try {
-    const r = await fetch(api('/api/health'), { method: 'GET' });
-    ok = r.ok;
-  } catch {}
-
-  serverOnline = ok;
-  updateMeta();
-}
-
-/* stable: 10 sec ping */
-function startPinger() {
-  if (_pingTimer) clearInterval(_pingTimer);
-  _pingTimer = setInterval(pingServer, 10000);
-  pingServer();
-}
-
-function updateMeta() {
-  const m = document.getElementById('meta-info');
-  if (!m) return;
-  const kb = Math.round((JSON.stringify(topics || []).length) / 1024);
-  m.innerText = `${serverOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`;
-  m.style.color = serverOnline ? '#9fe870' : '#ffb3b3';
-}
-
-/* Local Storage — unchanged but safe */
-function approxBytesOf(o) {
-  try {
-    return JSON.stringify(o).length;
-  } catch {
-    return 0;
+/* Server status with multi-probe */
+const PROBES = ['/api/vedllm/health','/api/health','/__routes','/openapi.json'];
+let serverOnline=false, _pingTimer=null;
+async function pingServer(){
+  let ok=false;
+  for(const p of PROBES){
+    try{ const r=await fetch(api(p),{method:'GET',credentials:'include'}); if(r.ok){ ok=true; break; } }catch{}
   }
+  serverOnline = ok; updateMeta();
 }
+function updateMeta(){ const m=document.getElementById('meta-info'); if(!m) return; const kb=Math.round((JSON.stringify(topics||[]).length)/1024); m.innerText=`${serverOnline?'Online':'Offline'} • Local: ${kb} KB`; m.style.color=serverOnline?'#9fe870':'#ffb3b3'; }
+function startPinger(){ if(_pingTimer) clearInterval(_pingTimer); _pingTimer=setInterval(pingServer,5000); pingServer(); }
 
-function tryTrimForQuota() {
+/* Local storage safe */
+function approxBytesOf(o){ try{return JSON.stringify(o).length;}catch{return 0;} }
+function tryTrimForQuota(){
   if (topics.length > TOPIC_HARD_LIMIT) topics = topics.slice(0, TOPIC_HARD_LIMIT);
-  topics.forEach((t) => {
-    if (Array.isArray(t.messages) && t.messages.length > MSGS_PER_TOPIC_LIMIT)
-      t.messages = t.messages.slice(-MSGS_PER_TOPIC_LIMIT);
-  });
-
+  topics.forEach(t=>{ if(Array.isArray(t.messages) && t.messages.length>MSGS_PER_TOPIC_LIMIT) t.messages=t.messages.slice(-MSGS_PER_TOPIC_LIMIT); });
   let size = approxBytesOf(topics);
-  while (size > MAX_LOCAL_BYTES && topics.length > 1) {
-    topics.pop();
-    size = approxBytesOf(topics);
+  while (size > MAX_LOCAL_BYTES && topics.length > 1) { topics.pop(); size = approxBytesOf(topics); }
+  if (size > MAX_LOCAL_BYTES) {
+    for (let i = topics.length - 1; i >= 0 && size > MAX_LOCAL_BYTES; i--) {
+      const t = topics[i];
+      while (t.messages && t.messages.length > 1 && size > MAX_LOCAL_BYTES) { t.messages.shift(); size = approxBytesOf(topics); }
+    }
   }
 }
-
-function safeSetLocal(k, v) {
-  try {
-    localStorage.setItem(k, v);
-  } catch {
-    tryTrimForQuota();
-    try {
-      localStorage.setItem('vedsaas_topics', JSON.stringify(topics));
-      banner('Storage trimmed.');
-    } catch {}
-  }
-}
-
-function saveTopicsToLocal() {
-  try {
-    tryTrimForQuota();
-    safeSetLocal('vedsaas_topics', JSON.stringify(topics));
-    localStorage.setItem('vedsaas_current', currentTopicId || '');
-  } catch {}
-  renderStorageUsage();
-}
-
-function loadTopicsFromLocal() {
-  try {
-    topics = JSON.parse(localStorage.getItem('vedsaas_topics') || '[]');
-  } catch {
-    topics = [];
-  }
-  try {
-    currentTopicId = localStorage.getItem('vedsaas_current') || (topics[0] && topics[0].id) || null;
-  } catch {
-    currentTopicId = (topics[0] && topics[0].id) || null;
-  }
-}
+function safeSetLocal(k,v){ try{ localStorage.setItem(k,v); }catch{ tryTrimForQuota(); try{ localStorage.setItem('vedsaas_topics', JSON.stringify(topics)); banner('Storage trimmed.'); }catch{} } }
+function saveTopicsToLocal(){ try{ tryTrimForQuota(); safeSetLocal('vedsaas_topics', JSON.stringify(topics)); localStorage.setItem('vedsaas_current', currentTopicId||''); }catch{} renderStorageUsage(); }
+function loadTopicsFromLocal(){ try{ topics=JSON.parse(localStorage.getItem('vedsaas_topics')||'[]'); }catch{ topics=[]; } try{ currentTopicId=localStorage.getItem('vedsaas_current')||(topics[0]&&topics[0].id)||null; }catch{ currentTopicId=(topics[0]&&topics[0].id)||null; } }
 
 /* Drafts */
-function draftKey() {
-  return 'draft_' + (currentTopicId || 'global');
-}
-function setDraft(v) {
-  try {
-    localStorage.setItem(draftKey(), v);
-  } catch {}
-}
-function getDraft() {
-  try {
-    return localStorage.getItem(draftKey()) || '';
-  } catch {
-    return '';
-  }
-}
-function initials(name) {
-  return (name || 'U')
-    .split(/\s+/)
-    .map((x) => x[0]?.toUpperCase() || '')
-    .slice(0, 2)
-    .join('');
-}
+function draftKey(){ return 'draft_'+(currentTopicId||'global') }
+function setDraft(v){ try{ localStorage.setItem(draftKey(), v) }catch{} }
+function getDraft(){ try{ return localStorage.getItem(draftKey())||'' }catch{ return '' } }
+function initials(name){ return (name||'U').split(/\s+/).map(x=>x[0]?.toUpperCase()||'').slice(0,2).join('') }
 
 /* UI controls */
-function showAuth(screen = 'login') {
-  document.getElementById('auth-overlay').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  ['login', 'register', 'verify'].forEach(
-    (s) => (document.getElementById(s + '-screen').style.display = s === screen ? 'block' : 'none')
-  );
+function showAuth(screen='login'){
+  document.getElementById('auth-overlay').style.display='flex';
+  document.getElementById('app').style.display='none';
+  ['login','register','verify'].forEach(s=>document.getElementById(s+'-screen').style.display = (s===screen)?'block':'none');
 }
-
-function hideAuth() {
-  document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
+function hideAuth(){
+  document.getElementById('auth-overlay').style.display='none';
+  document.getElementById('app').style.display='flex';
 }
-
-function showLanding() {
-  document.getElementById('landing').style.display = 'flex';
-  document.getElementById('chat-shell').style.display = 'none';
-}
-function showChat() {
-  document.getElementById('landing').style.display = 'none';
-  document.getElementById('chat-shell').style.display = 'flex';
-}
-
-function setDisplayName(name) {
-  const chip = document.getElementById('settings-username');
-  const av = document.getElementById('settings-avatar');
-
-  if (chip) chip.innerText = name;
-  if (av) {
-    const url = localStorage.getItem('user_avatar_url');
-    av.innerHTML = '';
-    if (url) {
-      const i = new Image();
-      i.src = url;
-      av.appendChild(i);
-    } else av.textContent = initials(name);
+function showLanding(){ document.getElementById('landing').style.display='flex'; document.getElementById('chat-shell').style.display='none'; }
+function showChat(){ document.getElementById('landing').style.display='none'; document.getElementById('chat-shell').style.display='flex'; }
+function setDisplayName(name){
+  const chip=document.getElementById('settings-username'); const av=document.getElementById('settings-avatar');
+  if(chip) chip.innerText=name;
+  if(av){
+    const url=localStorage.getItem('user_avatar_url');
+    av.innerHTML='';
+    if(url){ const i=new Image(); i.src=url; i.alt=initials(name); av.appendChild(i);}
+    else { av.textContent=initials(name);}
   }
-
-  const up = document.getElementById('up-name');
-  const upa = document.getElementById('up-avatar');
-  if (up) up.innerText = name;
-  if (upa) {
-    const url2 = localStorage.getItem('user_avatar_url');
-    upa.innerHTML = '';
-    if (url2) {
-      const i2 = new Image();
-      i2.src = url2;
-      upa.appendChild(i2);
-    } else upa.textContent = initials(name);
+  const up=document.getElementById('up-name'); const upa=document.getElementById('up-avatar');
+  if(up) up.innerText=name;
+  if(upa){
+    const url2=localStorage.getItem('user_avatar_url');
+    upa.innerHTML='';
+    if(url2){ const i2=new Image(); i2.src=url2; i2.alt=initials(name); upa.appendChild(i2);}
+    else { upa.textContent=initials(name);}
   }
 }
+function setAccountInfo({email='',mobile=''}){ const em=document.getElementById('ac-email'); const mo=document.getElementById('ac-mobile'); if(em) em.value=email; if(mo) mo.value=mobile; }
 
-function setAccountInfo({ email = '', mobile = '' }) {
-  const em = document.getElementById('ac-email');
-  const mo = document.getElementById('ac-mobile');
-  if (em) em.value = email;
-  if (mo) mo.value = mobile;
+/* History */
+function renderHistory(){
+  const list=document.getElementById('history-list'); if(!list) return; list.innerHTML='';
+  (topics||[]).forEach(t=>{
+    const div=document.createElement('div'); div.className='topic'+(t.id===currentTopicId?' active':''); div.dataset.id=t.id;
+    const last=(t.messages&&t.messages.length)?t.messages[t.messages.length-1]:null;
+    const preview=esc(String(last?(last.message??last.text??''):'').replace(/\n/g,' ')).slice(0,40);
+    div.innerHTML=`<div style="font-weight:600">${esc(t.title||'Chat')}</div><div class="preview">${preview}</div>`;
+    div.onclick=()=>{ location.hash='#/chat/'+encodeURIComponent(t.id); };
+    list.appendChild(div);
+  });
 }
 
-/* ===== Auth handlers (unchanged) ===== */
-document.getElementById('login-submit').addEventListener('click', async () => {
-  const identifier = document.getElementById('login-identifier').value.trim();
-  const password = document.getElementById('login-password').value;
-  if (!identifier || !password) return banner('Enter identifier & password');
-
-  try {
-    const res = await fetch(api('/api/login'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ identifier, password })
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      if (data.token) {
-        token = data.token;
-        localStorage.setItem('token', token);
-      }
-      const name = data.name || identifier;
-      localStorage.setItem('user_name', name);
-      localStorage.setItem('user_email', data.email || '');
-      localStorage.setItem('user_mobile', data.mobile || '');
-      setDisplayName(name);
-      setAccountInfo({ email: data.email || '', mobile: data.mobile || '' });
-      hideAuth();
-      renderHistory();
-      renderChat();
-      handleRoute();
-      loadHistoryFromServer();
-      updateUsage();
-    } else banner(data.error || 'Login failed');
-  } catch {
-    banner('Server unreachable');
+/* Messages */
+function messageNode(m){
+  const wrap=document.createElement('div'); wrap.className='message-row '+(m.from==='user'?'from-user':'from-bot'); wrap.dataset.mid=m.id;
+  const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${m.from==='user'?'You':ASSISTANT_NAME} • ${formatFull(m.timestamp)}`;
+  const body=document.createElement('div'); body.className='msg-body'; body.innerHTML=mdLite(String(m.message??''));
+  const act=document.createElement('div'); act.className='msg-actions';
+  const btnCopy=document.createElement('button'); btnCopy.innerHTML='<i class="fas fa-copy"></i>'; btnCopy.title='Copy'; btnCopy.onclick=()=>{ navigator.clipboard.writeText(String(m.message??'')); banner('Copied'); };
+  const btnDel=document.createElement('button'); btnDel.innerHTML='<i class="fas fa-trash"></i>'; btnDel.title='Delete'; btnDel.onclick=()=>{ deleteMessage(m.id) };
+  act.append(btnCopy,btnDel);
+  const block=document.createElement('div'); block.append(label); wrap.append(body,act); return [block,wrap];
+}
+function renderChat(){
+  const area=document.getElementById('chat-area'); area.innerHTML='';
+  const t=topics.find(x=>x.id===currentTopicId);
+  if(!t){
+    area.innerHTML=`<div style="color:#bbb;text-align:center;margin-top:40px">No conversation selected.</div>`;
+    return;
   }
-});
+  const header=document.createElement('div'); header.style.textAlign='center'; header.style.marginBottom='10px';
+  header.innerHTML=`<strong style="font-size:18px">${esc(t.title||'New Chat')}</strong>`; area.appendChild(header);
+  t.messages.forEach(m=>{ const [label,row]=messageNode(m); area.appendChild(label); area.appendChild(row); });
+  const live=document.querySelector('.typing-row'); if(live) area.appendChild(live);
+  autoScroll();
+}
+function newTopic(title='New Chat'){
+  const id='t_'+Date.now();
+  topics.unshift({id,title,created_at:Date.now(),messages:[]});
+  currentTopicId=id; saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); return id;
+}
+function appendMessage(from,message){
+  const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
+  const m={id:uid(),from,message,timestamp:Date.now()}; t.messages.push(m); saveTopicsToLocal(); updateUsage(); return m;
+}
+function deleteMessage(mid){
+  const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
+  t.messages=t.messages.filter(m=>m.id!==mid); saveTopicsToLocal(); renderChat(); updateUsage();
+}
 
-document.getElementById('open-register').addEventListener('click', (e) => {
-  e.preventDefault();
-  showAuth('register');
-});
-document.getElementById('open-login').addEventListener('click', (e) => {
-  e.preventDefault();
-  showAuth('login');
-});
+/* Delete / Clear */
+function deleteCurrentChat(){
+  if(!currentTopicId) return banner('No chat selected');
+  const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
+  if(!confirm('Delete this chat from local storage?')) return;
+  topics=topics.filter(x=>x.id!==currentTopicId);
+  currentTopicId=(topics[0]&&topics[0].id)||null;
+  saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); if(!currentTopicId) showLanding();
+}
+function clearAllChats(){
+  if(!topics.length) return banner('No chats to clear.');
+  if(!confirm('Clear ALL chats stored locally?')) return;
+  topics=[]; currentTopicId=null; saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage(); showLanding();
+}
 
-document.getElementById('reg-send-otp').addEventListener('click', async () => {
-  const ident = document.getElementById('reg-identifier').value.trim();
-  if (!ident) return banner('Enter email or mobile');
-
-  try {
-    const r = await fetch(api('/api/send-otp'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ identifier: ident })
-    });
-    const d = await r.json();
-    banner(d.message || d.error || 'Done');
-    if (r.ok) document.getElementById('reg-otp').disabled = false;
-  } catch {
-    banner('Server unreachable');
+/* Typing */
+function showTyping(){
+  let tip=document.querySelector('.typing-row');
+  if(!tip){
+    tip=document.createElement('div');
+    tip.className='typing-row';
+    tip.innerHTML=`<span class="dots"><i></i><i></i><i></i></span> <span style="opacity:.8">${ASSISTANT_NAME} is typing…</span>`;
   }
+  const area=document.getElementById('chat-area'); if(tip.parentElement!==area) area.appendChild(tip); autoScroll(true);
+}
+function hideTyping(){ const tip=document.querySelector('.typing-row'); if(tip&&tip.parentElement) tip.remove(); }
+
+/* Typewriter */
+function typeWriteBot(text,speed=null){
+  const sp=Number(localStorage.getItem('pref_type_speed')||'55'); const typingSpeed=(speed!==null?speed:sp);
+  hideTyping(); showChat(); const t=topics.find(x=>x.id===currentTopicId); if(!t) return;
+  const msg={id:uid(),from:'bot',message:'',timestamp:Date.now()}; t.messages.push(msg); saveTopicsToLocal(); renderChat();
+  const area=document.getElementById('chat-area'); let el=area.querySelector(`.message-row.from-bot[data-mid="${msg.id}"]`);
+  if(!el){
+    const label=document.createElement('div'); label.className='msg-label'; label.innerText=`${ASSISTANT_NAME} • ${formatFull(msg.timestamp)}`;
+    el=document.createElement('div'); el.className='message-row from-bot'; el.dataset.mid=msg.id; const body=document.createElement('div'); body.className='msg-body'; el.appendChild(body); area.appendChild(label);
+  }
+  const body=el.querySelector('.msg-body'); const safeMD=s=>{ try{return mdLite(s);}catch(_){ const d=document.createElement('div'); d.innerText=s; return d.innerHTML; } };
+
+  const cleaned = sanitizeBotText(text);
+  if(typingSpeed<=0){ msg.message=cleaned; saveTopicsToLocal(); body.innerHTML=safeMD(cleaned); autoScroll(true); return; }
+  const cursor=document.createElement('span'); cursor.className='typing-cursor'; body.textContent=''; body.appendChild(cursor);
+  let i=0; const src=cleaned;
+  const timer=setInterval(()=>{ if(i>=src.length){ clearInterval(timer); msg.message=src; saveTopicsToLocal(); body.innerHTML=safeMD(src); autoScroll(true); return; }
+    msg.message+=src[i++]; body.textContent=msg.message; body.appendChild(cursor); autoScroll(true); }, typingSpeed);
+}
+
+/* Routing */
+function goToChat(id){
+  if(!id) return;
+  if(currentTopicId!==id){ currentTopicId=id; saveTopicsToLocal(); renderHistory(); renderChat(); }
+  showChat();
+  const want='#/chat/'+encodeURIComponent(id);
+  if(location.hash!==want) location.hash=want;
+}
+function handleRoute(){
+  const m=location.hash.match(/^#\/chat\/(.+)$/);
+  if(m){
+    const id=decodeURIComponent(m[1]);
+    const t=(topics||[]).find(x=>x.id===id);
+    if(t){ goToChat(id); } else { showLanding(); }
+  } else { showLanding(); }
+}
+window.addEventListener('hashchange', handleRoute);
+
+/* Auth + profile – guest mode, no /api/user-status */
+async function checkLoginAndOpen(){
+  const name = localStorage.getItem('user_name') || 'Guest';
+  const email = localStorage.getItem('user_email') || '';
+  const mobile = localStorage.getItem('user_mobile') || '';
+  setDisplayName(name);
+  setAccountInfo({ email, mobile });
+  hideAuth();
+  renderHistory();
+  renderChat();
+  handleRoute();
+  updateUsage();
+}
+
+/* Auth handlers (kept for future, backend optional) */
+document.getElementById('login-submit').addEventListener('click', async ()=>{
+  const identifier=document.getElementById('login-identifier').value.trim();
+  const password=document.getElementById('login-password').value;
+  if(!identifier||!password){ banner('Enter identifier & password'); return; }
+  try{
+    const res=await fetch(api('/api/login'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier,password})});
+    const data=await res.json();
+    if(res.ok){
+      if(data.token){ token=data.token; localStorage.setItem('token',token); } else { token=null; localStorage.removeItem('token'); }
+      const name=data.name||identifier; localStorage.setItem('user_name',name);
+      localStorage.setItem('user_email', data.email||''); localStorage.setItem('user_mobile', data.mobile||'');
+      setDisplayName(name); setAccountInfo({email:data.email||'', mobile:data.mobile||''});
+      hideAuth(); renderHistory(); renderChat(); handleRoute(); loadHistoryFromServer(); updateUsage();
+    } else { banner(data.error||'Login failed'); }
+  }catch{ banner('Server unreachable'); }
+});
+document.getElementById('open-register').addEventListener('click',e=>{e.preventDefault();showAuth('register')});
+document.getElementById('open-login').addEventListener('click',e=>{e.preventDefault();showAuth('login')});
+document.getElementById('reg-send-otp').addEventListener('click', async ()=>{
+  const ident=document.getElementById('reg-identifier').value.trim(); if(!ident) return banner('Enter email or mobile');
+  try{
+    const r=await fetch(api('/api/send-otp'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier:ident})});
+    const d=await r.json(); banner(d.message||d.error||'Done'); if(r.ok) document.getElementById('reg-otp').disabled=false;
+  }catch{ banner('Server unreachable'); }
+});
+document.getElementById('reg-submit').addEventListener('click', async ()=>{
+  const name=document.getElementById('reg-name').value.trim();
+  const ident=document.getElementById('reg-identifier').value.trim();
+  const pass=document.getElementById('reg-password').value;
+  if(!name||!ident||!pass) return banner('Fill all fields');
+  try{
+    const r=await fetch(api('/api/register'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({name,email:(ident.includes('@')?ident:null),mobile:(!ident.includes('@')?ident:null),password:pass})});
+    const d=await r.json();
+    if(r.ok){ document.getElementById('verify-identifier').value=ident; showAuth('verify'); banner('Registered. OTP sent.'); }
+    else banner(d.error||'Registration failed');
+  }catch{ banner('Server unreachable'); }
+});
+document.getElementById('verify-submit').addEventListener('click', async ()=>{
+  const ident=document.getElementById('verify-identifier').value.trim();
+  const otp=document.getElementById('verify-otp').value.trim();
+  if(!ident||!otp) return banner('Enter identifier & OTP');
+  try{
+    const r=await fetch(api('/api/verify-otp'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier:ident,otp})});
+    const d=await r.json();
+    if(r.ok){
+      if(d.token){token=d.token;localStorage.setItem('token',token);} else{token=null;localStorage.removeItem('token');}
+      const name=d.name||ident; localStorage.setItem('user_name',name);
+      localStorage.setItem('user_email', d.email||''); localStorage.setItem('user_mobile', d.mobile||'');
+      setDisplayName(name); setAccountInfo({email:d.email||'', mobile:d.mobile||''});
+      hideAuth(); renderHistory(); renderChat(); handleRoute(); loadHistoryFromServer(); updateUsage();
+    } else banner(d.error||'Verification failed');
+  }catch{ banner('Server unreachable'); }
+});
+document.getElementById('verify-resend').addEventListener('click', async ()=>{
+  const ident=document.getElementById('verify-identifier').value.trim(); if(!ident) return banner('Missing identifier');
+  try{
+    const r=await fetch(api('/api/send-otp'),{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({identifier:ident})});
+    const d=await r.json(); banner(d.message||d.error||'Done');
+  }catch{ banner('Server unreachable'); }
 });
 
-document.getElementById('reg-submit').addEventListener('click', async () => {
-  const name = document.getElementById('reg-name').value.trim();
-  const ident = document.getElementById('reg-identifier').value.trim();
-  const pass = document.getElementById('reg-password').value;
-  if (!name || !ident || !pass) return banner('Fill all fields');
-
-  try {
-    const r = await fetch(api('/api/register'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        name,
-        email: ident.includes('@') ? ident : null,
-        mobile: !ident.includes('@') ? ident : null,
-        password: pass
-      })
-    });
-    const d = await r.json();
-    if (r.ok) {
-      document.getElementById('verify-identifier').value = ident;
-      showAuth('verify');
-      banner('Registered. OTP sent.');
-    } else banner(d.error || 'Registration failed');
-  } catch {
-    banner('Server unreachable');
-  }
-})
-
-document.getElementById('verify-submit').addEventListener('click', async () => {
-  const ident = document.getElementById('verify-identifier').value.trim();
-  const otp = document.getElementById('verify-otp').value.trim();
-  if (!ident || !otp) return banner('Enter identifier & OTP');
-
-  try {
-    const r = await fetch(api('/api/verify-otp'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ identifier: ident, otp })
-    });
-
-    const d = await r.json();
-    if (r.ok) {
-      if (d.token) {
-        token = d.token;
-        localStorage.setItem('token', token);
-      }
-      const name = d.name || ident;
-      localStorage.setItem('user_name', name);
-      localStorage.setItem('user_email', d.email || '');
-      localStorage.setItem('user_mobile', d.mobile || '');
-      setDisplayName(name);
-      setAccountInfo({ email: d.email || '', mobile: d.mobile || '' });
-      hideAuth();
-      renderHistory();
-      renderChat();
-      handleRoute();
-      loadHistoryFromServer();
-      updateUsage();
-    } else banner(d.error || 'Verification failed');
-  } catch {
-    banner('Server unreachable');
-  }
-});
-
-document.getElementById('verify-resend').addEventListener('click', async () => {
-  const ident = document.getElementById('verify-identifier').value.trim();
-  if (!ident) return banner('Missing identifier');
-
-  try {
-    const r = await fetch(api('/api/send-otp'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ identifier: ident })
-    });
-    const d = await r.json();
-    banner(d.message || d.error || 'Done');
-  } catch {
-    banner('Server unreachable');
-  }
-});
-  
 /* Landing */
 const landingInput=document.getElementById('landing-input'); const landingStart=document.getElementById('landing-start');
 document.getElementById('landing-open-history').addEventListener('click', ()=>{
@@ -1105,6 +975,3 @@ document.getElementById('pref-save').addEventListener('click', async ()=>{
 </script>
 </body>
 </html>
-
-
-
