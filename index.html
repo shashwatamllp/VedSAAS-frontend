@@ -16,7 +16,7 @@
   style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
   script-src 'self' 'unsafe-inline';
   font-src 'self' https://cdnjs.cloudflare.com;
-  connect-src 'self' https://vedsaas.com https://*.vedsaas.com https://api.vedsaas.com http://127.0.0.1:8012 http://127.0.0.1:8000;
+  connect-src 'self' https://vedsaas.com https://*.vedsaas.com https://api.vedsaas.com http://127.0.0.1:8010 http://localhost:8010 http://127.0.0.1:8000 http://127.0.0.1:8012;
   frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
 ">
 
@@ -296,7 +296,7 @@ const ASSISTANT_NAME = 'VedSAAS';
 
 /* ===== API base normalize ===== */
 const API_BASE = (() => {
-  const FALLBACK = 'http://127.0.0.1:8000';
+  const FALLBACK = 'http://127.0.0.1:8010';
   try {
     const meta = document.querySelector('meta[name="ved-api-base"]');
     const m = meta ? (meta.content||'').trim() : '';
