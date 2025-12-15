@@ -870,16 +870,10 @@ height: 0
     const ASSISTANT_NAME = 'VedSAAS';
 
     /* ===== API base normalize ===== */
+    /* ===== API base normalize ===== */
     const API_BASE = (() => {
-      const FALLBACK = 'http://127.0.0.1:8010';
-      try {
-        const meta = document.querySelector('meta[name="ved-api-base"]');
-        const m = meta ? (meta.content || '').trim() : '';
-        if (m) return m.replace(/\/+$/, '');
-        const o = location.origin || '';
-        if (!o || o.startsWith('file://')) return FALLBACK;
-        return o.replace(/\/+$/, '');
-      } catch { return FALLBACK; }
+      // Junction Server IP (Port 80)
+      return 'http://163.223.145.140';
     })();
     function api(path) {
       let p = String(path || '');
