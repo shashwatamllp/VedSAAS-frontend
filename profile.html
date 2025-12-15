@@ -328,8 +328,8 @@
   <script>
     /* ===== Config ===== */
     const API_BASE = (() => {
-      // Junction Server IP (Port 80)
-      return 'http://163.223.145.140';
+      // Junction Server Domain
+      return 'https://api.vedsaas.com';
     })();
     const $ = id => document.getElementById(id);
     const banner = (m) => { const b = $('banner'); b.textContent = m; b.style.display = 'block'; clearTimeout(b._t); b._t = setTimeout(() => b.style.display = 'none', 2200); };

@@ -3,8 +3,8 @@ const ASSISTANT_NAME = 'VedSAAS';
 
 /* ===== API base normalize ===== */
 const API_BASE = (() => {
-  // Junction Server IP (Port 80)
-  return 'http://163.223.145.140';
+  // Junction Server Domain
+  return 'https://api.vedsaas.com';
 })();
 function api(path) {
   let p = String(path || '');

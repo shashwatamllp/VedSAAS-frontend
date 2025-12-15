@@ -3,8 +3,8 @@
   // ── API base detect ──
   // ── API base detect ──
   const API_BASE = (() => {
-    // Junction Server IP (Port 80)
-    return 'http://163.223.145.140';
+    // Junction Server Domain
+    return 'https://api.vedsaas.com';
   })();
   const api = p => {
     let x = String(p || ''); if (!x.startsWith('/')) x = '/' + x;
