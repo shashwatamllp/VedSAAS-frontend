@@ -1,15 +1,12 @@
 /* ===== Brand constant ===== */
 const ASSISTANT_NAME = 'VedSAAS';
 
-/* ===== API base normalize ===== */
-const API_BASE = (() => {
-  // Junction Server Domain
-  return 'https://api.vedsaas.com';
-})();
+/* ===== API base (Cloudflare Tunnel) ===== */
+const API_BASE = 'https://row-acm-spell-personal.trycloudflare.com';
+
 function api(path) {
   let p = String(path || '');
   if (!p.startsWith('/')) p = '/' + p;
-  if (API_BASE.endsWith('/api') && p.startsWith('/api')) p = p.replace(/^\/api\b/, '');
   return API_BASE + p;
 }
 
