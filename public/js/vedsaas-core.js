@@ -1,10 +1,10 @@
 /* ===== Brand constant ===== */
 const ASSISTANT_NAME = 'VedSAAS';
 
-/* ===== API base (production) ===== */
+/* ===== API base (production, same-origin) ===== */
 /*
-  Frontend → https://app.vedsaas.com
-  API → same origin (/api)
+  Frontend: https://app.vedsaas.com
+  API:      https://app.vedsaas.com/api/*
 */
 const API_BASE = '';
 
