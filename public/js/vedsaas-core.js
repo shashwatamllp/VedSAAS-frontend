@@ -1,15 +1,18 @@
 /* ===== Brand constant ===== */
 const ASSISTANT_NAME = 'VedSAAS';
 
-/* ===== API base (Cloudflare Tunnel) ===== */
-const API_BASE = 'https://row-acm-spell-personal.trycloudflare.com';
+/* ===== API base (production) ===== */
+/*
+  Frontend → https://app.vedsaas.com
+  API → same origin (/api)
+*/
+const API_BASE = '';
 
 function api(path) {
   let p = String(path || '');
   if (!p.startsWith('/')) p = '/' + p;
-  return API_BASE + p;
+  return p;
 }
-
 /* ===== State ===== */
 let token = localStorage.getItem('token') || null;
 let topics = [];
