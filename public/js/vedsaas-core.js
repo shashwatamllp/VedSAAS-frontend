@@ -1,17 +1,27 @@
 /* ===== Brand constant ===== */
 const ASSISTANT_NAME = 'VedSAAS';
 
+<<<<<<< HEAD
 /* ===== API base (production, same-origin) ===== */
 /*
   Frontend: https://app.vedsaas.com
   API:      https://app.vedsaas.com/api/*
 */
 const API_BASE = '';
+=======
+/* ===== API base ===== */
+/* Cloudflare Tunnel backend URL */
+const API_BASE = 'https://row-acm-spell-personal.trycloudflare.com';
+>>>>>>> 8d7e28c (feat: Vision UI (Camera & Preview) + v2 API Support)
 
 function api(path) {
   let p = String(path || '');
   if (!p.startsWith('/')) p = '/' + p;
+<<<<<<< HEAD
   return p;
+=======
+  return API_BASE + p;
+>>>>>>> 8d7e28c (feat: Vision UI (Camera & Preview) + v2 API Support)
 }
 /* ===== State ===== */
 let token = localStorage.getItem('token') || null;
@@ -42,7 +52,8 @@ async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
     headers: {
       'Content-Type': 'application/json',
       ...(opts.headers || {}),
-      ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+      // Backend expects X-API-Token, not Bearer
+      ...(token ? { 'X-API-Token': token } : {})
     }
   });
   clearTimeout(t);
@@ -98,16 +109,24 @@ function sanitizeBotText(t) {
 }
 
 /* Server status with multi-probe */
-const PROBES = ['/api/user-status', '/api/health', '/api/engine1/health', '/api/engine2/health', '/__routes', '/openapi.json'];
+/* Server status with multi-probe */
+const PROBES = ['/health'];
 let serverOnline = false;
 let _pingTimer = null;
 async function pingServer() {
   let ok = false;
   for (const p of PROBES) {
     try {
-      const r = await fetch(api(p), { method: 'GET', credentials: 'include' });
-      if (r.ok) { ok = true; break; }
-    } catch { }
+      const opts = { method: 'GET' };
+      // Only send credentials for protected routes to avoid CORS/Mixed-Content strictness on HTTP
+      if (p !== '/health' && p !== '/openapi.json') opts.credentials = 'include';
+      const r = await fetch(api(p), opts);
+      if (r.ok || r.status === 401) { ok = true; break; }
+    } catch (e) {
+      // console.error("Ping failed:", e); // Silenced to avoid user panic
+      // For debugging: show error once
+      if (!serverOnline) { /* banner("Connection Error: " + e.message); */ }
+    }
   }
   serverOnline = ok;
   updateMeta();
@@ -116,8 +135,10 @@ function updateMeta() {
   const m = document.getElementById('meta-info');
   if (!m) return;
   const kb = Math.round((JSON.stringify(topics || []).length) / 1024);
-  m.innerText = `${serverOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`;
-  m.style.color = serverOnline ? '#9fe870' : '#ffb3b3';
+  // User Request: Offline status appears only when the actual network connection is lost.
+  const isOnline = navigator.onLine;
+  m.innerText = `${isOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`;
+  m.style.color = isOnline ? '#9fe870' : '#ffb3b3';
 }
 function startPinger() {
   if (_pingTimer) clearInterval(_pingTimer);
@@ -486,34 +507,64 @@ function handleRoute() {
 window.addEventListener('hashchange', handleRoute);
 
 /* Auth + profile: login check */
+/* Auth + profile: login check */
 async function checkLoginAndOpen() {
   if (!token) {
-    showAuth('login');
+    // Auto-login as Guest if no token exists
+    await authenticateAsGuest();
     return;
   }
   try {
-    const res = await authFetch('/api/user-status');
+    const res = await authFetch('/api/user/profile');
     const data = await res.json();
-    const name = (data.user?.name) || localStorage.getItem('user_name') || 'User';
+    const name = (data.profile?.name) || localStorage.getItem('user_name') || 'User';
     setDisplayName(name);
-    setAccountInfo({ email: data.user?.email || '', mobile: data.user?.mobile || '' });
-    hideAuth();
-    renderHistory();
-    renderChat();
-    handleRoute();
-    loadHistoryFromServer();
-    updateUsage();
-    maybeShowConsent();
-  } catch {
-    const name = localStorage.getItem('user_name') || 'User';
-    setDisplayName(name);
-    hideAuth();
-    renderHistory();
-    renderChat();
-    handleRoute();
-    updateUsage();
-    maybeShowConsent();
+    setAccountInfo({ email: data.profile?.email || '', mobile: data.profile?.mobile || '' });
+    finishBoot();
+  } catch (e) {
+    // If 403, it means valid token but Guest (No Profile) - This is OK.
+    if (e.message.includes('403')) {
+      setDisplayName('Guest');
+      finishBoot();
+      return;
+    }
+    // If other error (401/Expired), re-auth as guest
+    await authenticateAsGuest();
   }
+}
+
+async function authenticateAsGuest() {
+  try {
+    // POST to /api/auth/guest to get a fresh token
+    const res = await fetch(api('/api/auth/guest'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: uid() })
+    });
+    const data = await res.json();
+    if (data.success && data.api_token) {
+      token = data.api_token;
+      safeSetLocal('token', token);
+      setDisplayName('Guest');
+      finishBoot();
+    } else {
+      banner('Guest Auth Failed');
+    }
+  } catch (e) {
+    console.error("Guest Auth Error:", e);
+    banner('Connection Failed - Retrying...');
+    setTimeout(authenticateAsGuest, 3000);
+  }
+}
+
+function finishBoot() {
+  hideAuth();
+  renderHistory();
+  renderChat();
+  handleRoute();
+  loadHistoryFromServer();
+  updateUsage();
+  maybeShowConsent();
 }
 
 /* Landing */
@@ -546,13 +597,49 @@ landingInput.addEventListener('input', () => autosize(landingInput));
 /* Composer */
 const mainInput = document.getElementById('main-input');
 const sendBtn = document.getElementById('send-btn');
+const attachBtn = document.getElementById('attach-btn');
+const imageUpload = document.getElementById('image-upload');
+const attachPreview = document.getElementById('attach-preview');
+const previewImg = document.getElementById('preview-img');
+const clearAttach = document.getElementById('clear-attach');
+let currentImage = null;
+
 function autosize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 160) + 'px';
 }
+
 function updateSendState() {
-  sendBtn.disabled = sending || !mainInput.value.trim().length;
+  const hasText = (mainInput.value || '').trim().length > 0;
+  const hasImage = !!currentImage;
+  sendBtn.disabled = sending || (!hasText && !hasImage);
 }
+
+/* Attach Handlers */
+if (attachBtn && imageUpload) {
+  attachBtn.addEventListener('click', () => imageUpload.click());
+  imageUpload.addEventListener('change', () => {
+    const file = imageUpload.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      currentImage = e.target.result;
+      if (previewImg) previewImg.src = currentImage;
+      if (attachPreview) attachPreview.style.display = 'block';
+      updateSendState();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+if (clearAttach) {
+  clearAttach.addEventListener('click', () => {
+    currentImage = null;
+    imageUpload.value = '';
+    if (attachPreview) attachPreview.style.display = 'none';
+    updateSendState();
+  });
+}
+
 mainInput.addEventListener('input', () => {
   autosize(mainInput);
   setDraft(mainInput.value);
@@ -566,6 +653,7 @@ mainInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     mainInput.value = '';
     setDraft('');
+    if (clearAttach) clearAttach.click();
     updateSendState();
   }
 });
@@ -577,18 +665,33 @@ document.addEventListener('keydown', e => {
 });
 sendBtn.addEventListener('click', async () => {
   const text = mainInput.value.trim();
-  if (!text || sending) return;
+  if ((!text && !currentImage) || sending) return;
+
   if (!currentTopicId) {
     const id = newTopic('New Chat');
     location.hash = '#/chat/' + encodeURIComponent(id);
   }
-  appendMessage('user', text);
+
+  // Display logic: Don't save huge base64 to local storage history
+  let displayMsg = text;
+  if (currentImage) {
+    displayMsg = (text ? text + '\n\n' : '') + '📷 [Image Sent to Vision Engine]';
+  }
+
+  const imgToSend = currentImage; // Capture before clear
+
+  appendMessage('user', displayMsg);
   mainInput.value = '';
   setDraft('');
   autosize(mainInput);
+
+  // Clear attachment UI
+  if (clearAttach) clearAttach.click();
+
   updateSendState();
-  await sendToServer(text);
+  await sendToServer(text, imgToSend);
 });
+
 function restoreDraft() {
   const d = getDraft();
   if (d) {
@@ -599,8 +702,8 @@ function restoreDraft() {
 }
 restoreDraft();
 
-/* Chat send – ONLY /api/engine1/ask */
-async function sendToServer(text) {
+/* Chat send – Updated for /api/v2/chat & Multi-modal */
+async function sendToServer(text, imageBase64 = null) {
   sending = true;
   updateSendState();
   showChat();
@@ -610,17 +713,24 @@ async function sendToServer(text) {
 
   try {
     const body = {
-      assistant: ASSISTANT_NAME,
-      assistant_name: ASSISTANT_NAME,
-      lang: langPref,
-      consent,
-      query: text,
-      user: 'web'
+      message: text,
+      context: {
+        lang: langPref,
+        consent,
+        assistant: ASSISTANT_NAME
+      }
     };
-    const res = await authFetch('/api/engine1/ask', {
+
+    // Attach Image if present
+    if (imageBase64) {
+      body.image = imageBase64;
+    }
+
+    // Switch to v2 for enhanced features
+    const res = await authFetch('/api/v2/chat', {
       method: 'POST',
       body: JSON.stringify(body)
-    }, { timeoutMs: 15000 });
+    }, { timeoutMs: 45000 }); // Increased timeout for Vision
 
     let data = null;
     try { data = await res.json(); } catch { }
@@ -641,8 +751,6 @@ async function sendToServer(text) {
     const msg = e && e.message ? e.message : 'Network error';
     banner(msg);
     typeWriteBot(msg);
-    serverOnline = false;
-    updateMeta();
   } finally {
     sending = false;
     updateSendState();
@@ -694,8 +802,9 @@ function renderStorageUsage() {
   if (el) el.innerText = `${kb} KB`;
   const meta = document.getElementById('meta-info');
   if (meta) {
-    meta.innerText = `${serverOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`;
-    meta.style.color = serverOnline ? '#9fe870' : '#ffb3b3';
+    const isOnline = navigator.onLine && (serverOnline !== false);
+    meta.innerText = `${isOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`;
+    meta.style.color = isOnline ? '#9fe870' : '#ffb3b3';
   }
 }
 function updateUsage() {
@@ -736,7 +845,7 @@ async function loadHistoryFromServer() {
       renderChat();
       updateUsage();
     }
-  } catch { }
+  } catch { /* Ignore history errors */ }
 }
 
 /* Boot */
@@ -749,6 +858,7 @@ async function loadHistoryFromServer() {
   handleRoute();
   updateUsage();
   startPinger();
+  updateMeta(); // Force immediate status update
 
   const pref = localStorage.getItem('pref_theme');
   if (pref === 'dark') document.body.classList.add('dark-mode');
@@ -757,4 +867,21 @@ async function loadHistoryFromServer() {
     const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
     document.body.classList.toggle('dark-mode', prefersDark);
   }
+
+  // Native network listeners
+  // These will update the UI status based on actual connection presence
+  window.addEventListener('online', () => {
+    serverOnline = true;
+    updateMeta();
+    banner('Network Connected 🟢');
+  });
+
+  window.addEventListener('offline', () => {
+    serverOnline = false;
+    updateMeta();
+    banner('Network Lost 🔴');
+  });
+
+  // Start Auth Flow
+  checkLoginAndOpen();
 })();
