@@ -16,11 +16,6 @@ let topics = [];
 let currentTopicId = null;
 let sending = false;
 
-/* Limits */
-const MAX_LOCAL_BYTES = 2_000_000;
-const TOPIC_HARD_LIMIT = 80;
-const MSGS_PER_TOPIC_LIMIT = 200;
-
 /* ===== Utils ===== */
 async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
   const ctrl = new AbortController();
@@ -46,7 +41,7 @@ async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
   return res;
 }
 
-/* ===== Guest Auth (HYBRID – SYSTEM NATURE PRESERVED) ===== */
+/* ===== Guest Auth (EXACTLY AS JUNCTION EXPECTS) ===== */
 async function authenticateAsGuest() {
   try {
     const res = await fetch(api('/api/auth/guest'), {
@@ -54,24 +49,30 @@ async function authenticateAsGuest() {
       credentials: 'include'
     });
 
-    if (!res.ok) throw new Error('Guest auth failed');
-
-    // Try JSON only if content-type allows it
-    const ct = res.headers.get('content-type') || '';
-    if (ct.includes('application/json')) {
-      const data = await res.json();
-      if (data.api_token) {
-        token = data.api_token;
-        localStorage.setItem('token', token);
-      }
+    if (!res.ok) {
+      throw new Error('Guest auth failed');
     }
 
-    // Verify session/token by hitting real API
+    const ct = res.headers.get('content-type') || '';
+
+    // Junction sometimes returns HTML on error
+    if (!ct.includes('application/json')) {
+      throw new Error('Guest auth returned non-JSON');
+    }
+
+    const data = await res.json();
+
+    if (data.api_token) {
+      token = data.api_token;
+      localStorage.setItem('token', token);
+    }
+
+    // verify token/session
     await authFetch('/api/user/profile');
 
     finishBoot();
   } catch (e) {
-    console.error('Guest auth error:', e);
+    console.error('Guest auth error:', e.message);
     setTimeout(authenticateAsGuest, 3000);
   }
 }
@@ -94,9 +95,7 @@ async function sendToServer(text, imageBase64 = null) {
 
   const body = {
     message: text,
-    context: {
-      assistant: ASSISTANT_NAME
-    }
+    context: { assistant: ASSISTANT_NAME }
   };
 
   if (imageBase64) body.image = imageBase64;
@@ -121,11 +120,11 @@ async function sendToServer(text, imageBase64 = null) {
     sending = false;
   }
 }
-// ===== Safety fallback (do not override existing system) =====
-if (typeof finishBoot !== 'function') {
-  window.finishBoot = function () {
-    console.warn('finishBoot fallback executed');
-  };
+
+/* ===== Boot Finish (was missing earlier) ===== */
+function finishBoot() {
+  console.info('finishBoot executed');
+  document.body.classList.remove('loading');
 }
 
 /* ===== Boot ===== */
