@@ -121,6 +121,12 @@ async function sendToServer(text, imageBase64 = null) {
     sending = false;
   }
 }
+// ===== Safety fallback (do not override existing system) =====
+if (typeof finishBoot !== 'function') {
+  window.finishBoot = function () {
+    console.warn('finishBoot fallback executed');
+  };
+}
 
 /* ===== Boot ===== */
 (function boot() {
