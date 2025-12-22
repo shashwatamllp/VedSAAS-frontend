@@ -1,27 +1,14 @@
 /* ===== Brand constant ===== */
 const ASSISTANT_NAME = 'VedSAAS';
 
-<<<<<<< HEAD
-/* ===== API base (production, same-origin) ===== */
-/*
-  Frontend: https://app.vedsaas.com
-  API:      https://app.vedsaas.com/api/*
-*/
-const API_BASE = '';
-=======
 /* ===== API base ===== */
-/* Cloudflare Tunnel backend URL */
-const API_BASE = 'https://row-acm-spell-personal.trycloudflare.com';
->>>>>>> 8d7e28c (feat: Vision UI (Camera & Preview) + v2 API Support)
+// Production: Use relative path (Same Origin)
+const API_BASE = '';
 
 function api(path) {
   let p = String(path || '');
   if (!p.startsWith('/')) p = '/' + p;
-<<<<<<< HEAD
-  return p;
-=======
   return API_BASE + p;
->>>>>>> 8d7e28c (feat: Vision UI (Camera & Preview) + v2 API Support)
 }
 /* ===== State ===== */
 let token = localStorage.getItem('token') || null;
