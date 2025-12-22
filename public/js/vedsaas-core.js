@@ -41,34 +41,23 @@ async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
   return res;
 }
 
-/* ===== Guest Auth (EXACTLY AS JUNCTION EXPECTS) ===== */
+/* ===== Guest Auth (SESSION-BASED, JSON NOT REQUIRED) ===== */
 async function authenticateAsGuest() {
   try {
-    const res = await fetch(api('/api/auth/guest'), {
+    // Step 1: trigger guest session (cookie)
+    await fetch(api('/api/auth/guest'), {
       method: 'GET',
       credentials: 'include'
     });
 
-    if (!res.ok) {
-      throw new Error('Guest auth failed');
-    }
-
-    const ct = res.headers.get('content-type') || '';
-
-    // Junction sometimes returns HTML on error
-    if (!ct.includes('application/json')) {
-      throw new Error('Guest auth returned non-JSON');
-    }
-
+    // Step 2: verify session / token
+    const res = await authFetch('/api/user/profile');
     const data = await res.json();
 
-    if (data.api_token) {
+    if (data && data.api_token) {
       token = data.api_token;
       localStorage.setItem('token', token);
     }
-
-    // verify token/session
-    await authFetch('/api/user/profile');
 
     finishBoot();
   } catch (e) {
@@ -121,7 +110,7 @@ async function sendToServer(text, imageBase64 = null) {
   }
 }
 
-/* ===== Boot Finish (was missing earlier) ===== */
+/* ===== Boot Finish ===== */
 function finishBoot() {
   console.info('finishBoot executed');
   document.body.classList.remove('loading');
