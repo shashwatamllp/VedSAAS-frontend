@@ -1,893 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VedSAAS AI</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <title>VedSAAS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/vedsaas-ui.css" />
+
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
     body {
-      height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background: #1e1e2f;
-      color: #fff;
-      overflow: hidden
+      margin: 0;
+      background: #0f1320;
+      color: #eaeaea;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    body.dark-mode {
-      background: #0e0e12
-    }
-
-    .container {
+    #app {
       display: flex;
       height: 100vh;
-      position: relative;
-      z-index: 1;
-      overflow: hidden
+      width: 100vw;
     }
 
-    .sidebar {
-      width: 20%;
-      min-width: 275px;
-      background: #232336;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow: auto
-    }
-
-    .sidebar .title {
-      text-align: center;
-      font-weight: 700;
-      font-size: 15px;
-      color: #eee
-    }
-
-    .new-topic-btn {
-      background: #0078d4;
-      color: #fff;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%
-    }
-
-    .history-list {
-      flex: 1;
-      overflow: auto;
-      margin-top: 10px;
-      border-top: 1px solid #333;
-      padding-top: 10px
-    }
-
-    .topic {
-      padding: 8px 10px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #ddd
-    }
-
-    .topic.active {
-      background: #2e7bbd;
-      color: #fff
-    }
-
-    .topic .preview {
-      color: #bbb;
-      font-size: 13px;
-      margin-top: 4px
-    }
-
-    .settings-summary {
-      margin-top: 8px
-    }
-
-    .user-chip {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #2f2f42;
-      border: 1px solid #4a4a60;
-      padding: 10px 12px;
-      border-radius: 10px;
-      cursor: pointer
-    }
-
-    .user-avatar {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: #0078d4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-      overflow: hidden
-    }
-
-    .user-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block
-    }
-
-    .user-name {
-      font-size: 13px;
-      color: #ddd;
-      flex: 1
-    }
-
-    .settings-panel {
-      display: none;
-      margin-top: 8px
-    }
-
-    .settings-panel button {
-      display: block;
-      width: 100%;
-      text-align: left;
-      background: none;
-      border: 1px solid #3a3a4d;
-      border-radius: 8px;
-      color: #ddd;
-      padding: 10px 12px;
-      cursor: pointer;
-      margin-bottom: 6px
-    }
-
-    .settings-panel button:hover {
-      background: #2f2f42;
-      color: #fff
-    }
-
-    .main {
+    #chat-shell {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden
+      background: #12162a;
     }
 
-    .rail {
-      position: relative;
-      width: 100%;
-      max-width: none;
-      margin: 0;
-      padding-inline: 16px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 0
-    }
-
-    .rail::before {
-      content: "";
-      background: url('/public/image/logopic.png?v=1') no-repeat center/60%;
-      opacity: .10;
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none
-    }
-
-    .topbar {
-      padding: 14px 18px;
-      border-bottom: 1px solid #333;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      position: relative;
-      z-index: 1
-    }
-
-    .topbar h1 {
-      margin: 0;
-      font-size: 20px;
-      letter-spacing: 1px
-    }
-
-    .top-controls {
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      gap: 8px;
-      align-items: center
-    }
-
-    .topbar .meta {
-      color: #bbb;
-      font-size: 14px
-    }
-
-    .content {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      z-index: 1;
-      overflow: hidden
-    }
-
-    .chat-area {
-      flex: 1;
-      min-height: 0;
-      overflow: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: stretch;
-      max-width: none;
-      margin: 0
-    }
-
-    .message-row {
-      max-width: 80%;
-      position: relative;
-      line-height: 1.5;
-      display: flex;
-      flex-direction: column
-    }
-
-    .from-user {
-      align-self: flex-end;
-      text-align: right
-    }
-
-    .from-bot {
-      align-self: flex-start;
-      text-align: left
-    }
-
-    .msg-label {
-      font-size: 12px;
-      color: #bbb;
-      margin-bottom: 4px;
-      width: fit-content;
-      max-width: min(720px, 90%)
-    }
-
-    .message-row .msg-body {
-      display: block;
-      background: transparent;
-      color: #fff;
-      padding: 0;
-      border-radius: 0;
-      box-shadow: none;
-      white-space: pre-wrap;
-      word-break: normal;
-      overflow-wrap: break-word;
-      max-width: 72ch
-    }
-
-    .msg-actions {
-      position: absolute;
-      right: -2px;
-      bottom: -18px;
-      display: flex;
-      gap: 6px;
-      opacity: 0;
-      transition: opacity .15s
-    }
-
-    .message-row:hover .msg-actions {
-      opacity: 1
-    }
-
-    .msg-actions button {
-      background: rgba(0, 0, 0, .25);
-      border: 1px solid #4a4a60;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 12px;
-      padding: 2px 6px;
-      cursor: pointer
-    }
-
-    .composer-wrap {
-      position: sticky;
-      bottom: 0;
-      z-index: 2;
-      border-top: 1px solid #3a3a4d;
-      background: transparent;
+    #chat-header {
       padding: 12px 16px;
-      display: flex;
-      justify-content: center
+      background: #151a33;
+      font-weight: 600;
+      border-bottom: 1px solid #1f2447;
     }
 
-    .composer {
-      width: 100%;
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      background: transparent;
-      border: none;
-      border-radius: 0;
-      padding: 0
-    }
-
-    .composer textarea {
+    #messages {
       flex: 1;
-      background: transparent;
-      color: #fff;
-      border: none;
-      outline: none;
-      font-size: 15px;
-      line-height: 1.4;
-      resize: none;
-      max-height: 10rem;
-      min-height: 44px;
-      overflow: auto
-    }
-
-    .composer .send-btn {
-      width: 42px;
-      height: 42px;
-      flex: 0 0 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      border: 1px solid #4a4a60;
-      background: #2f2f42;
-      color: #fff;
-      cursor: pointer
-    }
-
-    .composer .send-btn[disabled] {
-      opacity: .5;
-      cursor: not-allowed
-    }
-
-    .landing {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center
-    }
-
-    .landing-card {
-      background: rgba(44, 44, 62, 0.92);
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 22px;
-      width: min(720px, 90vw);
-      text-align: center;
-      position: relative;
-      z-index: 1
-    }
-
-    .landing .title {
-      font-size: 18px;
-      margin-bottom: 6px;
-      color: #e9e9e9
-    }
-
-    .landing .hint {
-      font-size: 13px;
-      color: #bdbdbd;
-      margin-bottom: 12px
-    }
-
-    .landing .composer {
-      margin-top: 10px
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-      background: rgba(0, 0, 0, 0.5)
-    }
-
-    .auth-box {
-      background: #2c2c3e;
-      padding: 28px;
-      border-radius: 12px;
-      width: 360px;
-      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
-      max-height: 90vh;
-      overflow: auto;
-      border: 1px solid #3a3a4d
-    }
-
-    .auth-box h2 {
-      color: #fff;
-      margin-bottom: 12px;
-      text-align: center
-    }
-
-    .auth-box input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #3f3f55;
-      margin: 8px 0;
-      background: #3a3a4d;
-      color: #fff
-    }
-
-    .auth-box button {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      background: #0078d4;
-      color: #fff;
-      cursor: pointer;
-      margin-top: 8px
-    }
-
-    .banner {
-      position: fixed;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #9b1c1c;
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      display: none;
-      z-index: 99
-    }
-
-    .to-bottom {
-      position: fixed;
-      right: 20px;
-      bottom: 84px;
-      background: #2f2f42;
-      border: 1px solid #4a4a60;
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 999px;
-      display: none;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer
-    }
-
-    .to-bottom.show {
-      display: flex
-    }
-
-    .userpage {
-      position: fixed;
-      inset: 0;
-      z-index: 60;
-      display: none
-    }
-
-    .userpage.show {
-      display: flex
-    }
-
-    .userpage .backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, .6)
-    }
-
-    .userpage .sheet {
-      position: relative;
-      z-index: 1;
-      margin: auto;
-      background: #1e1e2f;
-      border: 1px solid #333;
-      border-radius: 16px;
-      width: min(1000px, 95vw);
-      height: min(90vh, 800px);
-      display: flex;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, .6)
-    }
-
-    .userpage .aside {
-      width: 260px;
-      background: #232336;
-      border-right: 1px solid #333;
       padding: 16px;
-      overflow: auto
+      overflow-y: auto;
     }
 
-    .userpage .aside .brand {
+    .msg {
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .user {
+      color: #7aa2ff;
+    }
+
+    .bot {
+      color: #9ae6b4;
+    }
+
+    #composer {
       display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px
+      padding: 12px;
+      border-top: 1px solid #1f2447;
+      background: #151a33;
     }
 
-    .userpage .aside .brand .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: #0078d4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      overflow: hidden
-    }
-
-    .userpage .aside .nav button {
-      width: 100%;
-      text-align: left;
-      background: none;
-      border: none;
-      color: #ddd;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-bottom: 6px
-    }
-
-    .userpage .aside .nav button.active,
-    .userpage .aside .nav button:hover {
-      background: #2f2f42;
-      color: #fff
-    }
-
-    .userpage .main {
+    #input {
       flex: 1;
-      padding: 18px;
-      overflow: auto
-    }
-
-    .userpage .section-title {
-      font-size: 16px;
-      margin-bottom: 10px
-    }
-
-    .kv {
-      display: grid;
-      grid-template-columns: 180px 1fr;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 10px
-    }
-
-    .ip {
-      width: 100%;
       padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #3f3f55;
-      background: #2c2c3e;
-      color: #fff
+      background: #0f1320;
+      border: 1px solid #2a2f55;
+      color: #fff;
+      outline: none;
+      border-radius: 4px;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #2f2f42;
-      border: 1px solid #4a4a60;
-      padding: 6px 10px;
-      border-radius: 999px
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap
-    }
-
-    .card {
-      background: #232336;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 12px
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 12px
-    }
-
-    .cta {
-      background: #0078d4;
+    #send {
+      margin-left: 8px;
+      padding: 10px 16px;
+      background: #2563eb;
       border: none;
       color: #fff;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer
-    }
-
-    .cta.secondary {
-      background: #444
-    }
-
-    .cta.danger {
-      background: #b91c1c
-    }
-
-    .muted {
-      color: #bbb;
-      font-size: 12px
-    }
-
-    @media (max-width:900px) {
-      .sidebar {
-        display: none
-      }
-
-      .container {
-        flex-direction: column
-      }
-
-      .kv {
-        grid-template-columns: 1fr
-      }
-    }
-
-    body,
-    .chat-area,
-    .history-list {
-      scrollbar-width: none
-    }
-
-    body::-webkit-scrollbar,
-    .chat-area::-webkit-scrollbar,
-    .history-list::-webkit-scrollbar {
-      width: 0;
-      height: 0
+      cursor: pointer;
+      border-radius: 4px;
     }
   </style>
 </head>
 
 <body>
 
-  <div id="banner" class="banner"></div>
+<div id="app">
+  <div id="chat-shell">
 
-  <div id="app" class="container" style="display:none;">
-    <div class="sidebar">
-      <div class="title">Chat History</div>
-      <button class="new-topic-btn" id="new-topic">+ New Chat</button>
-      <div class="history-list" id="history-list"></div>
-
-      <div class="settings-summary">
-        <div id="settings-header" class="user-chip" title="Account & Settings">
-          <div id="settings-avatar" class="user-avatar">U</div>
-          <div id="settings-username" class="user-name">User</div>
-          <i id="settings-caret" class="fas fa-chevron-down"></i>
-        </div>
-
-        <div id="settings-panel" class="settings-panel">
-          <button id="dark-toggle">🌙 Toggle Dark Mode</button>
-          <button id="lang-toggle">🌐 Language</button>
-          <button id="profile-open">🧑‍💼 Profile</button>
-          <button id="export-topic">📥 Export</button>
-          <button id="delete-topic">🗑 Delete This Chat</button>
-          <button id="clear-all-chats">🧹 Clear All Chats</button>
-          <button id="logout-btn">🚪 Logout</button>
-        </div>
-      </div>
+    <div id="chat-header">
+      VedSAAS
     </div>
 
-    <div class="main">
-      <div class="rail">
-        <div class="topbar">
-          <h1 id="brand-title"></h1>
-          <div class="top-controls">
-            <div class="meta" id="meta-info">Welcome</div>
-            <button class="btn" id="refresh-history" title="Reload history"><i class="fas fa-sync"></i></button>
-            <button class="btn" id="top-delete-chat" title="Delete this chat"><i class="fas fa-trash"></i></button>
-          </div>
-        </div>
+    <div id="messages"></div>
 
-        <div class="content">
-          <div id="landing" class="landing" style="display:none;">
-            <div class="landing-card">
-              <div class="title">Start a new conversation</div>
-              <div class="hint">Ask anything. I’ll reply in your language.</div>
-              <div class="composer">
-                <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
-                <button id="landing-start" class="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
-              </div>
-              <div class="landing-actions">
-                <button id="landing-open-history" class="btn">Open Previous Chats</button>
-              </div>
-            </div>
-          </div>
-
-          <div id="chat-shell" style="display:none;flex:1;min-height:0;display:flex;flex-direction:column;">
-            <div class="chat-area" id="chat-area"></div>
-            <div class="composer-wrap">
-              <div class="composer">
-                <textarea id="main-input" placeholder="Type your message..." rows="1"></textarea>
-                <div style="position:relative">
-                  <button id="attach-btn" class="send-btn" title="Attach Image" style="margin-right:6px"><i class="fas fa-camera"></i></button>
-                  <div id="attach-preview" style="position:absolute;bottom:50px;right:-10px;display:none;background:#222;padding:4px;border:1px solid #444;border-radius:4px;">
-                    <img id="preview-img" style="width:60px;height:60px;object-fit:cover;border-radius:2px;">
-                    <button id="clear-attach" style="position:absolute;top:-6px;right:-6px;background:red;color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;">&times;</button>
-                  </div>
-                </div>
-                <input id="image-upload" type="file" accept="image/*" style="display:none">
-                <button id="send-btn" class="send-btn" title="Send" disabled><i class="fas fa-paper-plane"></i></button>
-              </div>
-            </div>
-          </div>
-        </div> <!-- /content -->
-      </div> <!-- /rail -->
+    <div id="composer">
+      <input id="input" type="text" placeholder="Type your message…" />
+      <button id="send">Send</button>
     </div>
+
   </div>
+</div>
 
-  <div id="auth-overlay" class="overlay" style="display:none;">
-    <div class="auth-box">
-      <div id="login-screen">
-        <h2>Login</h2>
-        <input id="login-identifier" placeholder="Email or Mobile" />
-        <input id="login-password" type="password" placeholder="Password" />
-        <button id="login-submit">Login</button>
-        <small>Tip: Same backend host/port as API_BASE.</small>
-        <p style="color:#bbb;text-align:center;margin-top:8px;">Don't have account?
-          <a id="open-register" href="#" style="color:#1e90ff;">Register</a>
-        </p>
-      </div>
+<!-- CORE JS (UNCHANGED) -->
+<script src="/public/js/vedsaas-core.js"></script>
 
-      <div id="register-screen" style="display:none;">
-        <h2>Register</h2>
-        <input id="reg-name" placeholder="Full name" />
-        <input id="reg-identifier" placeholder="Email or Mobile" />
-        <input id="reg-password" type="password" placeholder="Password" />
-        <div style="display:flex;gap:8px">
-          <input id="reg-otp" placeholder="OTP (if received)" disabled style="flex:1" />
-          <button id="reg-send-otp" style="flex:0 0 120px">Send OTP</button>
-        </div>
-        <button id="reg-submit">Register</button>
-        <p style="color:#bbb;text-align:center;margin-top:8px;">Already have account?
-          <a id="open-login" href="#" style="color:#1e90ff;">Login</a>
-        </p>
-      </div>
+<script>
+  // very thin UI glue, system-safe
+  const messages = document.getElementById('messages');
+  const input = document.getElementById('input');
+  const send = document.getElementById('send');
 
-      <div id="verify-screen" style="display:none;">
-        <h2>Verify OTP</h2>
-        <input id="verify-identifier" placeholder="Email or Mobile" />
-        <input id="verify-otp" placeholder="Enter OTP" />
-        <button id="verify-submit">Verify</button>
-        <button id="verify-resend" style="margin-top:8px;background:#444">Resend OTP</button>
-      </div>
-    </div>
-  </div>
+  function addMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + cls;
+    d.textContent = text;
+    messages.appendChild(d);
+    messages.scrollTop = messages.scrollHeight;
+  }
 
-  <div id="userpage" class="userpage">
-    <div class="backdrop"></div>
-    <div class="sheet">
-      <aside class="aside">
-        <div class="brand">
-          <div id="up-avatar" class="avatar">U</div>
-          <div>
-            <div id="up-name" style="font-weight:700">User</div>
-            <div id="plan-label" class="badge" style="margin-top:6px">
-              <i class="fas fa-crown"></i><span style="margin-left:6px">Free</span>
-            </div>
-          </div>
-        </div>
-        <div class="nav" style="display:flex;flex-direction:column;height:100%;">
-          <button data-tab="profile" class="active"><i class="fas fa-user"></i> Profile</button>
-          <button data-tab="account"><i class="fas fa-id-badge"></i> Account</button>
-          <button data-tab="preferences"><i class="fas fa-sliders-h"></i> Preferences</button>
-          <button data-tab="usage"><i class="fas fa-chart-line"></i> Usage</button>
-          <div style="flex:1"></div>
-          <button id="userpage-logout" class="cta danger" style="width:100%;margin-top:8px"><i
-              class="fas fa-right-from-bracket"></i> Logout</button>
-          <button id="userpage-close" class="cta secondary" style="width:100%;margin-top:8px"><i
-              class="fas fa-times"></i> Close</button>
-        </div>
-      </aside>
-      <main class="main">
-        <section data-panel="profile">
-          <div class="section-title">Profile</div>
-          <div class="kv"><label>Display name</label><input id="pf-name" class="ip" placeholder="Your name" /></div>
-          <div class="kv"><label>Username (handle)</label><input id="pf-handle" class="ip" placeholder="@username" />
-          </div>
-          <div class="kv">
-            <label>Avatar</label>
-            <div class="row">
-              <label class="badge" style="cursor:pointer"><i class="fas fa-upload"></i> Upload
-                <input id="pf-avatar" type="file" accept="image/*" style="display:none">
-              </label>
-              <button id="pf-avatar-remove" class="cta secondary">Remove</button>
-            </div>
-            <div class="muted">Tip: If no avatar, initials are used.</div>
-          </div>
-          <div class="actions"><button id="pf-save" class="cta"><i class="fas fa-save"></i> Save</button></div>
-        </section>
+  // hook existing core functions if present
+  if (typeof window.typeWriteBot !== 'function') {
+    window.typeWriteBot = (t) => addMsg(t, 'bot');
+  }
 
-        <section data-panel="account" style="display:none">
-          <div class="section-title">Account</div>
-          <div class="kv"><label>Email</label><input id="ac-email" class="ip" placeholder="email@example.com" /></div>
-          <div class="kv"><label>Mobile</label><input id="ac-mobile" class="ip" placeholder="+91-XXXXXXXXXX" /></div>
-          <div class="kv"><label>Plan</label>
-            <div class="row"><span class="badge"><i class="fas fa-crown"></i>
-                <span id="ac-plan-label" style="margin-left:6px">Free</span></span>
-              <button id="ac-upgrade" class="cta">Upgrade</button>
-            </div>
-          </div>
-          <div class="kv"><label>Sessions</label>
-            <div class="card" id="ac-sessions" style="width:100%">
-              <div class="muted">This device • Active now</div>
-              <div class="muted">Chrome • Last used today</div>
-            </div>
-          </div>
-        </section>
+  send.onclick = () => {
+    const v = input.value.trim();
+    if (!v) return;
+    addMsg(v, 'user');
+    input.value = '';
+    if (typeof window.sendToServer === 'function') {
+      window.sendToServer(v);
+    }
+  };
 
-        <section data-panel="preferences" style="display:none">
-          <div class="section-title">Preferences</div>
-          <div class="kv"><label>Theme</label>
-            <div class="row"><button id="pref-theme-dark" class="cta secondary">Dark</button><button
-                id="pref-theme-light" class="cta secondary">Light</button><button id="pref-theme-system"
-                class="cta secondary">System</button></div>
-          </div>
-          <div class="kv"><label>Language</label>
-            <select id="pref-lang" class="ip">
-              <option value="auto">Auto (Detect)</option>
-              <option value="en">English</option>
-              <option value="hi">Hindi</option>
-            </select>
-          </div>
-          <div class="kv"><label>Typing animation</label>
-            <select id="pref-type-speed" class="ip">
-              <option value="75">Slow (VedSAAS-like)</option>
-              <option value="40">Normal</option>
-              <option value="15">Fast</option>
-              <option value="0">Instant</option>
-            </select>
-          </div>
-          <div class="actions"><button id="pref-save" class="cta"><i class="fas fa-save"></i> Save</button></div>
-        </section>
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') send.click();
+  });
+</script>
 
-        <section data-panel="usage" style="display:none">
-          <div class="section-title">Usage</div>
-          <div class="row">
-            <div class="card" style="min-width:220px">
-              <div class="muted">Conversations</div>
-              <div id="usg-conv" style="font-size:22px;font-weight:700">0</div>
-            </div>
-            <div class="card" style="min-width:220px">
-              <div class="muted">Messages</div>
-              <div id="usg-msg" style="font-size:22px;font-weight:700">0</div>
-            </div>
-            <div class="card" style="min-width:220px">
-              <div class="muted">Local storage</div>
-              <div id="usg-local" style="font-size:22px;font-weight:700">0 KB</div>
-            </div>
-            <div class="card" style="min-width:220px">
-              <div class="muted">Last active</div>
-              <div id="usg-last" style="font-size:22px;font-weight:700">—</div>
-            </div>
-          </div>
-        </section>
-      </main>
-      <button id="export-topic">📥 Export</button>
-      <button id="delete-topic">🗑 Delete This Chat</button>
-      <button id="clear-all-chats">🧹 Clear All Chats</button>
-      <button id="logout-btn">🚪 Logout</button>
-    </div>
-
-
-    <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
-
-    <script src="public/js/vedsaas-core.js?v=2025"></script>
 </body>
-
-  </html>
+</html>
