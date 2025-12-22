@@ -25,7 +25,7 @@ const MAX_LOCAL_BYTES = 2_000_000;
 const TOPIC_HARD_LIMIT = 80;
 const MSGS_PER_TOPIC_LIMIT = 200;
 
-/* Utils */
+/* ===== Utils ===== */
 async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -50,13 +50,12 @@ async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
   return res;
 }
 
-/* ===== Guest Auth (FIXED) ===== */
+/* ===== Guest Auth (JUNCTION-CORRECT) ===== */
 async function authenticateAsGuest() {
   try {
     const res = await fetch(api('/api/auth/guest'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: crypto.randomUUID() })
+      method: 'GET',
+      credentials: 'include'
     });
 
     if (!res.ok) throw new Error('Guest auth failed');
@@ -66,9 +65,10 @@ async function authenticateAsGuest() {
 
     token = data.api_token;
     localStorage.setItem('token', token);
+
     finishBoot();
   } catch (e) {
-    console.error(e);
+    console.error('Guest auth error:', e);
     setTimeout(authenticateAsGuest, 3000);
   }
 }
@@ -86,6 +86,7 @@ async function checkLoginAndOpen() {
 
 /* ===== Chat Send ===== */
 async function sendToServer(text, imageBase64 = null) {
+  if (sending) return;
   sending = true;
 
   const body = {
@@ -120,6 +121,7 @@ async function sendToServer(text, imageBase64 = null) {
 
 /* ===== Boot ===== */
 (function boot() {
-  document.getElementById('brand-title').textContent = ASSISTANT_NAME;
+  const title = document.getElementById('brand-title');
+  if (title) title.textContent = ASSISTANT_NAME;
   checkLoginAndOpen();
 })();
