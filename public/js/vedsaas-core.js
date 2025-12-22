@@ -1,11 +1,7 @@
 /* ===== Brand constant ===== */
 const ASSISTANT_NAME = 'VedSAAS';
 
-/* ===== API base (Junction only, same-origin) =====
-   Frontend: https://app.vedsaas.com
-   Junction: https://app.vedsaas.com/api/*
-   Backend is NEVER called directly
-*/
+/* ===== API base (Junction only, same-origin) ===== */
 const API_BASE = '';
 
 function api(path) {
@@ -50,7 +46,7 @@ async function authFetch(path, opts = {}, { timeoutMs = 10000 } = {}) {
   return res;
 }
 
-/* ===== Guest Auth (JUNCTION-CORRECT) ===== */
+/* ===== Guest Auth (HYBRID – SYSTEM NATURE PRESERVED) ===== */
 async function authenticateAsGuest() {
   try {
     const res = await fetch(api('/api/auth/guest'), {
@@ -60,11 +56,18 @@ async function authenticateAsGuest() {
 
     if (!res.ok) throw new Error('Guest auth failed');
 
-    const data = await res.json();
-    if (!data.api_token) throw new Error('Token missing');
+    // Try JSON only if content-type allows it
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      const data = await res.json();
+      if (data.api_token) {
+        token = data.api_token;
+        localStorage.setItem('token', token);
+      }
+    }
 
-    token = data.api_token;
-    localStorage.setItem('token', token);
+    // Verify session/token by hitting real API
+    await authFetch('/api/user/profile');
 
     finishBoot();
   } catch (e) {
