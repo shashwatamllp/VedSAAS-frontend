@@ -2,7 +2,8 @@
 (() => {
   // ── API base detect ──
   // ── API base detect ──
-  const API_BASE = (() => {
+  // ── API base detect ──
+  const API_BASE = window.VEDSAAS_API_URL || (() => {
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       return 'http://127.0.0.1:8000';
     }
@@ -27,7 +28,7 @@
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), timeoutMs);
     const res = await fetch(api(path), {
       ...opts, signal: ctrl.signal, credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}), ...(token ? { 'Authorization': 'Bearer ' + token } : {}) }
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}), ...(token ? { 'X-API-Token': token } : {}) }
     });
     clearTimeout(t);
     if (!res.ok) {

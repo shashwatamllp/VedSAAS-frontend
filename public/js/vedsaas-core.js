@@ -2,12 +2,14 @@
 const ASSISTANT_NAME = 'VedSAAS';
 
 /* ===== API base ===== */
-// Production: Use relative path (Same Origin)
-const API_BASE = '';
+// Junction Gateway URL
+const API_BASE = window.VEDSAAS_API_URL || 'http://localhost:8000';
 
 function api(path) {
   let p = String(path || '');
   if (!p.startsWith('/')) p = '/' + p;
+  // Fix v2 mismatch if present
+  p = p.replace('/api/v2/chat', '/api/chat');
   return API_BASE + p;
 }
 
@@ -94,7 +96,7 @@ async function sendToServer(text) {
   sending = true;
 
   try {
-    const res = await authFetch('/api/v2/chat', {
+    const res = await authFetch('/api/chat', {
       method: 'POST',
       body: JSON.stringify({
         message: text,

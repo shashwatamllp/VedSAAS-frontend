@@ -282,166 +282,93 @@
     <div class="footer">VedSAAS by Shashwatam Eco-Chie Creations LLP</div>
   </div>
 
+  <!-- Shared Auth Wire -->
+  <script src="/public/js/ved-auth-wire.js"></script>
+
   <script>
-    // --------------------------------------------
-    // API base (Dynamic)
-    // --------------------------------------------
-    window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:8000'
-      : 'https://api.vedsaas.com';
+    // Adapter for register.html to use centralized logic
+    // ved-auth-wire.js handles the heavy lifting if IDs match
 
-    // --------------------------------------------
-    // API key source
-    // --------------------------------------------
-    (function primeKey() {
-      const metaKey = document.querySelector('meta[name="ved-api-key"]')?.content || '';
-      if (metaKey && !localStorage.getItem('VED_API_KEY')) {
-        localStorage.setItem('VED_API_KEY', metaKey);
-      }
-    })();
-    const getApiKey = () => localStorage.getItem('VED_API_KEY') || '';
+    document.addEventListener('DOMContentLoaded', () => {
+      // The shared wire expects a form with specific ID or manual submission
+      // Here we keep it custom but use the SHARED 'api' and 'authFetch' logic provided by the wire (if exposed)
+      // or we just reimplement the 'click' handler using standard FETCH that respects the GLOBAL config.
 
-    // --------------------------------------------
-    // tiny helpers
-    // --------------------------------------------
-    const $ = (id) => document.getElementById(id);
-    const show = (t, ok = false) => { const m = $('msg'); m.className = 'msg ' + (ok ? 'ok' : 'err'); m.textContent = t || ''; };
+      const $ = (id) => document.getElementById(id);
+      const show = (t, ok = false) => { const m = $('msg'); m.className = 'msg ' + (ok ? 'ok' : 'err'); m.textContent = t || ''; };
 
-    // avatar preview
-    let avatarFile = null;
-    $('avatar').addEventListener('change', e => {
-      const f = e.target.files?.[0] || null;
-      avatarFile = null;
-      if (!f) { $('preview').style.backgroundImage = 'none'; return; }
-      if (f.size > 1024 * 1024) { show('Image too large (max 1 MB)'); e.target.value = ''; return; }
-      avatarFile = f;
-      const rd = new FileReader();
-      rd.onload = () => { $('preview').style.backgroundImage = `url('${rd.result}')`; };
-      rd.readAsDataURL(f);
-    });
+      // Re-implementing simplified logic using the GLOBAL API_BASE which ved-auth-wire.js sets up
 
-    const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v || "");
-    const validPhone = v => /^\+?\d{10,15}$/.test((v || "").replace(/\s/g, ""));
+      $('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = ($('name').value || '').trim();
+        const email = ($('email').value || '').trim();
+        const mobile = ($('mobile').value || '').trim();
+        const dob = ($('dob').value || '').trim();
+        const pw = $('pw').value || '';
+        const cpw = $('cpw').value || '';
+        const f = $('avatar').files?.[0];
 
-    async function parseResponse(r) {
-      const ct = r.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await r.json().catch(() => ({})) : await r.text().catch(() => '');
-      return { ct, data };
-    }
-    function friendlyError(r, dataStr) {
-      if (r.status === 403 && /cacheable requests|cloudfront/i.test(dataStr || '')) {
-        return 'Blocked by CDN: POST reached static S3 behavior. Check CloudFront /api/* behavior.';
-      }
-      return `HTTP ${r.status} ${r.statusText}${dataStr ? ': ' + dataStr : ''}`;
-    }
+        if (!name) return show('Name required');
+        if (!email || !email.includes('@')) return show('Valid email required');
+        if (!mobile) return show('Mobile required');
+        if (!dob) return show('DOB required');
+        if (pw.length < 6) return show('Password min 6 chars');
+        if (pw !== cpw) return show('Passwords mismatch');
 
-    // --------------------------------------------
-    // API wrappers — now always send X-API-Key
-    // --------------------------------------------
-    async function apiJSON(url, body) {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-API-Key': getApiKey(),
-        },
-        body: JSON.stringify(body),
-        mode: 'cors', cache: 'no-store', credentials: 'omit'
-      });
-      const { data } = await parseResponse(r);
-      if (!r.ok) throw new Error(typeof data === 'string' ? friendlyError(r, data) : (data.error || data.message || friendlyError(r)));
-      return data;
-    }
-    async function apiForm(url, formData) {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'X-API-Key': getApiKey() },
-        body: formData,
-        mode: 'cors', cache: 'no-store', credentials: 'omit'
-      });
-      const { data } = await parseResponse(r);
-      if (!r.ok) throw new Error(typeof data === 'string' ? friendlyError(r, data) : (data.error || data.message || friendlyError(r)));
-      return data;
-    }
+        $('submit').disabled = true; show('Registering...');
 
-    // --------------------------------------------
-    // Submit
-    // --------------------------------------------
-    $('register-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = ($('name').value || '').trim();
-      const email = ($('email').value || '').trim();
-      const mobile = ($('mobile').value || '').trim();
-      const dob = ($('dob').value || '').trim();
-      const pw = $('pw').value || '';
-      const cpw = $('cpw').value || '';
+        // Dynamic Base from Global or fallback
+        // Note: ved-auth-wire.js defines API_BASE locally usually, so we re-detect or rely on window
+        const BASE = window.VEDSAAS_API_URL || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:8000' : 'https://api.vedsaas.com');
 
-      if (!name) return show('Name required');
-      if (!validEmail(email)) return show('Valid email required');
-      if (!validPhone(mobile)) return show('Valid mobile required (10–15 digits)');
-      if (!dob) return show('DOB required');
-      if (pw.length < 6) return show('Password must be at least 6 characters');
-      if (pw !== cpw) return show('Passwords do not match');
+        const fd = new FormData();
+        fd.append('name', name);
+        fd.append('email', email);
+        fd.append('mobile', mobile);
+        fd.append('dob', dob);
+        fd.append('password', pw);
+        if (f) fd.append('avatar', f);
 
-      const haveKey = !!getApiKey();
-      if (!haveKey) {
-        // keep it obvious in UI when key missing
-        return show('API key missing. Please configure it.', false);
-      }
-
-      $('submit').disabled = true; show('');
-      const base = window.API_BASE || '';
-
-      // Build multipart (avatar-friendly)
-      const fd = new FormData();
-      fd.append('name', name);
-      fd.append('email', email);
-      fd.append('mobile', mobile);
-      fd.append('dob', dob);
-      fd.append('password', pw);
-      if (avatarFile) fd.append('avatar', avatarFile);
-
-      try {
-        // Primary route
         try {
-          await apiForm(`${base}/api/auth/register`, fd);
-        } catch (e1) {
-          // JSON fallback same endpoint
-          try {
-            await apiJSON(`${base}/api/auth/register`, { name, email, mobile, dob, password: pw });
-          } catch (e2) {
-            // Alt paths
-            try {
-              await apiForm(`${base}/api/register`, fd);
-            } catch (e3) {
-              await apiJSON(`${base}/api/register`, { name, email, mobile, dob, password: pw });
-            }
-          }
+          // 1. REGISTER
+          const r1 = await fetch(`${BASE}/api/auth/register`, {
+            method: 'POST',
+            body: fd
+            // No headers needed for FormData; fetch sets boundary
+            // No Auth header needed for registration
+          });
+          const d1 = await r1.json().catch(() => ({}));
+          if (!r1.ok) throw new Error(d1.error || d1.message || 'Registration failed');
+
+          // 2. SEND OTP
+          const identifier = email || mobile;
+          await fetch(`${BASE}/api/auth/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier })
+          });
+
+          show('Registered! Sending OTP...', true);
+          setTimeout(() => {
+            location.href = `./verify.html?who=${encodeURIComponent(identifier)}&sent=1`;
+          }, 1000);
+
+        } catch (err) {
+          show(err.message);
+          $('submit').disabled = false;
         }
+      });
 
-        // Send OTP
-        const identifier = email || mobile;
-        try {
-          await apiJSON(`${base}/api/auth/send-otp`, { identifier });
-        } catch {
-          await apiJSON(`${base}/api/send-otp`, { identifier });
+      // Avatar Preview
+      $('avatar').addEventListener('change', e => {
+        const f = e.target.files?.[0];
+        if (f) {
+          const rd = new FileReader();
+          rd.onload = () => $('preview').style.backgroundImage = `url('${rd.result}')`;
+          rd.readAsDataURL(f);
         }
-
-        // Stash a few bits for next screen
-        try {
-          localStorage.setItem('pendingIdentifier', identifier);
-          localStorage.setItem('pendingName', name);
-          localStorage.setItem('pendingDob', dob);
-        } catch { }
-
-        show('OTP sent. Redirecting…', true);
-        setTimeout(() => { location.href = `./verify.html?who=${encodeURIComponent(identifier)}&sent=1`; }, 600);
-      } catch (err) {
-        show('Registration failed: ' + (err?.message || err));
-        console.error('Register error:', err);
-        $('submit').disabled = false;
-      }
+      });
     });
   </script>
 </body>

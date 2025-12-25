@@ -154,144 +154,65 @@
     <div id="msg" class="msg" role="status" aria-live="polite"></div>
   </div>
 
+  <!-- Shared Auth Wire -->
+  <script src="/public/js/ved-auth-wire.js"></script>
+
   <script>
-    // ---- API base resolver (meta -> vedsaas.com -> local dev) ----
-    // ---- API base resolver (Dynamic) ----
-    (function () {
-      const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-      window.API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://api.vedsaas.com';
-    })();
+    document.addEventListener('DOMContentLoaded', () => {
+      const $ = (id) => document.getElementById(id);
+      const show = (t, ok = false) => { const m = $('msg'); m.className = 'msg ' + (ok ? 'ok' : 'err'); m.textContent = t || ''; };
 
-    const $ = (id) => document.getElementById(id);
-    const setMsg = (t, ok = false) => { const m = $('msg'); m.className = 'msg ' + (ok ? 'ok' : 'err'); m.textContent = t || ''; };
+      const who = new URLSearchParams(location.search).get('who') || localStorage.getItem('pendingIdentifier') || '';
+      $('who').textContent = who ? `For: ${who}` : 'Identifier missing';
 
-    function mapHttpError(r, bodyTxt) {
-      if (r.status === 403 && /cacheable requests|cloudfront/i.test(bodyTxt || '')) {
-        return 'Blocked by CDN: /api/* is not hitting API origin. Fix CloudFront behavior.';
-      }
-      if (r.status === 429) return 'Too many requests. Try again later.';
-      if (r.status >= 500) return 'Server error. Please try again.';
-      return `HTTP ${r.status}${r.statusText ? ' ' + r.statusText : ''}${bodyTxt ? ': ' + bodyTxt : ''}`;
-    }
+      if (new URLSearchParams(location.search).get('sent')) show('OTP sent', true);
 
-    // who are we verifying?
-    const qs = new URLSearchParams(location.search);
-    const who = qs.get('who') || localStorage.getItem('pendingIdentifier') || '';
-    $('who').textContent = who ? ('For: ' + who) : 'Identifier missing';
+      // Base URL from Window (set by wire) or fallback
+      const BASE = window.VEDSAAS_API_URL || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:8000' : 'https://api.vedsaas.com');
 
-    // cooldown for resend (persists during this page view)
-    function cooldown(sec) {
-      const c = $('cool'), a = $('resend');
-      a.style.pointerEvents = 'none'; a.style.opacity = '.6';
-      let s = sec; c.textContent = '(' + s + 's)';
-      const t = setInterval(() => {
-        s--; c.textContent = s > 0 ? '(' + s + 's)' : '';
-        if (s <= 0) { clearInterval(t); a.style.pointerEvents = 'auto'; a.style.opacity = '1'; }
-      }, 1000);
-    }
-    if (qs.get('sent') === '1') cooldown(45);
+      $('verify').onclick = async () => {
+        const otp = $('otp').value.replace(/\D/g, '').slice(0, 6);
+        if (otp.length < 4) return show('Enter full OTP');
 
-    // back
-    $('back').onclick = () => history.length > 1 ? history.back() : location.href = 'login.html';
+        $('verify').disabled = true; show('');
 
-    // resend
-    $('resend').onclick = async (e) => {
-      e.preventDefault();
-      if (!who) return;
-      const ac = new AbortController();
-      const timer = setTimeout(() => ac.abort(), 15000);
-      try {
-        const r = await fetch(window.API_BASE + '/api/send-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ identifier: who }),
-          signal: ac.signal,
-          mode: 'cors', cache: 'no-store', credentials: 'omit'
-        });
-        const ct = r.headers.get('content-type') || '';
-        const body = ct.includes('application/json') ? await r.json().catch(() => ({})) : await r.text().catch(() => '');
-        if (!r.ok) return setMsg(mapHttpError(r, typeof body === 'string' ? body : body.error));
-        if (body && body.ok) { setMsg('OTP sent again', true); cooldown(45); }
-        else setMsg((body && body.error) || 'Failed to resend');
-      } catch (err) {
-        setMsg(err?.name === 'AbortError' ? 'Network timeout.' : 'Network error.');
-      } finally { clearTimeout(timer); }
-    };
+        try {
+          const r = await fetch(`${BASE}/api/auth/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, // No auth needed to verify
+            body: JSON.stringify({ identifier: who, otp })
+          });
 
-    async function verifyOtp() {
-      const code = ($('otp').value || '').replace(/\D+/g, '').slice(0, 6);
-      $('otp').value = code;
-      if (code.length < 4) return setMsg('Enter full OTP');
-      if (!who) return setMsg('Identifier missing');
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(d.error || 'Invalid OTP');
 
-      const btn = $('verify');
-      btn.disabled = true; setMsg('');
-
-      const ac = new AbortController();
-      const timer = setTimeout(() => ac.abort(), 15000);
-
-      try {
-        const r = await fetch(window.API_BASE + '/api/verify-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ identifier: who, otp: code }),
-          signal: ac.signal,
-          mode: 'cors', cache: 'no-store', credentials: 'omit'
-        });
-
-        const ct = r.headers.get('content-type') || '';
-        const j = ct.includes('application/json') ? await r.json().catch(() => ({})) : { error: await r.text().catch(() => '') };
-
-        if (!r.ok) return setMsg(mapHttpError(r, typeof j === 'string' ? j : j.error));
-
-        if (!j || !j.ok || !j.token) return setMsg((j && j.error) || 'Invalid OTP');
-
-        // success
-        try { localStorage.setItem('token', j.token); } catch { }
-        setMsg('Verified! Finishing setup…', true);
-
-        // optional profile completes
-        const nm = localStorage.getItem('pendingName');
-        if (nm) {
-          try {
-            await fetch(window.API_BASE + '/api/user/profile', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + j.token },
-              body: JSON.stringify({ name: nm })
-            });
-          } catch { }
+          if (d.token) {
+            localStorage.setItem('token', d.token);
+            show('Verified! Redirecting...', true);
+            setTimeout(() => location.href = 'index.html', 500);
+          } else {
+            throw new Error('No token received');
+          }
+        } catch (e) {
+          show(e.message);
+          $('verify').disabled = false;
         }
+      };
 
-        const av = localStorage.getItem('pendingAvatar');
-        if (av) {
-          try {
-            const blob = await (await fetch(av)).blob();
-            const fd = new FormData(); fd.append('avatar', blob, 'avatar.png');
-            await fetch(window.API_BASE + '/api/user/avatar', {
-              method: 'POST', headers: { 'Authorization': 'Bearer ' + j.token }, body: fd
-            });
-          } catch { }
-        }
+      $('resend').onclick = async (e) => {
+        e.preventDefault();
+        try {
+          await fetch(`${BASE}/api/auth/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier: who })
+          });
+          show('OTP Sent again', true);
+        } catch (e) { show('Network error'); }
+      };
 
-        const dob = localStorage.getItem('pendingDob'); if (dob) { localStorage.setItem('profile_dob', dob); }
-
-        // cleanup & go home
-        localStorage.removeItem('pendingAvatar');
-        localStorage.removeItem('pendingDob');
-        localStorage.removeItem('pendingName');
-        localStorage.removeItem('pendingIdentifier');
-
-        setTimeout(() => location.href = 'index.html', 400);
-      } catch (err) {
-        setMsg(err?.name === 'AbortError' ? 'Network timeout. Try again.' : 'Network error. Try again.');
-      } finally {
-        clearTimeout(timer);
-        btn.disabled = false;
-      }
-    }
-
-    $('verify').onclick = verifyOtp;
-    $('otp').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); verifyOtp(); } });
+      $('back').onclick = () => location.href = 'login.html';
+    });
   </script>
 </body>
 

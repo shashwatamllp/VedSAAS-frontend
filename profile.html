@@ -325,132 +325,132 @@
     </div>
   </div>
 
+  <!-- Shared Auth Wire -->
+  <script src="/public/js/ved-auth-wire.js"></script>
+
   <script>
-    /* ===== Config ===== */
-    const API_BASE = (() => {
-      // Junction Server Domain
-      return 'https://api.vedsaas.com';
-    })();
-    const $ = id => document.getElementById(id);
-    const banner = (m) => { const b = $('banner'); b.textContent = m; b.style.display = 'block'; clearTimeout(b._t); b._t = setTimeout(() => b.style.display = 'none', 2200); };
-    const HOBBIES = ["Reading", "Music", "Travel", "Fitness", "Yoga", "Meditation", "Gardening", "Cooking", "Photography", "Gaming", "Cricket", "Football", "Technology", "Movies", "Art", "Design", "Writing", "Investing", "Startups"];
-    const auth = () => { const t = localStorage.getItem('token'); return t ? { Authorization: 'Bearer ' + t } : {}; };
-    const validEmail = (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v || '');
+    document.addEventListener('DOMContentLoaded', () => {
 
-    /* ===== Hobbies (chips) ===== */
-    function renderHobbyChips(selected = []) {
-      const host = $('pf-hobbies'); host.innerHTML = '';
-      HOBBIES.forEach(h => {
-        const id = 'hb_' + h.toLowerCase().replace(/\s+/g, '_');
-        const sel = selected.includes(h);
-        const el = document.createElement('label'); el.className = 'chip-opt';
-        el.innerHTML = `<input type="checkbox" ${sel ? 'checked' : ''} id="${id}"><span>${h}</span>`;
-        host.appendChild(el);
-      });
-    }
-    function getSelectedHobbies() {
-      return Array.from(document.querySelectorAll('#pf-hobbies input:checked')).map(i => i.nextElementSibling.textContent);
-    }
+      const $ = id => document.getElementById(id);
+      const banner = (m, ok = false) => {
+        const b = $('banner');
+        b.textContent = m;
+        b.style.display = 'block';
+        b.style.background = ok ? '#27c093' : '#ff6b6b';
+        clearTimeout(b._t);
+        b._t = setTimeout(() => b.style.display = 'none', 3000);
+      };
 
-    /* ===== Avatar ===== */
-    let avatarDataURL = null;  // live selection
-    let serverAvatar = null;   // from server (url/base64)
-    function setAvatarFrom(str) {
-      const box = $('pf-preview');
-      if (!box) return;
-      if (str) { box.style.backgroundImage = `url('${str}')`; box.textContent = ''; }
-      else {
-        // initials fallback
-        const name = ($('pf-name')?.value || localStorage.getItem('pendingName') || 'U').trim();
-        const initials = name.split(/\s+/).map(s => s[0] || '').slice(0, 2).join('').toUpperCase();
-        box.style.backgroundImage = 'none'; box.textContent = initials || 'U';
-      }
-    }
-    $('btn-upload').onclick = () => $('pf-avatar').click();
-    $('btn-pick').onclick = () => $('pf-avatar').click();
-    $('pf-avatar').onchange = (e) => {
-      const f = e.target.files?.[0]; if (!f) return;
-      if (f.size > 1024 * 1024) { banner('Image too large (max 1 MB)'); e.target.value = ''; return; }
-      const rd = new FileReader(); rd.onload = () => { avatarDataURL = rd.result; setAvatarFrom(avatarDataURL); }; rd.readAsDataURL(f);
-    };
-    $('btn-remove').onclick = () => { avatarDataURL = null; localStorage.removeItem('pendingAvatar'); if (serverAvatar) { serverAvatar = null; } setAvatarFrom(null); };
+      // 1. Config
+      const BASE = window.VEDSAAS_API_URL || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:8000' : 'https://api.vedsaas.com');
 
-    /* ===== Counters ===== */
-    $('pf-bio').addEventListener('input', () => { const n = $('pf-bio').value.length; $('bio-count').textContent = `(${n}/280)`; });
+      // Auth Header Helper (Junction/Core requires X-API-Token)
+      const auth = () => {
+        const t = localStorage.getItem('token');
+        return t ? { 'X-API-Token': t } : {};
+      };
 
-    /* ===== Load ===== */
-    async function load() {
-      const tok = localStorage.getItem('token'); if (!tok) { location.href = 'login.html'; return; }
-      try {
-        const r = await fetch(API_BASE + '/api/user-profile', { headers: { ...auth() } });
-        const j = await r.json(); if (!j.ok) { banner(j.error || 'Failed'); if (r.status === 401) location.href = 'login.html'; return; }
-        const u = j.user || {};
+      // 2. Load Profile
+      async function load() {
+        const tok = localStorage.getItem('token');
+        if (!tok) { location.href = 'login.html'; return; }
 
-        $('pf-name').value = u.name || localStorage.getItem('pendingName') || '';
-        $('pf-handle').value = u.handle || u.nickname || '';
-        $('pf-email').value = u.email || '';
-        $('pf-mobile').value = u.mobile || '';
-        if (u.email) $('email-badge').style.display = 'inline-flex';
-        if (u.mobile) $('mobile-badge').style.display = 'inline-flex';
+        try {
+          const r = await fetch(`${BASE}/api/user/profile`, {
+            headers: { 'Content-Type': 'application/json', ...auth() }
+          });
+          if (r.status === 401) { location.href = 'login.html'; return; }
 
-        // text fields
-        $('pf-backup').value = u.backup_email || localStorage.getItem('profile_backup') || '';
-        $('pf-bio').value = u.bio || localStorage.getItem('profile_bio') || '';
-        $('pf-bio').dispatchEvent(new Event('input'));
+          const j = await r.json();
+          if (!j.success && !j.profile) throw new Error(j.detail || 'Failed to load');
 
-        // hobbies
-        const sel = Array.isArray(u.hobbies) ? u.hobbies
-          : (localStorage.getItem('profile_hobbies') || '').split(',').filter(Boolean);
-        renderHobbyChips(sel);
+          const p = j.profile || j.user || {};
 
-        // avatar preference: server -> localStorage -> initials
-        serverAvatar = u.avatar_url || u.avatar || null;
-        avatarDataURL = localStorage.getItem('pendingAvatar') || null;
-        setAvatarFrom(avatarDataURL || serverAvatar);
+          $('pf-name').value = p.name || '';
+          $('pf-handle').value = p.handle || '';
+          $('pf-email').value = p.email || '';
+          $('pf-mobile').value = p.mobile || '';
 
-      } catch (e) { banner('Network error'); }
-    }
+          if (p.email) $('email-badge').style.display = 'inline-flex';
+          if (p.mobile) $('mobile-badge').style.display = 'inline-flex';
 
-    /* ===== Save ===== */
-    $('save').onclick = async () => {
-      const name = $('pf-name').value.trim();
-      const handle = $('pf-handle').value.trim();
-      const backup = $('pf-backup').value.trim();
-      const bio = $('pf-bio').value.trim();
-      const hobbies = getSelectedHobbies();
+          // Render Hobbies
+          renderHobbyChips(p.hobbies || []);
 
-      if (backup && !validEmail(backup)) return banner('Enter valid backup email');
+          // Avatar
+          const av = p.avatar_url || localStorage.getItem('user_avatar_url');
+          if (av) $('pf-preview').style.backgroundImage = `url('${av}')`;
+          else $('pf-preview').textContent = (p.name?.[0] || 'U').toUpperCase();
 
-      // optimistic local store
-      localStorage.setItem('profile_backup', backup);
-      localStorage.setItem('profile_bio', bio);
-      localStorage.setItem('profile_hobbies', hobbies.join(','));
-      if (name) localStorage.setItem('pendingName', name);
-
-      try {
-        // 1) basic fields
-        const r = await fetch(API_BASE + '/api/user/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...auth() },
-          body: JSON.stringify({ name, handle, backup_email: backup, bio, hobbies })
-        });
-        const j = await r.json().catch(() => ({})); if (!j?.ok) { banner(j?.error || 'Save failed'); return; }
-
-        // 2) avatar upload (if chosen)
-        if (avatarDataURL) {
-          try {
-            const blob = await (await fetch(avatarDataURL)).blob();
-            const fd = new FormData(); fd.append('avatar', blob, 'avatar.png');
-            const r2 = await fetch(API_BASE + '/api/user/avatar', { method: 'POST', headers: { ...auth() }, body: fd });
-            if (r2.ok) { localStorage.setItem('pendingAvatar', avatarDataURL); }
-          } catch { }
+        } catch (e) {
+          console.error(e);
+          banner('Failed to load profile');
         }
+      }
 
-        banner('Saved');
-      } catch (e) { banner('Network error'); }
-    };
+      // 3. Save Profile
+      $('save').onclick = async () => {
+        const name = $('pf-name').value.trim();
+        const handle = $('pf-handle').value.trim();
+        const bio = $('pf-bio').value.trim();
+        const hobbies = getSelectedHobbies();
 
-    load();
+        try {
+          const r = await fetch(`${BASE}/api/user/profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...auth() },
+            body: JSON.stringify({ name, handle, bio, hobbies })
+          });
+          if (r.ok) {
+            banner('Profile Saved', true);
+            localStorage.setItem('user_name', name);
+          } else {
+            banner('Save failed');
+          }
+
+          // Upload avatar if changed
+          if (avatarFile) {
+            const fd = new FormData();
+            fd.append('avatar', avatarFile);
+            await fetch(`${BASE}/api/user/avatar`, {
+              method: 'POST',
+              headers: { ...auth() }, // No Content-Type for FormData
+              body: fd
+            });
+          }
+        } catch (e) { banner('Network Error'); }
+      };
+
+      // Hobbies Logic
+      const HOBBIES = ["Reading", "Music", "Travel", "Fitness", "Tech", "Art", "Gaming"];
+      function renderHobbyChips(sel = []) {
+        const h = $('pf-hobbies'); h.innerHTML = '';
+        HOBBIES.forEach(x => {
+          const l = document.createElement('label'); l.className = 'chip-opt';
+          l.innerHTML = `<input type="checkbox" ${sel.includes(x) ? 'checked' : ''}> <span>${x}</span>`;
+          h.appendChild(l);
+        });
+      }
+      function getSelectedHobbies() {
+        return Array.from(document.querySelectorAll('#pf-hobbies input:checked')).map(x => x.nextElementSibling.innerText);
+      }
+
+      // Avatar UI
+      let avatarFile = null;
+      $('pf-avatar').onchange = (e) => {
+        const f = e.target.files?.[0];
+        if (f) {
+          avatarFile = f;
+          const rd = new FileReader();
+          rd.onload = () => $('pf-preview').style.backgroundImage = `url('${rd.result}')`;
+          rd.readAsDataURL(f);
+        }
+      };
+      $('btn-upload').onclick = () => $('pf-avatar').click();
+      $('btn-pick').onclick = () => $('pf-avatar').click();
+
+      load();
+    });
   </script>
 </body>
 
