@@ -156,10 +156,10 @@
 
   <script>
     // ---- API base resolver (meta -> vedsaas.com -> local dev) ----
-    // ---- API base resolver (Hardcoded for Deployment) ----
+    // ---- API base resolver (Dynamic) ----
     (function () {
-      // Junction Server Domain
-      window.API_BASE = 'https://api.vedsaas.com';
+      const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      window.API_BASE = isLocal ? 'http://127.0.0.1:8000' : 'https://api.vedsaas.com';
     })();
 
     const $ = (id) => document.getElementById(id);

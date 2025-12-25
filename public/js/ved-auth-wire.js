@@ -3,7 +3,9 @@
   // ── API base detect ──
   // ── API base detect ──
   const API_BASE = (() => {
-    // Junction Server Domain
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      return 'http://127.0.0.1:8000';
+    }
     return 'https://api.vedsaas.com';
   })();
   const api = p => {
