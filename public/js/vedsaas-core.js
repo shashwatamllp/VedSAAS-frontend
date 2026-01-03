@@ -3,7 +3,7 @@ const ASSISTANT_NAME = 'VedSAAS';
 
 /* ===== API base normalize ===== */
 const API_BASE = (() => {
-  const FALLBACK = 'http://127.0.0.1:8000';
+  const FALLBACK = 'http://127.0.0.1:8010';
   try {
     const meta = document.querySelector('meta[name="ved-api-base"]');
     const m = meta ? (meta.content||'').trim() : '';
