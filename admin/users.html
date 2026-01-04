@@ -1,26 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - VedSAAS Admin</title>
-    <link rel="stylesheet" href="../assets/main.css">
+    <title>Admin Dashboard - VedSAAS</title>
+    <link rel="stylesheet" href="../assets/css/unified-design.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: var(--bg-cosmic);
+            color: var(--text-cosmic);
+        }
+
+        .admin-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .admin-sidebar {
+            width: 260px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-cosmic);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .admin-logo {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-nav {
+            list-style: none;
+        }
+
+        .admin-nav li {
+            margin-bottom: 8px;
+        }
+
+        .admin-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            color: var(--text-cosmic);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .admin-nav a:hover,
+        .admin-nav a.active {
+            background: rgba(77, 107, 255, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .admin-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .admin-header {
+            margin-bottom: 30px;
+        }
+
+        .admin-header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .admin-header p {
+            color: #9aa9ff;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-cosmic);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-cosmic);
+            border-color: var(--accent-blue);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon.blue {
+            background: rgba(77, 107, 255, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .stat-icon.green {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .stat-icon.orange {
+            background: rgba(255, 153, 51, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .stat-icon.purple {
+            background: rgba(191, 90, 242, 0.15);
+            color: var(--accent-purple);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-cosmic);
+        }
+
+        .stat-label {
+            color: #9aa9ff;
+            font-size: 14px;
+        }
+
+        .chart-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-cosmic);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .chart-header {
+            margin-bottom: 20px;
+        }
+
+        .chart-header h3 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .chart-header p {
+            color: #9aa9ff;
+            font-size: 14px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-cosmic);
+            border-radius: var(--radius-md);
+            color: var(--text-cosmic);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .action-btn:hover {
+            background: rgba(77, 107, 255, 0.1);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .action-btn i {
+            font-size: 20px;
+            color: var(--accent-blue);
+        }
+
+        .recent-activity {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-cosmic);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-cosmic);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(77, 107, 255, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #9aa9ff;
+        }
+    </style>
 </head>
-<body class="admin-body">
-    <div class="admin-sidebar">
-        <h2>VedSAAS Admin</h2>
-        <nav>
-            <a href="analytics.html">Analytics</a>
-            <a href="users.html">Users</a>
-            <a href="content.html">Content</a>
-            <a href="settings.html">Settings</a>
-        </nav>
+
+<body class="dark-mode">
+    <canvas id="bg"></canvas>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="admin-logo">
+                <span>🇮🇳</span>
+                <span>VedSAAS Admin</span>
+            </div>
+            <ul class="admin-nav">
+                <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="analytics.html"><i class="fas fa-chart-line"></i> Analytics</a></li>
+                <li><a href="users.html"><i class="fas fa-users"></i> Users</a></li>
+                <li><a href="content.html"><i class="fas fa-file-alt"></i> Content</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="../index.html"><i class="fas fa-home"></i> Back to Site</a></li>
+                <li><a href="../chat/"><i class="fas fa-comments"></i> Chat App</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="admin-header">
+                <h1>Dashboard Overview</h1>
+                <p>Welcome back! Here's what's happening with VedSAAS today.</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value">10,234</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stat-value">1.2M</div>
+                    <div class="stat-label">Total Queries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-value">99.9%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <div class="stat-value">₹45K</div>
+                    <div class="stat-label">Revenue (MTD)</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Usage Overview</h3>
+                    <p>Daily active users and query volume</p>
+                </div>
+                <div id="usage-chart"
+                    style="height: 300px; display: flex; align-items: center; justify-content: center; color: #9aa9ff;">
+                    <p>📊 Chart visualization will be rendered here using Chart.js</p>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Quick Actions</h3>
+                    <p>Common administrative tasks</p>
+                </div>
+                <div class="quick-actions">
+                    <a href="users.html" class="action-btn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add New User</span>
+                    </a>
+                    <a href="content.html" class="action-btn">
+                        <i class="fas fa-file-plus"></i>
+                        <span>Create Content</span>
+                    </a>
+                    <a href="analytics.html" class="action-btn">
+                        <i class="fas fa-download"></i>
+                        <span>Export Report</span>
+                    </a>
+                    <a href="settings.html" class="action-btn">
+                        <i class="fas fa-cog"></i>
+                        <span>System Settings</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <div class="chart-header">
+                    <h3>Recent Activity</h3>
+                    <p>Latest system events and user actions</p>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New user registered: Priya Sharma</div>
+                        <div class="activity-time">2 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">1,234 queries processed in the last hour</div>
+                        <div class="activity-time">5 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">System performance: All services running optimally</div>
+                        <div class="activity-time">10 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New subscription: Premium plan purchased</div>
+                        <div class="activity-time">15 minutes ago</div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-    <div class="admin-main">
-        <h1>User Management</h1>
-        <div class="admin-content">
-            <p>Admin dashboard content for User Management</p>
-        </div>
-    </div>
+
+    <script src="../public/js/bg.js"></script>
 </body>
+
 </html>
