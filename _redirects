@@ -1,0 +1,12 @@
+# Subdomain redirects
+https://docs.vedsaas.com/* https://vedsaas.com/subdomains/docs/:splat 200
+https://api.vedsaas.com/* https://vedsaas.com/subdomains/api/:splat 200
+https://status.vedsaas.com/* https://vedsaas.com/subdomains/status/:splat 200
+https://help.vedsaas.com/* https://vedsaas.com/subdomains/help/:splat 200
+https://careers.vedsaas.com/* https://vedsaas.com/subdomains/careers/:splat 200
+https://console.vedsaas.com/* https://vedsaas.com/subdomains/console/:splat 200
+https://wiki.vedsaas.com/* https://vedsaas.com/subdomains/wiki/:splat 200
+https://contact.vedsaas.com/* https://vedsaas.com/subdomains/contact/:splat 200
+
+# WWW redirect
+https://www.vedsaas.com/* https://vedsaas.com/:splat 301

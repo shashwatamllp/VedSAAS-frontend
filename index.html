@@ -5,6 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VedSAAS | The Artificial Civilization</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#00f0ff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030304">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VedSAAS">
+    <link rel="apple-touch-icon" href="/public/icons/apple-touch-icon.png">
+
+    <!-- MS Tiles -->
+    <meta name="msapplication-TileColor" content="#030304">
+    <meta name="msapplication-TileImage" content="/public/icons/icon-512x512.png">
+
+    <!-- SEO -->
+    <meta name="description"
+        content="India's First AI Platform supporting 22+ Indian languages with deep cultural understanding">
+    <meta name="keywords" content="AI, Indian languages, VedSAAS, chatbot, Hindi AI, multilingual AI">
+
     <link rel="stylesheet" href="public/css/civilization.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
@@ -589,6 +613,9 @@
             animate();
         }
     </script>
+
+    <!-- PWA Initialization -->
+    <script src="/pwa-init.js"></script>
 </body>
 
 </html>
