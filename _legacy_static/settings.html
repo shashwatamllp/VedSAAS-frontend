@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Settings — VedSAAS</title>
+<link rel="icon" href="/favicon.ico"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+  :root{
+    --bg: #0e0f14;
+    --surface: #0f1720;
+    --muted: #94a3b8;
+    --text: #e9edf4;
+    --accent: #2a7;
+  }
+  .light-theme{
+    --bg: #f7fafc;
+    --surface: #ffffff;
+    --muted: #475569;
+    --text: #0b1220;
+    --accent: #1366d6;
+  }
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:var(--bg); color:var(--text) }
+  .wrap{ max-width:960px; margin:24px auto; padding:16px }
+  h1,h2{ margin:0 0 12px 0 }
+  .card{ background:var(--surface); padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.03) }
+  .row{ display:flex; gap:12px; align-items:center; margin-top:10px }
+  select, button{ padding:8px 10px; border-radius:8px; background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.03) }
+  a.btn{ display:inline-block; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.02); color:var(--text) }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Settings</h1>
+
+    <section class="card" aria-labelledby="user-heading">
+      <h2 id="user-heading">User</h2>
+      <div id="user-settings" role="region" aria-live="polite">
+        <!-- JS will render login/register or user info here -->
+        <p>Loading...</p>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px" aria-labelledby="appearance-heading">
+      <h2 id="appearance-heading">Appearance</h2>
+      <div class="row">
+        <button id="theme-toggle-btn" aria-label="Toggle theme">Toggle Theme</button>
+        <div style="margin-left:8px">Current: <span data-theme-indicator></span></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px" aria-labelledby="language-heading">
+      <h2 id="language-heading">Chat Language</h2>
+      <div class="row">
+        <label for="chat-lang-select-settings" class="sr-only">Preferred chat language</label>
+        <select id="chat-lang-select-settings" aria-label="Select chat language">
+          <option value="Auto">Auto</option>
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+        <div style="margin-left:8px">Current: <span data-chat-lang-indicator></span></div>
+      </div>
+    </section>
+
+    <div style="margin-top:18px">
+      <a href="index.html" class="btn" aria-label="Back to chat">← Back to chat</a>
+    </div>
+  </div>
+
+<script>
+/* Shared keys */
+const THEME_KEY = 'vedsaas_theme';
+const LANG_KEY = 'vedsaas_chat_lang';
+
+function applyTheme(theme){
+  if(theme === 'light') document.documentElement.classList.add('light-theme');
+  else document.documentElement.classList.remove('light-theme');
+  document.querySelectorAll('[data-theme-indicator]').forEach(el=> el.textContent = theme);
+}
+function getSavedTheme(){ return localStorage.getItem(THEME_KEY) || 'dark'; }
+function setSavedTheme(t){ localStorage.setItem(THEME_KEY, t); applyTheme(t); }
+
+function setSavedLang(lang){
+  localStorage.setItem(LANG_KEY, lang);
+  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = lang);
+}
+function getSavedLang(){ return localStorage.getItem(LANG_KEY) || 'Auto'; }
+
+/* Settings user area */
+async function loadUserArea(){
+  const container = document.getElementById('user-settings');
+  const loginHref = 'login.html';
+  const registerHref = 'register.html';
+
+  function renderLoggedOut(){
+    container.innerHTML = `
+      <p>You are not signed in.</p>
+      <a href="${loginHref}" class="btn" role="button" aria-label="Login">Login</a>
+      <a href="${registerHref}" class="btn" role="button" aria-label="Register" style="margin-left:8px">Register</a>
+    `;
+  }
+
+  function renderUser(user){
+    container.innerHTML = `
+      <h3>${user.name || user.email || 'User'}</h3>
+      <p><strong>Email:</strong> ${user.email || '—'}</p>
+      <p><strong>Plan:</strong> ${user.plan || 'Free'}</p>
+      <div style="margin-top:8px">
+        <button id="logout-btn" class="btn" aria-label="Logout">Logout</button>
+      </div>
+    `;
+    const logoutBtn = document.getElementById('logout-btn');
+    if(logoutBtn && window.VedAPI && typeof VedAPI.logout === 'function'){
+      logoutBtn.addEventListener('click', async ()=>{
+        try{
+          await VedAPI.logout();
+          location.reload();
+        }catch(e){
+          console.error('Logout failed', e);
+          location.reload();
+        }
+      });
+    }
+  }
+
+  try{
+    if(window.VedAPI && typeof VedAPI.getUser === 'function'){
+      const user = await VedAPI.getUser();
+      if(user && (user.email || user.name)){
+        renderUser(user);
+      } else {
+        renderLoggedOut();
+      }
+    } else {
+      if(window.USER && (USER.email || USER.name)){
+        renderUser(window.USER);
+      } else {
+        renderLoggedOut();
+      }
+    }
+  }catch(err){
+    console.error(err);
+    renderLoggedOut();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  // apply theme and language saved values
+  applyTheme(getSavedTheme());
+  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = getSavedLang());
+
+  // Theme toggle
+  const tBtn = document.getElementById('theme-toggle-btn');
+  if(tBtn) tBtn.addEventListener('click', ()=>{
+    const current = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';
+    const next = current === 'light' ? 'dark' : 'light';
+    setSavedTheme(next);
+  });
+
+  // Language selector
+  const sel = document.getElementById('chat-lang-select-settings');
+  if(sel){
+    sel.value = getSavedLang();
+    sel.addEventListener('change', (e)=> setSavedLang(e.target.value));
+  }
+
+  loadUserArea();
+});
+</script>
+</body>
+</html>

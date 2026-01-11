@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta http-equiv="x-content-type-options" content="nosniff"/>
+  <meta name="referrer" content="strict-origin-when-cross-origin"/>
+  <!-- Force prod API; JS will honor this if present -->
+  <meta name="ved-api-base" content="https://api.vedsaas.com"/>
+  <title>VedSAAS • Verify OTP</title>
+
+  <style>
+    :root{
+      --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
+      --text:#fff; --brand:#0078d4; --brand-2:#005ea2; --muted:#b9bed1;
+      --ok:#b7ffb7; --err:#ffd7d7;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
+      background:radial-gradient(1200px 600px at 50% -10%, #2a2a3b 0%, #1e1e2f 60%);
+      color:var(--text); display:flex; align-items:center; justify-content:center; overflow:hidden;
+    }
+    .card{position:relative;z-index:1;width:min(520px,94vw);background:var(--card);
+      border-radius:14px;padding:26px 24px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+    h1{text-align:center;margin-bottom:8px}
+    .sub{color:var(--muted);text-align:center;font-size:14px;margin-bottom:14px}
+    label{display:block;font-size:13px;color:#cfd2e2;margin:8px 0 6px}
+    .ip{width:100%;padding:12px 14px;border-radius:10px;border:none;background:var(--ip);color:#fff;outline:none;font-size:16px}
+    .ip:focus{background:var(--ip-focus)}
+    .row{display:flex;gap:10px}
+    .btn{width:100%;padding:12px 14px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-weight:600;margin-top:12px;cursor:pointer}
+    .btn:hover{background:var(--brand-2)}
+    .btn-secondary{background:#444}
+    .msg{min-height:18px;margin-top:10px;text-align:center;font-size:13px}
+    .ok{color:var(--ok)} .err{color:var(--err)}
+  </style>
+</head>
+<body>
+  <div class="card" role="dialog" aria-labelledby="title" aria-describedby="who">
+    <h1 id="title">Verify OTP</h1>
+    <p id="who" class="sub"></p>
+
+    <label for="otp">Enter 6-digit OTP</label>
+    <input id="otp" class="ip" inputmode="numeric" autocomplete="one-time-code"
+           maxlength="6" placeholder="••••••" autofocus aria-describedby="msg"/>
+
+    <div class="row" style="margin-top:4px">
+      <button id="verify" class="btn">Verify</button>
+      <button id="back" class="btn btn-secondary" type="button">Back</button>
+    </div>
+
+    <p class="sub" id="resendLine" style="margin-top:12px">
+      Didn’t receive?
+      <a href="#" id="resend" style="color:#76b7ff">Resend</a>
+      <span id="cool"></span>
+    </p>
+
+    <div id="msg" class="msg" role="status" aria-live="polite"></div>
+  </div>
+
+<script>
+  // ---- API base resolver (meta -> vedsaas.com -> local dev) ----
+  (function(){
+    if (window.API_BASE) return;
+    const metaBase = document.querySelector('meta[name="ved-api-base"]')?.content || '';
+    const h = (location.hostname || '').toLowerCase();
+    const origin = location.origin || '';
+    if (metaBase) window.API_BASE = metaBase.replace(/\/$/, '');
+    else if (h.endsWith('vedsaas.com')) window.API_BASE = (h === 'api.vedsaas.com') ? origin : 'https://api.vedsaas.com';
+    else if (/:(8010|8011|8012)\b/.test(origin)) window.API_BASE = origin;
+    else window.API_BASE = 'http://127.0.0.1:8010';
+  })();
+
+  const $ = (id) => document.getElementById(id);
+  const setMsg = (t, ok=false) => { const m = $('msg'); m.className = 'msg ' + (ok?'ok':'err'); m.textContent = t || ''; };
+
+  function mapHttpError(r, bodyTxt){
+    if (r.status === 403 && /cacheable requests|cloudfront/i.test(bodyTxt||'')) {
+      return 'Blocked by CDN: /api/* is not hitting API origin. Fix CloudFront behavior.';
+    }
+    if (r.status === 429) return 'Too many requests. Try again later.';
+    if (r.status >= 500) return 'Server error. Please try again.';
+    return `HTTP ${r.status}${r.statusText ? ' ' + r.statusText : ''}${bodyTxt ? ': ' + bodyTxt : ''}`;
+  }
+
+  // who are we verifying?
+  const qs  = new URLSearchParams(location.search);
+  const who = qs.get('who') || localStorage.getItem('pendingIdentifier') || '';
+  $('who').textContent = who ? ('For: ' + who) : 'Identifier missing';
+
+  // cooldown for resend (persists during this page view)
+  function cooldown(sec){
+    const c=$('cool'), a=$('resend');
+    a.style.pointerEvents='none'; a.style.opacity='.6';
+    let s=sec; c.textContent='(' + s + 's)';
+    const t=setInterval(()=>{ s--; c.textContent = s>0 ? '('+s+'s)' : '';
+      if(s<=0){ clearInterval(t); a.style.pointerEvents='auto'; a.style.opacity='1'; }},1000);
+  }
+  if (qs.get('sent') === '1') cooldown(45);
+
+  // back
+  $('back').onclick = () => history.length>1 ? history.back() : location.href='login.html';
+
+  // resend
+  $('resend').onclick = async (e) => {
+    e.preventDefault();
+    if (!who) return;
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 15000);
+    try{
+      const r = await fetch(window.API_BASE + '/api/send-otp', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify({ identifier: who }),
+        signal: ac.signal,
+        mode:'cors', cache:'no-store', credentials:'omit'
+      });
+      const ct = r.headers.get('content-type') || '';
+      const body = ct.includes('application/json') ? await r.json().catch(()=>({})) : await r.text().catch(()=> '');
+      if (!r.ok) return setMsg(mapHttpError(r, typeof body==='string'?body:body.error));
+      if (body && body.ok) { setMsg('OTP sent again', true); cooldown(45); }
+      else setMsg((body && body.error) || 'Failed to resend');
+    }catch(err){
+      setMsg(err?.name === 'AbortError' ? 'Network timeout.' : 'Network error.');
+    } finally { clearTimeout(timer); }
+  };
+
+  async function verifyOtp(){
+    const code = ($('otp').value || '').replace(/\D+/g,'').slice(0,6);
+    $('otp').value = code;
+    if (code.length < 4) return setMsg('Enter full OTP');
+    if (!who) return setMsg('Identifier missing');
+
+    const btn = $('verify');
+    btn.disabled = true; setMsg('');
+
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 15000);
+
+    try{
+      const r = await fetch(window.API_BASE + '/api/verify-otp', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify({ identifier: who, otp: code }),
+        signal: ac.signal,
+        mode:'cors', cache:'no-store', credentials:'omit'
+      });
+
+      const ct = r.headers.get('content-type') || '';
+      const j = ct.includes('application/json') ? await r.json().catch(()=>({})) : { error: await r.text().catch(()=> '') };
+
+      if (!r.ok) return setMsg(mapHttpError(r, typeof j === 'string' ? j : j.error));
+
+      if (!j || !j.ok || !j.token) return setMsg((j && j.error) || 'Invalid OTP');
+
+      // success
+      try { localStorage.setItem('token', j.token); } catch {}
+      setMsg('Verified! Finishing setup…', true);
+
+      // optional profile completes
+      const nm = localStorage.getItem('pendingName');
+      if (nm) { try {
+        await fetch(window.API_BASE + '/api/user/profile', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+j.token},
+          body: JSON.stringify({ name:nm })
+        });
+      } catch {} }
+
+      const av = localStorage.getItem('pendingAvatar');
+      if (av) { try {
+        const blob = await (await fetch(av)).blob();
+        const fd = new FormData(); fd.append('avatar', blob, 'avatar.png');
+        await fetch(window.API_BASE + '/api/user/avatar', {
+          method:'POST', headers:{'Authorization':'Bearer '+j.token}, body: fd
+        });
+      } catch {} }
+
+      const dob = localStorage.getItem('pendingDob'); if (dob) { localStorage.setItem('profile_dob', dob); }
+
+      // cleanup & go home
+      localStorage.removeItem('pendingAvatar');
+      localStorage.removeItem('pendingDob');
+      localStorage.removeItem('pendingName');
+      localStorage.removeItem('pendingIdentifier');
+
+      setTimeout(() => location.href = 'index.html', 400);
+    }catch(err){
+      setMsg(err?.name === 'AbortError' ? 'Network timeout. Try again.' : 'Network error. Try again.');
+    } finally {
+      clearTimeout(timer);
+      btn.disabled = false;
+    }
+  }
+
+  $('verify').onclick = verifyOtp;
+  $('otp').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); verifyOtp(); }});
+</script>
+</body>
+</html>

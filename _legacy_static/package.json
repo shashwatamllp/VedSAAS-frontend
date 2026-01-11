@@ -1,0 +1,22 @@
+{
+  "name": "vedsaas-frontend",
+  "version": "1.0.0",
+  "description": "India's First Multilingual AI Platform - Frontend",
+  "main": "index.html",
+  "scripts": {
+    "start": "python serve_frontend.py",
+    "serve": "serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "india",
+    "multilingual",
+    "vedsaas"
+  ],
+  "author": "Shashwatam Eco-Chic Creations LLP",
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}

@@ -1,0 +1,285 @@
+/* 
+   VedSAAS 4.0 Design System 
+   "Vedic-Futurism"
+*/
+
+:root {
+    /* -- Palette: Void (Dark) -- */
+    --bg-void: #030304;
+    --bg-card: rgba(20, 20, 25, 0.6);
+    --bg-input: rgba(255, 255, 255, 0.05);
+
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-active: rgba(255, 255, 255, 0.2);
+
+    --accent-cyan: #00f0ff;
+    --accent-purple: #7000ff;
+    --accent-pink: #ff0055;
+
+    --text-primary: #ffffff;
+    --text-secondary: #9494a0;
+
+    /* -- Effects -- */
+    --glass-blur: blur(20px);
+    --shadow-card: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    --glow-cyan: 0 0 20px rgba(0, 240, 255, 0.15);
+
+    /* -- Typography -- */
+    --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* -- Light Mode Palette -- */
+body.light-mode {
+    --bg-void: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --bg-input: #f5f5f7;
+
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --border-active: rgba(0, 0, 0, 0.1);
+
+    --accent-cyan: #0066cc;
+    /* International Blue */
+    --accent-purple: #5e5ce6;
+    --accent-pink: #ff2d55;
+
+    --text-primary: #000000;
+    --text-secondary: #4a4a4f;
+
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --glow-cyan: none;
+}
+
+/* -- Reset & Baselines -- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    outline: none;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    line-height: 1.5;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s;
+}
+
+ul {
+    list-style: none;
+}
+
+/* -- Utility: Layout -- */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* -- Utility: Components -- */
+
+/* Glass Card */
+.card-glass {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 32px;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s;
+}
+
+.card-glass:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-card);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 99px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background: var(--text-primary);
+    color: var(--bg-void);
+}
+
+.btn-primary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.btn-ghost {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--text-primary);
+}
+
+.btn-ghost:hover {
+    background: rgba(128, 128, 128, 0.2);
+}
+
+/* Typography Gradient */
+.text-gradient {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* -- Branding: Navbar -- */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 20px 0;
+    background: rgba(var(--bg-void), 0.8);
+    /* fallback */
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.brand-logo {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: -1px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* -- Animations -- */
+.fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* -- Specifics: Ticker -- */
+.ticker-container {
+    overflow: hidden;
+    position: relative;
+    padding: 40px 0;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.ticker-track {
+    display: flex;
+    gap: 20px;
+    width: max-content;
+    animation: scroll 40s linear infinite;
+}
+
+.ticker-pill {
+    padding: 8px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 5px #22c55e;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* -- Specifics: Ecosystem Stats -- */
+.stat-item {
+    text-align: center;
+}
+
+.stat-num {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 8px;
+}
+
+/* -- Theme Toggle -- */
+#theme-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+}

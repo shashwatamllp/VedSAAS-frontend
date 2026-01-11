@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VedSAAS | Analytics</title>
+    <title>VedSAAS | Training Dashboard</title>
     <link rel="stylesheet" href="../public/css/civilization.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap"
@@ -90,32 +90,7 @@
             padding: 32px
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 24px
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin: 8px 0
-        }
-
-        .stat-label {
-            font-size: .85rem;
-            color: var(--text-secondary)
-        }
-
-        .chart-card {
+        .training-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
             border-radius: 16px;
@@ -123,11 +98,58 @@
             margin-bottom: 20px
         }
 
-        .chart-canvas {
-            width: 100%;
-            height: 200px;
-            background: rgba(0, 0, 0, .3);
-            border-radius: 8px
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-input);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            transition: width .3s
+        }
+
+        .control-btn {
+            padding: 12px 24px;
+            background: var(--accent-cyan);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 12px
+        }
+
+        .control-btn.danger {
+            background: #ef4444;
+            color: #fff
+        }
+
+        .metric-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0
+        }
+
+        .metric-item {
+            background: var(--bg-input);
+            padding: 16px;
+            border-radius: 12px
+        }
+
+        .metric-label {
+            font-size: .85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700
         }
 
         .icon-btn {
@@ -156,8 +178,8 @@
                 <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Overview</a>
                 <a href="users.html" class="nav-item"><i class="fas fa-users"></i> User Management</a>
                 <a href="health.html" class="nav-item"><i class="fas fa-heartbeat"></i> System Health</a>
-                <a href="training.html" class="nav-item"><i class="fas fa-brain"></i> Training</a>
-                <a href="analytics.html" class="nav-item active"><i class="fas fa-chart-bar"></i> Analytics</a>
+                <a href="training.html" class="nav-item active"><i class="fas fa-brain"></i> Training</a>
+                <a href="analytics.html" class="nav-item"><i class="fas fa-chart-bar"></i> Analytics</a>
                 <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> Configuration</a>
                 <a href="security.html" class="nav-item"><i class="fas fa-shield-alt"></i> Security</a>
             </nav>
@@ -168,60 +190,58 @@
 
         <main class="dashboard-main">
             <header class="dashboard-header">
-                <div class="header-title">Analytics & Insights</div>
+                <div class="header-title">Training Dashboard</div>
                 <button id="theme-toggle" class="icon-btn"><i class="fas fa-moon"></i></button>
             </header>
 
             <div class="dashboard-content">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Users</div>
-                        <div class="stat-value">12,482</div>
-                        <div style="color:#22c55e;font-size:.85rem"><i class="fas fa-arrow-up"></i> +12.5% this month
-                        </div>
+                <div class="training-card">
+                    <h3 style="margin-bottom:16px">Model Training Status</h3>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                        <span>Epoch 42 / 100</span>
+                        <span id="progress-text">42%</span>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Total Messages</div>
-                        <div class="stat-value">1.2M</div>
-                        <div style="color:#22c55e;font-size:.85rem"><i class="fas fa-arrow-up"></i> +8.3% this week
-                        </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width:42%"></div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Avg Messages/User</div>
-                        <div class="stat-value">96</div>
-                        <div style="color:#f59e0b;font-size:.85rem"><i class="fas fa-minus"></i> -2.1% this week</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">API Requests</div>
-                        <div class="stat-value">842K</div>
-                        <div style="color:#22c55e;font-size:.85rem"><i class="fas fa-arrow-up"></i> +15.7% today</div>
+                    <div style="margin-top:20px">
+                        <button class="control-btn" onclick="startTraining()"><i class="fas fa-play"></i> Start</button>
+                        <button class="control-btn" onclick="pauseTraining()"><i class="fas fa-pause"></i>
+                            Pause</button>
+                        <button class="control-btn danger" onclick="stopTraining()"><i class="fas fa-stop"></i>
+                            Stop</button>
                     </div>
                 </div>
 
-                <div class="chart-card">
-                    <h3 style="margin-bottom:16px">User Growth (Last 30 Days)</h3>
-                    <canvas id="growth-chart" class="chart-canvas"></canvas>
+                <div class="training-card">
+                    <h3 style="margin-bottom:16px">Training Metrics</h3>
+                    <div class="metric-row">
+                        <div class="metric-item">
+                            <div class="metric-label">Loss</div>
+                            <div class="metric-value">0.0342</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Accuracy</div>
+                            <div class="metric-value">94.2%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Perplexity</div>
+                            <div class="metric-value">12.8</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">Learning Rate</div>
+                            <div class="metric-value">0.0001</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="chart-card">
-                    <h3 style="margin-bottom:16px">Popular AI Modes</h3>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
-                        <div style="padding:16px;background:var(--bg-input);border-radius:12px">
-                            <div style="font-size:.85rem;color:var(--text-secondary)">Hindi-Vani</div>
-                            <div style="font-size:1.5rem;font-weight:700">42%</div>
-                        </div>
-                        <div style="padding:16px;background:var(--bg-input);border-radius:12px">
-                            <div style="font-size:.85rem;color:var(--text-secondary)">VedaLogic</div>
-                            <div style="font-size:1.5rem;font-weight:700">28%</div>
-                        </div>
-                        <div style="padding:16px;background:var(--bg-input);border-radius:12px">
-                            <div style="font-size:.85rem;color:var(--text-secondary)">Math-Rishi</div>
-                            <div style="font-size:1.5rem;font-weight:700">18%</div>
-                        </div>
-                        <div style="padding:16px;background:var(--bg-input);border-radius:12px">
-                            <div style="font-size:.85rem;color:var(--text-secondary)">Others</div>
-                            <div style="font-size:1.5rem;font-weight:700">12%</div>
-                        </div>
+                <div class="training-card">
+                    <h3 style="margin-bottom:16px">Dataset Information</h3>
+                    <div style="font-family:var(--font-mono);font-size:.9rem">
+                        <div style="margin-bottom:8px">Total Samples: <strong>2,500,000</strong></div>
+                        <div style="margin-bottom:8px">Processed: <strong>1,050,000</strong> (42%)</div>
+                        <div style="margin-bottom:8px">Remaining: <strong>1,450,000</strong></div>
+                        <div>Estimated Time: <strong>~4.2 hours</strong></div>
                     </div>
                 </div>
             </div>
@@ -243,21 +263,9 @@
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
         });
 
-        // Simple chart
-        const canvas = document.getElementById('growth-chart');
-        const ctx = canvas.getContext('2d');
-        canvas.width = canvas.offsetWidth;
-        canvas.height = 200;
-        ctx.strokeStyle = '#00f0ff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        for (let i = 0; i < 30; i++) {
-            const x = (canvas.width / 30) * i;
-            const y = canvas.height / 2 + Math.sin(i * .2) * 40 + Math.random() * 20;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+        function startTraining() { alert('Training started (mock)') }
+        function pauseTraining() { alert('Training paused (mock)') }
+        function stopTraining() { alert('Training stopped (mock)') }
     </script>
 </body>
 
