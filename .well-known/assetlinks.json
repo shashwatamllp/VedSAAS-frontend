@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.vedsaas.www.twa",
+            "sha256_cert_fingerprints": [
+                "14:4F:F0:51:0D:35:73:6C:7E:64:2E:12:92:05:DF:29:34:00:E9:DC:86:9B:A9:55:BB:44:C9:E4:17:44:90:91"
+            ]
+        }
+    }
+]
