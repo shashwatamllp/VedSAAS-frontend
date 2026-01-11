@@ -212,6 +212,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - **Website**: [vedsaas.com](https://vedsaas.com)
+- - **Website**: [vedsaas.com](https://vedsaas.in)
 - **Documentation**: [docs.vedsaas.com](https://docs.vedsaas.com)
 - **API**: [api.vedsaas.com](https://api.vedsaas.com)
 - **Status**: [status.vedsaas.com](https://status.vedsaas.com)
