@@ -2,7 +2,7 @@
     "name": "VedSAAS - The Artificial Civilization",
     "short_name": "VedSAAS",
     "description": "India's First AI Platform supporting 22+ Indian languages with deep cultural understanding",
-    "start_url": "/",
+    "start_url": "/chat/",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
