@@ -455,8 +455,47 @@
         </div>
     </footer>
 
-    <!-- Brain Animation -->
-    <script src="/public/js/brain-animation.js"></script>
+    <!-- Brain Animation (Inlined for reliability) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('brain-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                const body = document.body;
+                let points = [];
+                for (let i = 0; i < 150; i++) {
+                    const theta = Math.acos(2 * Math.random() - 1);
+                    const phi = Math.sqrt(150 * Math.PI) * theta;
+                    const r = 100;
+                    points.push({ x: r * Math.sin(theta) * Math.cos(phi), y: r * Math.sin(theta) * Math.sin(phi), z: r * Math.cos(theta) });
+                }
+
+                let rot = 0;
+                function animate() {
+                    ctx.clearRect(0, 0, 300, 300);
+                    const cx = 150, cy = 150;
+                    rot += 0.005;
+
+                    const isLight = body.classList.contains('light-mode');
+                    const color = isLight ? '#0066cc' : '#00f0ff';
+
+                    points.forEach(p => {
+                        let x = p.x * Math.cos(rot) - p.z * Math.sin(rot);
+                        let z = p.x * Math.sin(rot) + p.z * Math.cos(rot);
+                        let scale = 300 / (300 + z);
+
+                        ctx.fillStyle = color;
+                        ctx.globalAlpha = Math.max(0.1, (z + 100) / 200);
+                        ctx.beginPath();
+                        ctx.arc(cx + x * scale, cy + p.y * scale, 1.5 * scale, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            }
+        });
+    </script>
 
     <!-- PWA Initialization -->
     <!-- Component Loader -->
