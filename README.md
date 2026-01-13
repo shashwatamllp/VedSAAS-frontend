@@ -1,24 +1,20 @@
 # VedSAAS Frontend
+India's First AI Platform in 22+ Languages - Complete Frontend Application
 
-> India's First AI Platform in 22+ Languages - Complete Frontend Application
+License Made in India
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Made in India](https://img.shields.io/badge/Made%20in-Bharat%20🇮🇳-orange.svg)](https://github.com/shashwatamllp)
-
-## 🌟 Overview
-
+🌟 Overview
 VedSAAS is a cutting-edge AI platform designed specifically for Indian languages and cultural context. This repository contains the complete frontend application with 24+ pages, premium UI/UX, and a comprehensive design system.
 
-## ✨ Features
+✨ Features
+🎨 Premium Design System - VedSAAS 4.0 "Vedic-Futurism" aesthetic
+🌓 Dark/Light Mode - Seamless theme switching
+🗣️ 22+ Indian Languages - Full multilingual support
+📱 Responsive Design - Works on all devices
+⚡ Fast & Optimized - Lightweight and performant
+🔒 Secure - Built with security best practices
 
-- 🎨 **Premium Design System** - VedSAAS 4.0 "Vedic-Futurism" aesthetic
-- 🌓 **Dark/Light Mode** - Seamless theme switching
-- 🗣️ **22+ Indian Languages** - Full multilingual support
-- 📱 **Responsive Design** - Works on all devices
-- ⚡ **Fast & Optimized** - Lightweight and performant
-- 🔒 **Secure** - Built with security best practices
-
-## 📦 What's Included
+📦 What's Included
 
 ### Main Pages
 - **Landing Page** (`index.html`) - Hero, Features, Pricing, Testimonials, FAQ
@@ -43,32 +39,30 @@ VedSAAS is a cutting-edge AI platform designed specifically for Indian languages
 - **Developer Console** (`console.html`) - Code playground
 - **Wiki** (`wiki.html`) - Knowledge base
 - **Contact** (`contact.html`) - Support contacts
-  - `support.html` - General support
-  - `investor.html` - Investor relations
-  - `ai-team.html` - AI team contact
+    - `support.html` - General support
+    - `investor.html` - Investor relations
+    - `ai-team.html` - AI team contact
 
-## 🚀 Quick Start
+🚀 Quick Start
 
 ### Local Development
-
 1. **Clone the repository**
-```bash
-git clone https://github.com/shashwatamllp/VedSAAS-frontend.git
-cd VedSAAS-frontend
-```
+   ```bash
+   git clone https://github.com/shashwatamllp/VedSAAS-frontend.git
+   cd VedSAAS-frontend
+   ```
 
 2. **Run local server**
-```bash
-python serve_frontend.py
-```
+   ```bash
+   python serve_frontend.py
+   ```
 
 3. **Open browser**
-```
-http://localhost:3000
-```
+   ```
+   http://localhost:3000
+   ```
 
 ### Deploy to Vercel (Recommended)
-
 ```bash
 # Install Vercel CLI
 npm install -g vercel
@@ -80,8 +74,7 @@ vercel
 vercel --prod
 ```
 
-## 📁 Project Structure
-
+📁 Project Structure
 ```
 VedSAAS-frontend/
 ├── index.html              # Landing page
@@ -129,16 +122,16 @@ VedSAAS-frontend/
 └── serve_frontend.py       # Local dev server
 ```
 
-## 🎨 Design System
+🎨 Design System
 
 ### Colors
-- **Dark Mode**: `#030304` (Void) + `#00f0ff` (Cyan)
-- **Light Mode**: `#ffffff` (Paper) + `#0066cc` (Ink Blue)
-- **Accent**: Cyan (`#00f0ff`) and Purple (`#7000ff`)
+- **Dark Mode:** `#030304` (Void) + `#00f0ff` (Cyan)
+- **Light Mode:** `#ffffff` (Paper) + `#0066cc` (Ink Blue)
+- **Accent:** Cyan (`#00f0ff`) and Purple (`#7000ff`)
 
 ### Typography
-- **UI Font**: Inter
-- **Mono Font**: JetBrains Mono
+- **UI Font:** Inter
+- **Mono Font:** JetBrains Mono
 
 ### Components
 - Glassmorphism cards
@@ -146,77 +139,67 @@ VedSAAS-frontend/
 - Smooth animations
 - Interactive hover states
 
-## 🌐 Deployment Options
+🌐 Deployment Options
 
-### 1. Vercel (Recommended)
-```bash
-vercel --prod
-```
+1. **Vercel (Recommended)**
+   ```bash
+   vercel --prod
+   ```
 
-### 2. Netlify
-```bash
-netlify deploy --prod
-```
+2. **Netlify**
+   ```bash
+   netlify deploy --prod
+   ```
 
-### 3. GitHub Pages
-- Enable in Settings → Pages
-- Source: `main` branch
+3. **GitHub Pages**
+   - Enable in Settings → Pages
+   - Source: `main` branch
 
-### 4. Traditional Hosting
-- Upload to `public_html`
-- Set permissions: Files 644, Folders 755
+4. **Traditional Hosting**
+   - Upload to `public_html`
+   - Set permissions: Files 644, Folders 755
 
-## 📧 Contact
+📧 Contact
+- **General Support:** support@vedsaas.com
+- **AI Team:** vedsaasai@shashwatam.com
+- **Investor Relations:** investor@vedsaas.com
 
-- **General Support**: support@vedsaas.com
-- **AI Team**: vedsaasai@shashwatam.com
-- **Investor Relations**: investor@vedsaas.com
-
-## 🛠️ Tech Stack
-
+🛠️ Tech Stack
 - **HTML5** - Semantic markup
 - **CSS3** - Custom design system
 - **JavaScript** - Vanilla JS
 - **Font Awesome** - Icons
 - **Google Fonts** - Typography
 
-## 📊 Statistics
+📊 Statistics
+- **Total Pages:** 24+
+- **Lines of Code:** 5,000+
+- **File Size:** ~35KB (minified CSS)
+- **Load Time:** < 1s
+- **Lighthouse Score:** 95+
 
-- **Total Pages**: 24+
-- **Lines of Code**: 5,000+
-- **File Size**: ~35KB (minified CSS)
-- **Load Time**: < 1s
-- **Lighthouse Score**: 95+
-
-## 🔒 Security
-
+🔒 Security
 - End-to-end encryption ready
 - Secure authentication flow
 - XSS protection
 - CSRF tokens (backend integration)
 
-## 🤝 Contributing
-
+🤝 Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
+📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
+🙏 Acknowledgments
 - Built by **Shashwatam Eco-Chic Creations LLP**
 - Made in Bharat 🇮🇳
 - Powered by Sabhyata v4.0
 
-## 🔗 Links
+🔗 Links
+- Website: [vedsaas.com](https://vedsaas.com)
+- Website: [vedsaas.in](https://vedsaas.in)
+- Documentation: [docs.vedsaas.com](https://docs.vedsaas.com)
+- API: [api.vedsaas.com](https://api.vedsaas.com)
+- Status: [status.vedsaas.com](https://status.vedsaas.com)
 
-- **Website**: [vedsaas.com](https://vedsaas.com)
-- - **Website**: [vedsaas.in](https://vedsaas.in)
-- **Documentation**: [docs.vedsaas.com](https://docs.vedsaas.com)
-- **API**: [api.vedsaas.com](https://api.vedsaas.com)
-- **Status**: [status.vedsaas.com](https://status.vedsaas.com)
-
----
-
-**Made with ❤️ in India**
+Made with ❤️ in India
