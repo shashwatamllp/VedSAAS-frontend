@@ -360,11 +360,17 @@
       width: 100%;
       display: flex;
       align-items: flex-end;
-      gap: 10px;
-      background: transparent;
-      border: none;
-      border-radius: 0;
-      padding: 0
+      gap: 8px;
+      background: #343541;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      /* Pill shape handled in mobile media query, this is desktop default */
+      padding: 8px 10px;
+      transition: border-color 0.2s;
+    }
+
+    .composer:focus-within {
+      border-color: rgba(255, 255, 255, 0.3);
     }
 
     .composer textarea {
@@ -376,28 +382,57 @@
       font-size: 15px;
       line-height: 1.4;
       resize: none;
-      max-height: 10rem;
-      min-height: 44px;
-      overflow: auto
+      max-height: 12rem;
+      min-height: 24px;
+      padding: 4px 0;
+      overflow: auto;
     }
 
-    .composer .send-btn {
-      width: 42px;
-      height: 42px;
-      flex: 0 0 42px;
+    /* New Action Buttons (Attach/Mic) */
+    .composer .action-btn {
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 10px;
-      border: 1px solid #4a4a60;
-      background: #2f2f42;
+      background: transparent;
+      border: none;
+      color: #ececf1;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.2s;
+      padding: 0;
+    }
+
+    .composer .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .composer .send-btn {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      /* Disabled state default */
+      color: #ececf1;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .composer .send-btn:not([disabled]) {
+      background: #19c37d;
+      /* ChatGPT Green */
       color: #fff;
-      cursor: pointer
     }
 
     .composer .send-btn[disabled] {
-      opacity: .5;
-      cursor: not-allowed
+      opacity: 0.4;
+      cursor: default;
     }
 
     .landing {
@@ -810,7 +845,9 @@
         <div class="content">
           <div id="landing" class="landing" style="display:none;">
             <div class="landing-card">
-              <div class="title">Start a new conversation</div>
+              <div class="title" style="font-weight: 800; font-size: 24px;">VedSAAS</div>
+              <div class="hint">by Shaswatam Eco-Chic Creations LLP</div>
+              <div class="title" style="font-size: 16px; margin-top: 10px;">Start a new conversation</div>
               <div class="hint">Ask anything. I’ll reply in your language.</div>
               <div class="composer">
                 <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
