@@ -697,62 +697,75 @@
       z-index: 100
     }
 
-    @media (max-width:900px) {
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        transform: translateX(-100%);
-        width: 80%;
-        max-width: 320px;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5)
+    /* ChatGPT-Like Mobile Transformations */
+    @media (max-width: 900px) {
+      .topbar {
+        background: #1e1e2f;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        justify-content: space-between;
+        padding: 10px 16px;
       }
 
-      .sidebar.open {
-        transform: translateX(0)
+      .topbar h1#brand-title {
+        font-size: 16px;
+        font-weight: 600;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        width: auto;
       }
 
       .mobile-nav-toggle {
-        display: block
+        font-size: 18px;
+        color: #ddd;
+        padding: 8px 0;
       }
 
-      .topbar {
-        justify-content: flex-start;
-        gap: 12px
+      /* Hide non-essential controls in mobile header to mimic App */
+      .top-controls .meta,
+      .top-controls #refresh-history {
+        display: none;
       }
 
-      .rail {
-        padding-inline: 0
+      /* Floating Input Area */
+      .composer-wrap {
+        background: #1e1e2f;
+        padding: 12px 16px 20px;
+        /* Safe area for bottom */
+        border-top: none;
       }
 
-      .topbar h1 {
-        font-size: 16px;
-        flex: 1;
-        text-align: center
+      .composer {
+        background: #2a2b32;
+        border-radius: 24px;
+        padding: 8px 12px;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
-    }
 
-    body,
-    .chat-area,
-    .history-list {
-      scrollbar-width: none
-    }
+      .composer textarea {
+        max-height: 80px;
+        padding: 4px;
+      }
 
-    body::-webkit-scrollbar,
-    .chat-area::-webkit-scrollbar,
-    .history-list::-webkit-scrollbar {
-      width: 0;
-      height: 0
+      .composer .send-btn {
+        background: #0078d4;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        border: none;
+      }
     }
   </style>
 </head>
 
 <body>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id="navbar-placeholder"></div>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id='navbar-placeholder'></div>
+  <!-- Navbar (Loaded Dynamically) -->
+  <div id="navbar-placeholder"></div>
+  <!-- Navbar (Loaded Dynamically) -->
+  <div id='navbar-placeholder'></div>
 
   <div id="banner" class="banner"></div>
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
@@ -2012,8 +2025,8 @@ document.getElementById('pref-save').addEventListener('click', async ()=>{
       }
     })();
   </script>
-    <!-- Component Loader -->
-    <script src="/public/js/components.js"></script>
-    </body>
+  <!-- Component Loader -->
+  <script src="/public/js/components.js"></script>
+</body>
 
 </html>
