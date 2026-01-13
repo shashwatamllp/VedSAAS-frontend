@@ -33,10 +33,83 @@ async function loadNavbar() {
 
         // 4. Initialize Navbar Logic (Theme Toggle, Install Button, etc.)
         initNavbarLogic();
+        initNavbarEvents(); // New helper for UI events
 
     } catch (error) {
         console.error('VedSAAS Component Loader Error:', error);
     }
+}
+
+function initNavbarEvents() {
+    // -- Theme Toggle --
+    const btn = document.getElementById('theme-btn');
+    const body = document.body;
+
+    // Set initial theme based on localStorage
+    if (localStorage.getItem('theme') === 'light') {
+        body.classList.add('light-mode');
+        if (btn) {
+            const icon = btn.querySelector('i');
+            if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+        }
+    }
+
+    if (btn) {
+        btn.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            const isLight = body.classList.contains('light-mode');
+
+            // Update Icon
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-moon', !isLight);
+                icon.classList.toggle('fa-sun', isLight);
+            }
+
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
+    }
+
+    // -- Resources Dropdown Menu --
+    const resourcesBtn = document.getElementById('resources-btn');
+    const resourcesMenu = document.getElementById('resources-menu');
+
+    if (resourcesBtn && resourcesMenu) {
+        resourcesBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resourcesMenu.style.display = resourcesMenu.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            resourcesMenu.style.display = 'none';
+        });
+
+        // Prevent dropdown from closing when clicking inside it
+        resourcesMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Add hover effects to dropdown menu items
+        resourcesMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('mouseenter', function () {
+                this.style.background = 'rgba(0,240,255,0.1)';
+            });
+            link.addEventListener('mouseleave', function () {
+                this.style.background = 'transparent';
+            });
+        });
+    }
+
+    // Add hover effects to navbar links
+    document.querySelectorAll('nav a[href^="#"]').forEach(link => {
+        link.addEventListener('mouseenter', function () {
+            this.style.color = 'var(--accent-cyan)';
+        });
+        link.addEventListener('mouseleave', function () {
+            this.style.color = 'var(--text-primary)';
+        });
+    });
 }
 
 function initNavbarLogic() {
