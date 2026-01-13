@@ -39,65 +39,8 @@
 
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="container"
-            style="display: flex; align-items: center; justify-content: space-between; position: relative;">
-            <!-- Left: Navigation Links -->
-            <div style="display: flex; gap: 24px; align-items: center;">
-                <a href="#features"
-                    style="color: var(--text-primary); text-decoration: none; font-weight: 500; transition: color 0.2s;">Features</a>
-                <a href="#pricing"
-                    style="color: var(--text-primary); text-decoration: none; font-weight: 500; transition: color 0.2s;">Pricing</a>
-                <div style="position: relative; display: inline-block;">
-                    <button id="resources-btn"
-                        style="background: none; border: none; color: var(--text-primary); font-weight: 500; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 4px;">
-                        Resources <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
-                    </button>
-                    <div id="resources-menu"
-                        style="display: none; position: absolute; top: 100%; left: 0; margin-top: 12px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px; min-width: 200px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 1000;">
-                        <a href="subdomains/docs/docs.html"
-                            style="display: block; padding: 10px 12px; color: var(--text-primary); text-decoration: none; border-radius: 8px; transition: all 0.2s; margin-bottom: 4px;">
-                            <i class="fas fa-book"
-                                style="margin-right: 8px; color: var(--accent-cyan);"></i>Documentation
-                        </a>
-                        <a href="subdomains/api/api.html"
-                            style="display: block; padding: 10px 12px; color: var(--text-primary); text-decoration: none; border-radius: 8px; transition: all 0.2s; margin-bottom: 4px;">
-                            <i class="fas fa-code" style="margin-right: 8px; color: var(--accent-cyan);"></i>API
-                            Reference
-                        </a>
-                        <a href="subdomains/wiki/wiki.html"
-                            style="display: block; padding: 10px 12px; color: var(--text-primary); text-decoration: none; border-radius: 8px; transition: all 0.2s; margin-bottom: 4px;">
-                            <i class="fas fa-book-open" style="margin-right: 8px; color: var(--accent-cyan);"></i>Wiki
-                        </a>
-                        <a href="subdomains/help/help.html"
-                            style="display: block; padding: 10px 12px; color: var(--text-primary); text-decoration: none; border-radius: 8px; transition: all 0.2s;">
-                            <i class="fas fa-question-circle"
-                                style="margin-right: 8px; color: var(--accent-cyan);"></i>Help Center
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Center: Brand Logo -->
-            <div class="brand-logo" style="position: absolute; left: 50%; transform: translateX(-50%);">
-                <img src="public/image/logopic.png" alt="VedSAAS" style="height: 32px; width: auto;">
-                VedSAAS
-            </div>
-
-            <!-- Right: Actions -->
-            <div style="display: flex; gap: 16px; align-items: center;">
-                <a href="subdomains/status/status.html"
-                    style="color: var(--text-primary); text-decoration: none; font-weight: 500;">Status</a>
-                <button id="theme-btn" title="Toggle Theme"><i class="fas fa-moon"></i></button>
-                <button id="install-btn"
-                    style="display:none;padding:8px 16px;background:var(--accent-purple);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:0.9rem;cursor:pointer;">
-                    Install
-                </button>
-                <a href="chat/" class="btn btn-primary">App</a>
-            </div>
-        </div>
-    </nav>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
 
     <!-- Hero Section -->
     <header class="container"
@@ -619,6 +562,8 @@
     </script>
 
     <!-- PWA Initialization -->
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
     <script src="/pwa-init.js"></script>
 </body>
 

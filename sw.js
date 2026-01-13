@@ -50,8 +50,11 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Skip non-GET requests
+    // Skip non-GET requests (except for API calls which we want to bypass completely)
     if (request.method !== 'GET') return;
+
+    // CRITICAL: Bypass all API requests - Network Only
+    if (url.pathname.includes('/api/')) return;
 
     // Skip external requests
     if (url.origin !== location.origin) return;
