@@ -38,6 +38,10 @@
   </style>
 </head>
 <body>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id='navbar-placeholder'></div>
   <div class="card" role="dialog" aria-labelledby="title" aria-describedby="who">
     <h1 id="title">Verify OTP</h1>
     <p id="who" class="sub"></p>
@@ -198,5 +202,8 @@
   $('verify').onclick = verifyOtp;
   $('otp').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); verifyOtp(); }});
 </script>
-</body>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
 </html>
+

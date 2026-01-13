@@ -14,25 +14,8 @@
 
 <body>
     <!-- Page 1: Homepage -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="logo">
-                <span class="logo-icon">🇮🇳</span>
-                <span class="logo-text">VedSAAS</span>
-            </div>
-            <ul class="nav-menu" id="navMenu">
-                <li><a href="#features">Features</a></li>
-                <li><a href="pages/pricing.html">Pricing</a></li>
-                <li><a href="pages/about.html">About</a></li>
-                <li><a href="pages/contact.html">Contact</a></li>
-                <li><a href="pages/login.html" class="btn-secondary">Login</a></li>
-                <li><a href="pages/register.html" class="btn-primary">Sign Up</a></li>
-            </ul>
-            <div class="hamburger" id="hamburger">
-                <span></span><span></span><span></span>
-            </div>
-        </div>
-    </nav>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
 
     <section class="hero">
         <div class="container">
@@ -229,6 +212,8 @@
     </footer>
 
     <script src="assets/main.js"></script>
-</body>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
 
 </html>

@@ -174,15 +174,8 @@
                 <img src="../public/image/logopic.png" alt="VedSAAS" style="height:28px;width:auto">
                 <span style="margin-left:8px">VedSAAS</span>
             </div>
-            <nav>
-                <a href="dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Overview</a>
-                <a href="users.html" class="nav-item"><i class="fas fa-users"></i> User Management</a>
-                <a href="health.html" class="nav-item"><i class="fas fa-heartbeat"></i> System Health</a>
-                <a href="training.html" class="nav-item active"><i class="fas fa-brain"></i> Training</a>
-                <a href="analytics.html" class="nav-item"><i class="fas fa-chart-bar"></i> Analytics</a>
-                <a href="config.html" class="nav-item"><i class="fas fa-cog"></i> Configuration</a>
-                <a href="security.html" class="nav-item"><i class="fas fa-shield-alt"></i> Security</a>
-            </nav>
+            <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
             <div style="margin-top:auto;padding-top:20px;border-top:1px solid var(--border-subtle)">
                 <a href="../" class="nav-item"><i class="fas fa-home"></i> Back to Home</a>
             </div>
@@ -267,6 +260,8 @@
         function pauseTraining() { alert('Training paused (mock)') }
         function stopTraining() { alert('Training stopped (mock)') }
     </script>
-</body>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
 
 </html>

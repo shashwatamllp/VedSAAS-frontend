@@ -39,6 +39,10 @@
 </head>
 
 <body>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id='navbar-placeholder'></div>
     <h1>VedSAAS Icon Generator</h1>
     <input type="file" id="logoInput" accept="image/*">
     <button onclick="generateIcons()">Generate All Icons</button>
@@ -129,6 +133,8 @@
             });
         }
     </script>
-</body>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
 
 </html>

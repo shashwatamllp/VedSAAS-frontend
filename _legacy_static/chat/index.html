@@ -102,6 +102,10 @@ body::-webkit-scrollbar,.chat-area::-webkit-scrollbar,.history-list::-webkit-scr
 </style>
 </head>
 <body>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id='navbar-placeholder'></div>
 
 <div id="banner" class="banner"></div>
 
@@ -973,5 +977,8 @@ document.getElementById('pref-save').addEventListener('click', async ()=>{
   }
 })();
 </script>
-</body>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
 </html>
+

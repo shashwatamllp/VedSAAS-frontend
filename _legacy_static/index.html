@@ -30,23 +30,8 @@
     <canvas id="bg"></canvas>
 
     <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-wrapper">
-                <div class="logo">
-                    <span class="logo-icon">🇮🇳</span>
-                    <span>VedSAAS</span>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#pricing">Pricing</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="mailto:support@vedsaas.com">Contact</a></li>
-                    <li><a href="chat/" class="btn btn-primary">Try AI Chat</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -293,6 +278,8 @@
 
     <!-- Scripts -->
     <script type="module" src="public/js/bg.js"></script>
-</body>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
 
 </html>

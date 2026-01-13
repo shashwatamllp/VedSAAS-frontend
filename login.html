@@ -177,6 +177,10 @@
 </head>
 
 <body>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id='navbar-placeholder'></div>
   <div class="card" role="dialog" aria-labelledby="h1" aria-describedby="sub">
     <!-- Logo -->
     <div style="text-align: center; margin-bottom: 20px;">
@@ -286,6 +290,8 @@
     $('send-btn').addEventListener('click', sendOtp);
     $('identifier').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendOtp(); } });
   </script>
-</body>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
 
 </html>
