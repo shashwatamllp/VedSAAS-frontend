@@ -1,0 +1,10 @@
+{
+    "appId": "com.vedsaas.app",
+    "appName": "VedSAAS",
+    "webDir": ".",
+    "bundledWebRuntime": false,
+    "server": {
+        "url": "https://www.vedsaas.com",
+        "cleartext": true
+    }
+}

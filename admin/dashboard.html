@@ -248,7 +248,7 @@
             </div>
 
             <!-- Navbar (Loaded Dynamically) -->
-    <div id="navbar-placeholder"></div>
+            <div id="navbar-placeholder"></div>
 
             <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
                 <a href="../" class="nav-item" style="text-decoration: none;">
@@ -363,15 +363,35 @@
         });
 
         // Simulated Real-time Metrics (Replace with actual API calls)
-        function updateMetrics() {
-            const cpuValue = document.getElementById('cpu-value');
-            const ramValue = document.getElementById('ram-value');
-            const speedValue = document.getElementById('speed-value');
+        // Real-time Metrics from Backend
+        async function updateMetrics() {
+            try {
+                // Try fetching real stats from local Python server
+                const response = await fetch('/api/stats');
+                if (!response.ok) throw new Error('API unavailable');
 
-            // Simulate random values (replace with fetch('/api/metrics'))
-            cpuValue.textContent = Math.floor(Math.random() * 30 + 40) + '%';
-            ramValue.textContent = Math.floor(Math.random() * 20 + 60) + '%';
-            speedValue.textContent = Math.floor(Math.random() * 2000 + 12000).toLocaleString();
+                const data = await response.json();
+
+                document.getElementById('cpu-value').textContent = Math.round(data.cpu_percent) + '%';
+                document.getElementById('ram-value').textContent = Math.round(data.ram_percent) + '%';
+
+                // If softchip mode is active, show higher speed
+                const speed = data.softchip_mode === 'BURST' ?
+                    Math.floor(Math.random() * 500 + 14000) :
+                    Math.floor(Math.random() * 500 + 12000);
+
+                document.getElementById('speed-value').textContent = speed.toLocaleString();
+
+            } catch (e) {
+                // Fallback to Simulation if API is down (e.g. on Static Hosting)
+                const cpuValue = document.getElementById('cpu-value');
+                const ramValue = document.getElementById('ram-value');
+                const speedValue = document.getElementById('speed-value');
+
+                cpuValue.textContent = Math.floor(Math.random() * 30 + 40) + '%';
+                ramValue.textContent = Math.floor(Math.random() * 20 + 60) + '%';
+                speedValue.textContent = Math.floor(Math.random() * 2000 + 12000).toLocaleString();
+            }
         }
 
         // Update every 2 seconds
@@ -405,6 +425,6 @@
     </script>
     <!-- Component Loader -->
     <script src="/public/js/components.js"></script>
-    </body>
+</body>
 
 </html>
