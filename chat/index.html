@@ -1136,6 +1136,25 @@
     function saveTopicsToLocal() { try { tryTrimForQuota(); safeSetLocal('vedsaas_topics', JSON.stringify(topics)); localStorage.setItem('vedsaas_current', currentTopicId || ''); } catch { } renderStorageUsage(); }
     function loadTopicsFromLocal() { try { topics = JSON.parse(localStorage.getItem('vedsaas_topics') || '[]'); } catch { topics = []; } try { currentTopicId = localStorage.getItem('vedsaas_current') || (topics[0] && topics[0].id) || null; } catch { currentTopicId = (topics[0] && topics[0].id) || null; } }
 
+
+    /* Usage */
+    function renderStorageUsage() {
+      const size = (JSON.stringify(topics || []).length || 0);
+      const kb = Math.round(size / 1024);
+      const el = document.getElementById('usg-local'); if (el) el.innerText = `${kb} KB`;
+      const meta = document.getElementById('meta-info');
+      const isOnline = (typeof serverOnline !== 'undefined') ? serverOnline : false;
+      if (meta) { meta.innerText = `${isOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`; meta.style.color = isOnline ? '#9fe870' : '#ffb3b3'; }
+    }
+    function updateUsage() {
+      if (navigator.storage && navigator.storage.estimate) {
+        navigator.storage.estimate().then(est => {
+          const u = est.usage || 0;
+          renderStorageUsage();
+        });
+      } else renderStorageUsage();
+    }
+
     /* Drafts */
     function draftKey() { return 'draft_' + (currentTopicId || 'global') }
     function setDraft(v) { try { localStorage.setItem(draftKey(), v) } catch { } }
