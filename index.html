@@ -29,7 +29,18 @@
         content="India's First AI Platform supporting 22+ Indian languages with deep cultural understanding">
     <meta name="keywords" content="AI, Indian languages, VedSAAS, chatbot, Hindi AI, multilingual AI">
 
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:title" content="VedSAAS | The Artificial Civilization">
+    <meta property="og:description"
+        content="India's First AI Platform supporting 22+ Indian languages with deep cultural understanding.">
+    <meta property="og:image" content="https://vedsaas.com/public/icons/icon-512x512.png">
+    <meta property="og:url" content="https://vedsaas.com">
+    <meta property="og:type" content="website">
+
     <link rel="stylesheet" href="public/css/civilization.css">
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap"
@@ -47,26 +58,27 @@
         style="min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-top: 80px;">
 
         <!-- Status Badge -->
-        <div class="fade-in-up" style="margin-bottom: 24px;">
+        <div data-aos="fade-down" style="margin-bottom: 24px;">
             <span class="ticker-pill" style="display: inline-flex;">
                 <span class="status-dot"></span> System Online
             </span>
         </div>
 
-        <h1 class="fade-in-up"
+        <h1 data-aos="fade-up" data-aos-delay="100"
             style="font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.2; font-weight: 800; max-width: 800px; margin-bottom: 8px;">
             VedSAAS
         </h1>
-        <p class="fade-in-up" style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1.1rem;">
+        <p data-aos="fade-up" data-aos-delay="200"
+            style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1.1rem;">
             by Shashwatam Eco-Chic Creations LLP
         </p>
-        <h2 class="fade-in-up"
+        <h2 data-aos="fade-up" data-aos-delay="300"
             style="font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.2; font-weight: 700; max-width: 800px; margin-bottom: 24px;">
             An Artificial <span class="text-gradient">Civilization.</span>
         </h2>
 
         <!-- The 2030 Brain Canvas -->
-        <div class="fade-in-up"
+        <div data-aos="zoom-in" data-aos-delay="400"
             style="width: 300px; height: 300px; position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto 40px;">
             <canvas id="brain-canvas" width="300" height="300"></canvas>
             <div
@@ -75,14 +87,15 @@
             </div>
         </div>
 
-        <div class="fade-in-up" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+        <div data-aos="fade-up" data-aos-delay="500"
+            style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
             <a href="chat/" class="btn btn-primary">Start Conversation</a>
             <a href="#stats" class="btn btn-ghost">View Ecosystem</a>
         </div>
     </header>
 
     <!-- Modes Ticker -->
-    <section class="ticker-container">
+    <section class="ticker-container" data-aos="fade-in">
         <div class="ticker-track">
             <!-- 20 Items for Loop -->
             <div class="ticker-pill"><span class="status-dot"></span> Hindi-Vani</div>
@@ -114,15 +127,15 @@
     <!-- Stats Section -->
     <section id="stats" class="container" style="padding: 100px 24px;">
         <div class="grid-3">
-            <div class="card-glass stat-item">
+            <div class="card-glass stat-item" data-aos="zoom-in" data-aos-delay="0">
                 <div class="stat-num" id="stat-words">2.5M</div>
                 <div class="stat-label">Concept Vectors</div>
             </div>
-            <div class="card-glass stat-item">
+            <div class="card-glass stat-item" data-aos="zoom-in" data-aos-delay="100">
                 <div class="stat-num">14k</div>
                 <div class="stat-label">Tokens / Sec</div>
             </div>
-            <div class="card-glass stat-item">
+            <div class="card-glass stat-item" data-aos="zoom-in" data-aos-delay="200">
                 <div class="stat-num">57</div>
                 <div class="stat-label">Specialist Agents</div>
             </div>
@@ -131,24 +144,24 @@
 
     <!-- Features Section -->
     <section id="features" class="container" style="padding: 100px 24px;">
-        <div style="text-align: center; margin-bottom: 60px;">
+        <div style="text-align: center; margin-bottom: 60px;" data-aos="fade-up">
             <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Powered by Ancient Wisdom</h2>
             <p style="color: var(--text-secondary); font-size: 1.1rem;">India's First AI in 22+ Languages</p>
         </div>
 
         <div class="grid-3" style="gap: 32px;">
-            <div class="card-glass" style="padding: 32px;">
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="0">
                 <div style="font-size: 2.5rem; margin-bottom: 16px;">🗣️</div>
                 <h3 style="margin-bottom: 12px;">Hindi-Vani</h3>
                 <p style="color: var(--text-secondary);">Natural conversations in Hindi with cultural context and idioms
                 </p>
             </div>
-            <div class="card-glass" style="padding: 32px;">
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="100">
                 <div style="font-size: 2.5rem; margin-bottom: 16px;">📚</div>
                 <h3 style="margin-bottom: 12px;">VedaLogic</h3>
                 <p style="color: var(--text-secondary);">Ancient wisdom meets modern reasoning for deep insights</p>
             </div>
-            <div class="card-glass" style="padding: 32px;">
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="200">
                 <div style="font-size: 2.5rem; margin-bottom: 16px;">🧮</div>
                 <h3 style="margin-bottom: 12px;">Math-Rishi</h3>
                 <p style="color: var(--text-secondary);">Advanced mathematical problem solving with step-by-step
@@ -158,15 +171,15 @@
 
         <div style="margin-top: 60px; text-align: center;">
             <div class="grid-3" style="gap: 24px;">
-                <div>
+                <div data-aos="fade-in" data-aos-delay="300">
                     <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">22+</div>
                     <div style="color: var(--text-secondary);">Indian Languages</div>
                 </div>
-                <div>
+                <div data-aos="fade-in" data-aos-delay="400">
                     <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">14k</div>
                     <div style="color: var(--text-secondary);">Tokens/Second</div>
                 </div>
-                <div>
+                <div data-aos="fade-in" data-aos-delay="500">
                     <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">99.9%</div>
                     <div style="color: var(--text-secondary);">Uptime</div>
                 </div>
@@ -177,13 +190,13 @@
     <!-- How It Works -->
     <section id="how-it-works" class="container"
         style="padding: 100px 24px; background: var(--bg-card); border-radius: 24px; margin-bottom: 100px;">
-        <div style="text-align: center; margin-bottom: 60px;">
+        <div style="text-align: center; margin-bottom: 60px;" data-aos="fade-up">
             <h2 style="font-size: 2.5rem; margin-bottom: 16px;">How It Works</h2>
             <p style="color: var(--text-secondary); font-size: 1.1rem;">Get started in 3 simple steps</p>
         </div>
 
         <div class="grid-3" style="gap: 40px;">
-            <div style="text-align: center;">
+            <div style="text-align: center;" data-aos="fade-right" data-aos-delay="0">
                 <div
                     style="width: 60px; height: 60px; background: var(--accent-cyan); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 20px;">
                     1</div>
@@ -191,14 +204,14 @@
                 <p style="color: var(--text-secondary);">Create your free account in seconds. No credit card required.
                 </p>
             </div>
-            <div style="text-align: center;">
+            <div style="text-align: center;" data-aos="fade-right" data-aos-delay="100">
                 <div
                     style="width: 60px; height: 60px; background: var(--accent-cyan); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 20px;">
                     2</div>
                 <h3 style="margin-bottom: 12px;">Choose Your Mode</h3>
                 <p style="color: var(--text-secondary);">Select from 57 specialized AI modes tailored to your needs.</p>
             </div>
-            <div style="text-align: center;">
+            <div style="text-align: center;" data-aos="fade-right" data-aos-delay="200">
                 <div
                     style="width: 60px; height: 60px; background: var(--accent-cyan); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 20px;">
                     3</div>
@@ -210,14 +223,14 @@
 
     <!-- Pricing -->
     <section id="pricing" class="container" style="padding: 100px 24px;">
-        <div style="text-align: center; margin-bottom: 60px;">
+        <div style="text-align: center; margin-bottom: 60px;" data-aos="fade-up">
             <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Simple, Transparent Pricing</h2>
             <p style="color: var(--text-secondary); font-size: 1.1rem;">Choose the plan that fits your needs</p>
         </div>
 
         <div class="grid-3" style="gap: 32px;">
             <!-- Free Plan -->
-            <div class="card-glass" style="padding: 40px; text-align: center;">
+            <div class="card-glass" style="padding: 40px; text-align: center;" data-aos="flip-left" data-aos-delay="0">
                 <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Free</h3>
                 <div style="font-size: 3rem; font-weight: 800; margin: 20px 0;">₹0</div>
                 <p style="color: var(--text-secondary); margin-bottom: 32px;">Perfect for getting started</p>
@@ -232,7 +245,8 @@
 
             <!-- Pro Plan -->
             <div class="card-glass"
-                style="padding: 40px; text-align: center; border: 2px solid var(--accent-cyan); position: relative;">
+                style="padding: 40px; text-align: center; border: 2px solid var(--accent-cyan); position: relative;"
+                data-aos="flip-left" data-aos-delay="100">
                 <div
                     style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent-cyan); color: #000; padding: 4px 16px; border-radius: 99px; font-size: 0.85rem; font-weight: 600;">
                     POPULAR</div>
@@ -251,7 +265,8 @@
             </div>
 
             <!-- Enterprise Plan -->
-            <div class="card-glass" style="padding: 40px; text-align: center;">
+            <div class="card-glass" style="padding: 40px; text-align: center;" data-aos="flip-left"
+                data-aos-delay="200">
                 <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Enterprise</h3>
                 <div style="font-size: 3rem; font-weight: 800; margin: 20px 0;">Custom</div>
                 <p style="color: var(--text-secondary); margin-bottom: 32px;">For organizations</p>
@@ -508,6 +523,16 @@
     <!-- Component Loader -->
     <script src="/public/js/components.js"></script>
     <script src="/pwa-init.js"></script>
+
+    <!-- AOS Animation Init -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+    </script>
 </body>
 
 </html>

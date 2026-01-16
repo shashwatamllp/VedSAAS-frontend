@@ -11,10 +11,13 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Force Dark Mode */
+        /* Light/Dark mode handled by civilization.css via variables. 
+           We just need to ensure body uses them. 
+        */
         body {
-            background: #000000;
+            background: var(--bg-void);
             color: var(--text-primary);
             font-family: var(--font-mono);
             overflow: hidden;
@@ -26,14 +29,24 @@
             height: 100vh;
         }
 
-        /* Sidebar */
+        /* Sidebar - Use variables */
         .dashboard-sidebar {
-            background: #0a0a0a;
+            background: var(--bg-deep);
             border-right: 1px solid var(--border-subtle);
             padding: 24px;
             display: flex;
             flex-direction: column;
             gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-sidebar {
+                display: none;
+            }
         }
 
         .sidebar-brand {
@@ -58,6 +71,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            color: var(--text-primary);
         }
 
         .nav-item:hover,
@@ -72,6 +86,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            background: var(--bg-void);
         }
 
         .dashboard-header {
@@ -106,6 +121,16 @@
             background: #22c55e;
             border-radius: 50%;
             animation: pulse 2s infinite;
+        }
+
+        /* Icon Btn override */
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
         }
 
         @keyframes pulse {
@@ -190,8 +215,9 @@
 
         .chart-canvas {
             width: 100%;
-            height: 200px;
-            background: rgba(0, 0, 0, 0.3);
+            height: 300px;
+            /* Increased height for Chart.js */
+            /* Removed raw background */
             border-radius: 8px;
             position: relative;
         }
@@ -211,6 +237,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: var(--text-primary);
         }
 
         .log-item:last-child {
@@ -398,30 +425,53 @@
         updateMetrics();
         setInterval(updateMetrics, 2000);
 
-        // Simple Chart (Replace with Chart.js or similar)
-        const canvas = document.getElementById('performance-chart');
-        const ctx = canvas.getContext('2d');
-        canvas.width = canvas.offsetWidth;
-        canvas.height = 200;
-
-        function drawChart() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#00f0ff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-
-            const points = 50;
-            for (let i = 0; i < points; i++) {
-                const x = (canvas.width / points) * i;
-                const y = canvas.height / 2 + Math.sin(i * 0.2) * 40 + Math.random() * 20;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+        // Simple Chart (Chart.js)
+        const ctx = document.getElementById('performance-chart').getContext('2d');
+        const perfChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 20 }, (_, i) => i + 1),
+                datasets: [{
+                    label: 'System Load',
+                    data: Array.from({ length: 20 }, () => Math.floor(Math.random() * 40 + 30)),
+                    borderColor: '#00f0ff',
+                    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { display: false },
+                    y: {
+                        display: true,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#888' },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                },
+                animation: {
+                    duration: 0
+                }
             }
-            ctx.stroke();
-        }
+        });
 
-        drawChart();
-        setInterval(drawChart, 3000);
+        function updateChart() {
+            // Shift data
+            const data = perfChart.data.datasets[0].data;
+            data.shift();
+            data.push(Math.floor(Math.random() * 40 + 30));
+            perfChart.update('none'); // Update without full re-render
+        }
+        setInterval(updateChart, 2000);
     </script>
     <!-- Component Loader -->
     <script src="/public/js/components.js"></script>
