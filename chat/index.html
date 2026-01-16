@@ -1047,9 +1047,78 @@
         height: 36px;
         flex: 0 0 36px;
         border: none;
-      }
-    }
+
+        /* Code Highlighting & Markdown */
+        pre {
+          background: #0d0d0d;
+          padding: 12px;
+          border-radius: 6px;
+          overflow-x: auto;
+          margin: 8px 0;
+          border: 1px solid #333;
+        }
+
+        code {
+          font-family: 'Consolas', 'Monaco', monospace;
+          font-size: 14px;
+        }
+
+        p {
+          margin-bottom: 10px;
+          line-height: 1.6;
+        }
+
+        ul,
+        ol {
+          margin-bottom: 10px;
+          padding-left: 20px;
+        }
+
+        /* Suggestion Chips */
+        .suggestion-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          margin-top: 24px;
+          text-align: left;
+        }
+
+        .suggestion-card {
+          background: var(--sidebar-bg);
+          border: 1px solid var(--border-color);
+          padding: 12px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+
+        .suggestion-card:hover {
+          background: var(--hover-bg);
+          border-color: #8e8ea0;
+        }
+
+        .suggestion-head {
+          font-weight: 600;
+          font-size: 14px;
+          color: var(--text-color);
+          margin-bottom: 4px;
+        }
+
+        .suggestion-sub {
+          font-size: 12px;
+          color: var(--text-muted);
+        }
+
+        @media (max-width: 600px) {
+          .suggestion-grid {
+            grid-template-columns: 1fr;
+          }
+        }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
 </head>
 
 <body>
@@ -1105,7 +1174,26 @@
               <div class="title" style="font-weight: 800; font-size: 24px;">VedSAAS</div>
               <div class="hint">by Shaswatam Eco-Chic Creations LLP</div>
               <div class="title" style="font-size: 16px; margin-top: 10px;">Start a new conversation</div>
-              <div class="hint">Ask anything. I’ll reply in your language.</div>
+
+              <div class="suggestion-grid">
+                <div class="suggestion-card" onclick="startSuggestion('Write a python script to parse JSON')">
+                  <div class="suggestion-head">Write a python script</div>
+                  <div class="suggestion-sub">to parse JSON data</div>
+                </div>
+                <div class="suggestion-card" onclick="startSuggestion('Explain Quantum Physics to a 5 year old')">
+                  <div class="suggestion-head">Explain Quantum Physics</div>
+                  <div class="suggestion-sub">like I am 5 years old</div>
+                </div>
+                <div class="suggestion-card" onclick="startSuggestion('Draft a professional email for sick leave')">
+                  <div class="suggestion-head">Draft an email</div>
+                  <div class="suggestion-sub">requesting sick leave</div>
+                </div>
+                <div class="suggestion-card" onclick="startSuggestion('Give me 5 creative startup ideas for AI')">
+                  <div class="suggestion-head">Brainstorm ideas</div>
+                  <div class="suggestion-sub">for an AI startup</div>
+                </div>
+              </div>
+
               <div class="composer">
                 <textarea id="landing-input" placeholder="Type your first message..." rows="1"></textarea>
                 <button id="landing-start" class="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
@@ -1471,7 +1559,43 @@
     }
     function formatFull(ts) { const d = ts ? new Date(ts) : new Date(), z = n => String(n).padStart(2, '0'); return `${z(d.getDate())}/${z(d.getMonth() + 1)}/${d.getFullYear()}, ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; }
     function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) }
-    function mdLite(text) { let t = esc(text ?? ''); t = t.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); t = t.replace(/`([^`]+)`/g, '<code>$1</code>'); t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); t = t.replace(/\*([^*]+)\*/g, '<em>$1</em>'); return t.replace(/\n/g, '<br/>'); }
+    /* Markdown & Rendering */
+    function mdLite(text) {
+      // Use Marked.js if available, else fallback
+      if (typeof marked !== 'undefined') {
+        return marked.parse(text);
+      }
+      // Fallback
+      let t = esc(text ?? '');
+      t = t.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+      return t.replace(/\n/g, '<br/>');
+    }
+
+    // Highlight code blocks after render
+    function highlightCode() {
+      if (typeof hljs !== 'undefined') {
+        document.querySelectorAll('pre code').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+      }
+    }
+
+    // Suggestion Handler
+    window.startSuggestion = function (text) {
+      const id = newTopic('New Chat');
+      location.hash = '#/chat/' + encodeURIComponent(id);
+
+      // Force update logic
+      const t = topics.find(x => x.id === id);
+      if (t) { t.title = text.slice(0, 30) + (text.length > 30 ? '...' : ''); saveTopicsToLocal(); }
+
+      appendMessage('user', text);
+      renderHistory();
+      sendToServer(text);
+    };
+
+    /* Scroll pill */
     function uid() { return Math.random().toString(36).slice(2, 9) }
     function pickResponse(o) {
       // Check for Junction standard response format
@@ -1684,6 +1808,7 @@
       header.innerHTML = `<strong style="font-size:18px">${esc(t.title || 'New Chat')}</strong>`; area.appendChild(header);
       t.messages.forEach(m => { const [label, row] = messageNode(m); area.appendChild(label); area.appendChild(row); });
       const live = document.querySelector('.typing-row'); if (live) area.appendChild(live);
+      setTimeout(highlightCode, 0);
       autoScroll();
     }
     function newTopic(title = 'New Chat') {
@@ -1744,7 +1869,7 @@
       const cursor = document.createElement('span'); cursor.className = 'typing-cursor'; body.textContent = ''; body.appendChild(cursor);
       let i = 0; const src = cleaned;
       const timer = setInterval(() => {
-        if (i >= src.length) { clearInterval(timer); msg.message = src; saveTopicsToLocal(); body.innerHTML = safeMD(src); autoScroll(true); return; }
+        if (i >= src.length) { clearInterval(timer); msg.message = src; saveTopicsToLocal(); body.innerHTML = safeMD(src); highlightCode(); autoScroll(true); return; }
         msg.message += src[i++]; body.textContent = msg.message; body.appendChild(cursor); autoScroll(true);
       }, typingSpeed);
     }
