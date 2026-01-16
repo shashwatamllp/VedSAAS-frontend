@@ -1,4 +1,14 @@
 # Subdomain redirects
+https://app.vedsaas.com/api/* https://vedsaas.com/api/:splat 200
+https://app.vedsaas.com/public/* https://vedsaas.com/public/:splat 200
+https://app.vedsaas.com/components/* https://vedsaas.com/components/:splat 200
+https://app.vedsaas.com/sw.js https://vedsaas.com/sw.js 200
+https://app.vedsaas.com/pwa-init.js https://vedsaas.com/pwa-init.js 200
+https://app.vedsaas.com/favicon.ico https://vedsaas.com/favicon.ico 200
+https://app.vedsaas.com/manifest.json https://vedsaas.com/manifest.json 200
+https://app.vedsaas.com/chat/* https://vedsaas.com/chat/:splat 200
+https://app.vedsaas.com/ https://vedsaas.com/chat/ 200
+https://app.vedsaas.com/* https://vedsaas.com/chat/:splat 200
 https://docs.vedsaas.com/* https://vedsaas.com/subdomains/docs/:splat 200
 https://api.vedsaas.com/* https://vedsaas.com/subdomains/api/:splat 200
 https://status.vedsaas.com/* https://vedsaas.com/subdomains/status/:splat 200
