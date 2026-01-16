@@ -1,5 +1,5 @@
 // VedSAAS Service Worker
-const CACHE_VERSION = 'vedsaas-v1.1.1-final';
+const CACHE_VERSION = 'vedsaas-v1.1.2-urgent';
 const CACHE_NAME = `vedsaas-cache-${CACHE_VERSION}`;
 
 // Files to cache immediately
