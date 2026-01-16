@@ -597,12 +597,12 @@
     .landing .title {
       font-size: 18px;
       margin-bottom: 6px;
-      color: #e9e9e9
+      color: var(--text-color)
     }
 
     .landing .hint {
       font-size: 13px;
-      color: #bdbdbd;
+      color: var(--text-muted);
       margin-bottom: 12px
     }
 
@@ -1120,9 +1120,10 @@
             <div class="chat-area" id="chat-area"></div>
             <div class="composer-wrap">
               <div class="composer">
-                <button class="action-btn" title="Attach"><i class="fas fa-plus"></i></button>
+                <button id="btn-attach" class="action-btn" title="Attach"><i class="fas fa-plus"></i></button>
+                <input type="file" id="file-input" style="display:none" multiple />
                 <textarea id="main-input" placeholder="Message VedSAAS..." rows="1"></textarea>
-                <button class="action-btn" title="Voice Mode"><i class="fas fa-microphone"></i></button>
+                <button id="btn-voice" class="action-btn" title="Voice Mode"><i class="fas fa-microphone"></i></button>
                 <button id="send-btn" class="send-btn" title="Send" disabled><i class="fas fa-arrow-up"></i></button>
               </div>
             </div>
@@ -1967,7 +1968,57 @@
       }
     }
 
-    /* Scroll pill */
+    /* Feature: Voice & Attach */
+    const speechRec = ('webkitSpeechRecognition' in window) ? new webkitSpeechRecognition() : null;
+    let isListening = false;
+
+    if (speechRec) {
+      speechRec.continuous = false;
+      speechRec.lang = 'en-US';
+      speechRec.interimResults = false;
+      speechRec.onresult = (event) => {
+        const txt = event.results[0][0].transcript;
+        mainInput.value += (mainInput.value ? ' ' : '') + txt;
+        autosize(mainInput);
+        updateSendState();
+      };
+      speechRec.onend = () => {
+        isListening = false;
+        document.getElementById('btn-voice').style.color = '';
+      };
+    }
+
+    document.getElementById('btn-voice').addEventListener('click', () => {
+      if (!speechRec) {
+        banner('Voice not supported in this browser');
+        return;
+      }
+      if (isListening) {
+        speechRec.stop();
+      } else {
+        try {
+          speechRec.start();
+          isListening = true;
+          document.getElementById('btn-voice').style.color = '#10a37f';
+          banner('Listening...');
+        } catch (e) { console.error(e); }
+      }
+    });
+
+    document.getElementById('btn-attach').addEventListener('click', () => {
+      document.getElementById('file-input').click();
+    });
+
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        const names = Array.from(e.target.files).map(f => f.name).join(', ');
+        banner(`Attached: ${names}`);
+        mainInput.value += ` [Attached: ${names}]`;
+        updateSendState();
+      }
+    });
+
+    /* Auto-Scroll logic fix */
     const chatArea = document.getElementById('chat-area'); const toBottom = document.getElementById('to-bottom');
     function isAtBottom() { return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 8 }
     function autoScroll(force = false) { if (force || isAtBottom()) chatArea.scrollTop = chatArea.scrollHeight; toggleBottomPill(); }
