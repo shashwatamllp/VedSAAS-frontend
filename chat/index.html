@@ -549,160 +549,275 @@
       display: flex
     }
 
+    /* Settings Modal - ChatGPT Style */
     .userpage {
       position: fixed;
       inset: 0;
       z-index: 60;
-      display: none
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
 
     .userpage.show {
-      display: flex
+      display: flex;
     }
 
     .userpage .backdrop {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, .6)
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
     }
 
     .userpage .sheet {
       position: relative;
-      z-index: 1;
-      margin: auto;
-      background: #1e1e2f;
-      border: 1px solid #333;
-      border-radius: 16px;
-      width: min(1000px, 95vw);
-      height: min(90vh, 800px);
+      z-index: 2;
       display: flex;
+      width: min(1000px, 90vw);
+      height: min(700px, 85vh);
+      background: #202123;
+      border: 1px solid #4d4d4f;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, .6)
     }
 
+    /* Sidebar */
     .userpage .aside {
-      width: 260px;
-      background: #232336;
-      border-right: 1px solid #333;
+      width: 240px;
+      background: #202123;
+      border-right: 1px solid #4d4d4f;
+      display: flex;
+      flex-direction: column;
       padding: 16px;
-      overflow: auto
+      overflow-y: auto;
     }
 
-    .userpage .aside .brand {
+    /* Nav Items */
+    .userpage .nav button {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      color: #ececf1;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 14px
+      margin-bottom: 2px;
     }
 
-    .userpage .aside .brand .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: #0078d4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      overflow: hidden
+    .userpage .nav button:hover {
+      background: #2a2b32;
     }
 
-    .userpage .aside .nav button {
-      width: 100%;
-      text-align: left;
-      background: none;
-      border: none;
-      color: #ddd;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-bottom: 6px
+    .userpage .nav button.active {
+      background: #343541;
+      font-weight: 500;
     }
 
-    .userpage .aside .nav button.active,
-    .userpage .aside .nav button:hover {
-      background: #2f2f42;
-      color: #fff
+    .nav-group-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8e8ea0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 8px 12px;
     }
 
+    .nav-group-title:first-child {
+      margin-top: 0;
+    }
+
+    /* Main Content */
     .userpage .main {
       flex: 1;
-      padding: 18px;
-      overflow: auto
+      padding: 30px 40px;
+      overflow-y: auto;
+      background: #343541;
     }
 
     .userpage .section-title {
-      font-size: 16px;
-      margin-bottom: 10px
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #ececf1;
+      border-bottom: 1px solid #4d4d4f;
+      padding-bottom: 10px;
     }
 
+    /* Inputs & KV */
     .kv {
-      display: grid;
-      grid-template-columns: 180px 1fr;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 10px
+      margin-bottom: 24px;
+    }
+
+    .kv label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #ececf1;
+    }
+
+    .kv .sub-label {
+      font-size: 12px;
+      color: #8e8ea0;
+      margin-bottom: 8px;
     }
 
     .ip {
       width: 100%;
       padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #3f3f55;
-      background: #2c2c3e;
-      color: #fff
+      border-radius: 6px;
+      border: 1px solid #565869;
+      background: #40414f;
+      color: #ececf1;
+      font-size: 14px;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #2f2f42;
-      border: 1px solid #4a4a60;
-      padding: 6px 10px;
-      border-radius: 999px
+    .ip:focus {
+      border-color: #10a37f;
+      outline: none;
     }
 
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap
+    .ip:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
-    .card {
-      background: #232336;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 12px
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 12px
-    }
-
+    /* Buttons */
     .cta {
-      background: #0078d4;
       border: none;
-      color: #fff;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      background: #10a37f;
+      color: white;
+      transition: 0.2s;
+    }
+
+    .cta:hover {
+      background: #1a7f64;
     }
 
     .cta.secondary {
-      background: #444
+      background: #40414f;
+      color: #ececf1;
+      border: 1px solid #565869;
+    }
+
+    .cta.secondary:hover {
+      background: #2a2b32;
     }
 
     .cta.danger {
-      background: #b91c1c
+      background: transparent;
+      color: #ef4444;
+      border: 1px solid #ef4444;
     }
 
-    .muted {
-      color: #bbb;
-      font-size: 12px
+    .cta.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #565869;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: #10a37f;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(16px);
+    }
+
+    /* Close Button */
+    .close-modal-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: #8e8ea0;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .close-modal-btn:hover {
+      color: #ececf1;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .userpage .sheet {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+      }
+
+      .userpage .aside {
+        width: 60px;
+        padding: 10px 4px;
+      }
+
+      .nav-group-title,
+      .userpage .nav button span {
+        display: none;
+      }
+
+      /* Icon only sidebar */
+      .userpage .nav button {
+        justify-content: center;
+        padding: 12px;
+      }
+
+      .userpage .nav button i {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .userpage .main {
+        padding: 20px;
+      }
     }
 
     /* Mobile Specifics */
@@ -917,115 +1032,55 @@
   </div>
 
   <div id="userpage" class="userpage">
-    <div class="backdrop"></div>
+    <div class="backdrop" id="userpage-backdrop"></div>
     <div class="sheet">
       <aside class="aside">
-        <div class="brand">
-          <div id="up-avatar" class="avatar">U</div>
-          <div>
-            <div id="up-name" style="font-weight:700">User</div>
-            <div id="plan-label" class="badge" style="margin-top:6px">
-              <i class="fas fa-crown"></i><span style="margin-left:6px">Free</span>
-            </div>
-          </div>
-        </div>
-        <div class="nav" style="display:flex;flex-direction:column;height:100%;">
-          <button data-tab="profile" class="active"><i class="fas fa-user"></i> Profile</button>
-          <button data-tab="account"><i class="fas fa-id-badge"></i> Account</button>
-          <button data-tab="preferences"><i class="fas fa-sliders-h"></i> Preferences</button>
-          <button data-tab="usage"><i class="fas fa-chart-line"></i> Usage</button>
+        <div class="nav">
+          <div class="nav-group-title">Settings</div>
+          <button data-tab="general" class="active"><i class="fas fa-cog"></i> General</button>
+          <button data-tab="personalization"><i class="fas fa-magic"></i> Personalization</button>
+          <button data-tab="data-controls"><i class="fas fa-database"></i> Data Controls</button>
+
+          <div class="nav-group-title" style="margin-top:12px">Account</div>
+          <button data-tab="profile"><i class="fas fa-user-circle"></i> Builder Profile</button>
+          <button data-tab="subscription"><i class="fas fa-star"></i> Subscription</button>
+          <button data-tab="security"><i class="fas fa-shield-alt"></i> Security</button>
+
           <div style="flex:1"></div>
-          <button id="userpage-logout" class="cta danger" style="width:100%;margin-top:8px"><i
-              class="fas fa-right-from-bracket"></i> Logout</button>
-          <button id="userpage-close" class="cta secondary" style="width:100%;margin-top:8px"><i
-              class="fas fa-times"></i> Close</button>
+          <button data-tab="about"><i class="fas fa-info-circle"></i> About</button>
+          <button id="userpage-logout" class="cta danger" style="margin-top:8px"><i class="fas fa-sign-out-alt"></i> Log
+            out</button>
         </div>
       </aside>
+
       <main class="main">
-        <section data-panel="profile">
-          <div class="section-title">Profile</div>
-          <div class="kv"><label>Display name</label><input id="pf-name" class="ip" placeholder="Your name" /></div>
-          <div class="kv"><label>Username (handle)</label><input id="pf-handle" class="ip" placeholder="@username" />
+        <!-- General -->
+        <section data-panel="general">
+          <div class="section-title">General</div>
+          <div class="kv">
+            <label>Theme</label>
+            <div class="row">
+              <button id="pref-theme-system" class="cta secondary">System</button>
+              <button id="pref-theme-dark" class="cta secondary">Dark</button>
+              <button id="pref-theme-light" class="cta secondary">Light</button>
+            </div>
           </div>
           <div class="kv">
-            <label>Avatar</label>
-            <div class="row">
-              <label class="badge" style="cursor:pointer"><i class="fas fa-upload"></i> Upload
-                <input id="pf-avatar" type="file" accept="image/*" style="display:none">
-              </label>
-              <button id="pf-avatar-remove" class="cta secondary">Remove</button>
-            </div>
-            <div class="muted">Tip: If no avatar, initials are used.</div>
-          </div>
-          <div class="actions"><button id="pf-save" class="cta"><i class="fas fa-save"></i> Save</button></div>
-        </section>
-
-        <section data-panel="account" style="display:none">
-          <div class="section-title">Account</div>
-          <div class="kv"><label>Email</label><input id="ac-email" class="ip" placeholder="email@example.com" /></div>
-          <div class="kv"><label>Mobile</label><input id="ac-mobile" class="ip" placeholder="+91-XXXXXXXXXX" /></div>
-          <div class="kv"><label>Plan</label>
-            <div class="row"><span class="badge"><i class="fas fa-crown"></i>
-                <span id="ac-plan-label" style="margin-left:6px">Free</span></span>
-              <button id="ac-upgrade" class="cta">Upgrade</button>
-            </div>
-          </div>
-          <div class="kv"><label>Sessions</label>
-            <div class="card" id="ac-sessions" style="width:100%">
-              <div class="muted">This device • Active now</div>
-              <div class="muted">Chrome • Last used today</div>
-            </div>
-          </div>
-        </section>
-
-        <section data-panel="preferences" style="display:none">
-          <div class="section-title">Preferences</div>
-          <div class="kv"><label>Theme</label>
-            <div class="row"><button id="pref-theme-dark" class="cta secondary">Dark</button><button
-                id="pref-theme-light" class="cta secondary">Light</button><button id="pref-theme-system"
-                class="cta secondary">System</button></div>
-          </div>
-          <div class="kv"><label>Language</label>
+            <label>Language</label>
             <select id="pref-lang" class="ip">
               <option value="auto">Auto (Detect)</option>
-              <option value="en">English</option>
+              <option value="en">English (US)</option>
               <option value="hi">Hindi</option>
             </select>
           </div>
-          <div class="kv"><label>Typing animation</label>
-            <select id="pref-type-speed" class="ip">
-              <option value="75">Slow (VedSAAS-like)</option>
-              <option value="40">Normal</option>
-              <option value="15">Fast</option>
-              <option value="0">Instant</option>
-            </select>
+          <div class="card" style="min-width:220px">
+            <div class="muted">Last active</div>
+            <div id="usg-last" style="font-size:22px;font-weight:700">—</div>
           </div>
-          <div class="actions"><button id="pref-save" class="cta"><i class="fas fa-save"></i> Save</button></div>
-        </section>
-
-        <section data-panel="usage" style="display:none">
-          <div class="section-title">Usage</div>
-          <div class="row">
-            <div class="card" style="min-width:220px">
-              <div class="muted">Conversations</div>
-              <div id="usg-conv" style="font-size:22px;font-weight:700">0</div>
-            </div>
-            <div class="card" style="min-width:220px">
-              <div class="muted">Messages</div>
-              <div id="usg-msg" style="font-size:22px;font-weight:700">0</div>
-            </div>
-            <div class="card" style="min-width:220px">
-              <div class="muted">Local storage</div>
-              <div id="usg-local" style="font-size:22px;font-weight:700">0 KB</div>
-            </div>
-            <div class="card" style="min-width:220px">
-              <div class="muted">Last active</div>
-              <div id="usg-last" style="font-size:22px;font-weight:700">—</div>
-            </div>
-          </div>
-        </section>
-      </main>
     </div>
+    </section>
+    </main>
+  </div>
   </div>
 
   <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
@@ -1530,27 +1585,115 @@
     const userPage = document.getElementById('userpage');
     const userPageClose = document.getElementById('userpage-close');
 
-    settingsHeader.addEventListener('click', () => {
+    // Open Modal
+    function openSettings(tab = 'general') {
       userPage.classList.add('show');
-      userPage.querySelectorAll('.aside .nav button').forEach(b => b.classList.remove('active'));
-      const btn = userPage.querySelector('.aside .nav button[data-tab="account"]');
-      if (btn) btn.classList.add('active');
-      userPage.querySelectorAll('.main section').forEach(sec => {
-        sec.style.display = (sec.getAttribute('data-panel') === 'account') ? 'block' : 'none';
-      });
+      switchTab(tab);
       loadUserPage();
+    }
+
+    // Switch Tab
+    function switchTab(tabId) {
+      userPage.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+      const btn = userPage.querySelector(`.nav button[data-tab="${tabId}"]`);
+      if (btn) btn.classList.add('active');
+
+      userPage.querySelectorAll('.main section').forEach(s => s.style.display = 'none');
+      const panel = userPage.querySelector(`.main section[data-panel="${tabId}"]`);
+      if (panel) panel.style.display = 'block';
+    }
+
+    // Load Data
+    function loadUserPage() {
+      const name = localStorage.getItem('user_name') || 'User';
+      const email = localStorage.getItem('user_email') || '';
+      const mobile = localStorage.getItem('user_mobile') || '';
+      const avatar = localStorage.getItem('user_avatar_url') || '';
+      const bio = localStorage.getItem('user_bio') || '';
+
+      setText('up-name', name);
+      setVal('pf-name', name);
+      setVal('ac-email', email);
+      setVal('ac-mobile', mobile);
+      setVal('pf-avatar-url', avatar);
+      setVal('pf-bio', bio);
+
+      // Avatar Preview
+      const avPreview = document.getElementById('pf-avatar-preview');
+      const avSidebar = document.getElementById('up-avatar');
+
+      const renderAv = (el) => {
+        if (!el) return;
+        el.innerHTML = '';
+        if (avatar) {
+          const img = document.createElement('img'); img.src = avatar;
+          img.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%";
+          el.appendChild(img);
+        } else {
+          el.textContent = initials(name);
+        }
+      };
+      renderAv(avPreview);
+      renderAv(avSidebar);
+    }
+
+    function setText(id, val) { const el = document.getElementById(id); if (el) el.innerText = val; }
+    function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+    function initials(n) { return (n || 'U').split(' ').map(x => x[0]).join('').substring(0, 2).toUpperCase(); }
+
+    // Event Listeners
+    settingsHeader.addEventListener('click', () => openSettings('general'));
+
+    // Sidebar Profile Button
+    document.getElementById('profile-open')?.addEventListener('click', () => openSettings('profile'));
+
+    // Internal Tabs
+    userPage.querySelectorAll('.nav button[data-tab]').forEach(b => {
+      b.addEventListener('click', () => switchTab(b.dataset.tab));
     });
+
+    // Close
+    userPageClose.addEventListener('click', () => userPage.classList.remove('show'));
+    userPage.querySelector('.backdrop').addEventListener('click', () => userPage.classList.remove('show'));
+
+    // Save Profile
+    document.getElementById('pf-save')?.addEventListener('click', () => {
+      const n = document.getElementById('pf-name').value;
+      const u = document.getElementById('pf-avatar-url').value;
+      const b = document.getElementById('pf-bio').value;
+      localStorage.setItem('user_name', n);
+      localStorage.setItem('user_avatar_url', u);
+      localStorage.setItem('user_bio', b);
+      setDisplayName(n);
+      loadUserPage();
+      banner('Profile updated');
+    });
+
+    // Clear All
+    document.getElementById('settings-clear-all')?.addEventListener('click', () => {
+      if (confirm('Delete ALL chats? This cannot be undone.')) {
+        topics = [];
+        saveTopics();
+        currentTopicId = null;
+        renderHistory();
+        renderChat();
+        updateUsage();
+        banner('All chats deleted');
+        userPage.classList.remove('show');
+      }
+    });
+
+    // Logout
+    document.getElementById('userpage-logout')?.addEventListener('click', () => {
+      if (confirm('Log out?')) {
+        localStorage.removeItem('token');
+        location.reload();
+      }
+    });
+
     settingsCaret.addEventListener('click', (e) => {
       e.stopPropagation();
-      const open = settingsPanel.style.display === 'block';
-      settingsPanel.style.display = open ? 'none' : 'block';
-      settingsCaret.classList.toggle('fa-chevron-up', !open);
-    });
-    userPage.querySelector('.backdrop').addEventListener('click', () => userPage.classList.remove('show'));
-    userPageClose.addEventListener('click', () => userPage.classList.remove('show'));
-    document.getElementById('profile-open').addEventListener('click', () => {
-      userPage.classList.add('show');
-      loadUserPage();
+      openSettings('general'); // Reuse openSettings logic
     });
 
 
