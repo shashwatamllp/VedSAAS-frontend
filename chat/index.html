@@ -831,7 +831,11 @@
       <div class="rail">
         <div class="topbar">
           <button class="mobile-nav-toggle" id="nav-toggle"><i class="fas fa-bars"></i></button>
-          <h1 id="brand-title">VedSAAS</h1>
+          <div class="brand-logo" id="brand-title"
+            style="display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:700;">
+            <img src="/public/image/logopic.png" alt="VedSAAS" style="height:28px;">
+            <span>VedSAAS</span>
+          </div>
           <div class="top-controls">
             <div class="meta" id="meta-info">Welcome</div>
             <button class="btn" id="refresh-history" title="Reload history"><i class="fas fa-sync"></i></button>
@@ -1194,13 +1198,23 @@
 
     /* History */
     function renderHistory() {
-      const list = document.getElementById('history-list'); if (!list) return; list.innerHTML = '';
-      (topics || []).forEach(t => {
-        const div = document.createElement('div'); div.className = 'topic' + (t.id === currentTopicId ? ' active' : ''); div.dataset.id = t.id;
-        const last = (t.messages && t.messages.length) ? t.messages[t.messages.length - 1] : null;
-        const preview = esc(String(last ? (last.message ?? last.text ?? '') : '').replace(/\n/g, ' ')).slice(0, 40);
-        div.innerHTML = `<div style="font-weight:600">${esc(t.title || 'Chat')}</div><div class="preview">${preview}</div>`;
-        div.onclick = () => { location.hash = '#/chat/' + encodeURIComponent(t.id); };
+      const list = document.getElementById('history-list'); list.innerHTML = '';
+      topics.forEach(t => {
+        const div = document.createElement('div'); div.className = 'history-item';
+        if (t.id === currentTopicId) div.classList.add('active');
+
+        const span = document.createElement('span');
+        span.innerText = t.title || 'New Chat';
+        span.style.flex = '1';
+        span.onclick = () => { currentTopicId = t.id; location.hash = '#/chat/' + encodeURIComponent(t.id); renderHistory(); renderChat(); updateUsage(); };
+
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        delBtn.className = 'history-del-btn';
+        delBtn.title = 'Delete this chat';
+        delBtn.onclick = (e) => { e.stopPropagation(); if (confirm('Delete this chat?')) { deleteTopic(t.id); } };
+
+        div.append(span, delBtn);
         list.appendChild(div);
       });
     }
