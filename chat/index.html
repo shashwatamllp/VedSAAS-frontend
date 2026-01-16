@@ -1381,6 +1381,9 @@
         const d = await r.json(); banner(d.message || d.error || 'Done');
       } catch { banner('Server unreachable'); }
     });
+
+    /* Landing */
+    const landingInput = document.getElementById('landing-input'); const landingStart = document.getElementById('landing-start');
     landingStart.addEventListener('click', async () => {
       const text = (landingInput.value || '').trim(); if (!text) { landingInput.focus(); return; }
       const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id);
@@ -1507,7 +1510,7 @@
 
 
     /* Landing */
-    const landingInput = document.getElementById('landing-input'); const landingStart = document.getElementById('landing-start');
+
     document.getElementById('landing-open-history').addEventListener('click', () => {
       if (!currentTopicId && topics[0]) currentTopicId = topics[0].id;
       if (currentTopicId) location.hash = '#/chat/' + encodeURIComponent(currentTopicId);
@@ -1555,7 +1558,7 @@
       else if (pref === 'light') document.body.classList.remove('dark-mode');
       else if (pref === 'system') {
         const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-        document.body.classList.toggle('dark-mode', prefersDark);
+        document.body.classLis('dark-mode', prefersDark);
       }
     })();
   </script>
