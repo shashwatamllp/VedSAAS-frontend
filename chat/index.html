@@ -1043,8 +1043,8 @@
         const o = location.origin || '';
         if (!o || o.startsWith('file://') || o.includes('localhost') || o.includes('127.0.0.1')) return FALLBACK;
 
-        // On production (vedsaas.com), use same origin (proxied) or specific API domain if defined
-        return o.replace(/\/+$/, '');
+        // On production (vedsaas.com), point to the dedicated API domain
+        return 'https://api.vedsaas.com';
       } catch { return FALLBACK; }
     })();
     function api(path) {
