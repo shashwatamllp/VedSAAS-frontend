@@ -917,7 +917,7 @@
   <div id="banner" class="banner"></div>
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-  <div id="app" class="container" style="display:none;">
+  <div id="app" class="container" style="display:flex;">
     <div class="sidebar" id="sidebar">
       <div class="title">Chat History</div>
       <button class="new-topic-btn" id="new-topic"><i class="fas fa-plus"></i> New Chat</button>
@@ -1086,6 +1086,13 @@
   <button id="to-bottom" class="to-bottom"><i class="fas fa-angle-down"></i> Latest</button>
 
   <script>
+    /* Global Error Trap */
+    window.onerror = function (msg, url, line) {
+      alert("Global Error: " + msg + "\nLine: " + line);
+      document.getElementById('app').style.display = 'flex';
+      return false;
+    };
+
     /* ===== Brand constant ===== */
     const ASSISTANT_NAME = 'VedSAAS';
 
