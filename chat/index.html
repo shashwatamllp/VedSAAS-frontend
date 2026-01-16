@@ -893,6 +893,8 @@
         <h2>Register</h2>
         <input id="reg-name" placeholder="Full name" />
         <input id="reg-identifier" placeholder="Email or Mobile" />
+        <input id="reg-dob" type="date" placeholder="Date of Birth" style="color-scheme: dark;" />
+        <input id="reg-pic" placeholder="Profile Pic URL (Optional)" />
         <input id="reg-password" type="password" placeholder="Password" />
         <div style="display:flex;gap:8px">
           <input id="reg-otp" placeholder="OTP (if received)" disabled style="flex:1" />
@@ -1382,9 +1384,20 @@
       const name = document.getElementById('reg-name').value.trim();
       const ident = document.getElementById('reg-identifier').value.trim();
       const pass = document.getElementById('reg-password').value;
+      const dob = document.getElementById('reg-dob').value;
+      const pic = document.getElementById('reg-pic').value.trim();
+
       if (!name || !ident || !pass) return banner('Fill all fields');
       try {
-        const r = await fetch(api('/api/register'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ name, email: (ident.includes('@') ? ident : null), mobile: (!ident.includes('@') ? ident : null), password: pass }) });
+        const body = {
+          name,
+          email: (ident.includes('@') ? ident : null),
+          mobile: (!ident.includes('@') ? ident : null),
+          password: pass,
+          dob: dob || null,
+          profile_pic: pic || null
+        };
+        const r = await fetch(api('/api/register'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
         const d = await r.json();
         if (r.ok) { document.getElementById('verify-identifier').value = ident; showAuth('verify'); banner('Registered. OTP sent.'); }
         else banner(d.error || 'Registration failed');

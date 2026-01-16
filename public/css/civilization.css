@@ -298,6 +298,56 @@ ul {
 }
 
 /* -- Specifics: Ecosystem Stats -- */
+
+/* ChatGPT-style History Item */
+.history-item {
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #ececf1;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.history-item:hover,
+.history-item.active {
+    background: #2a2b32;
+}
+
+.history-item span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Delete Button - Hidden by default, visible on group hover */
+.history-del-btn {
+    background: transparent;
+    border: none;
+    color: #8e8ea0;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-item:hover .history-del-btn {
+    opacity: 1;
+}
+
+.history-del-btn:hover {
+    color: #ef4444;
+    /* Red on hover */
+}
+
 .stat-item {
     text-align: center;
     padding: 40px 20px;
