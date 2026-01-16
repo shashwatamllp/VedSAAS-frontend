@@ -302,36 +302,37 @@
 
             <div class="dashboard-content">
                 <!-- Metrics Grid -->
+                <!-- Metrics Grid -->
                 <div class="metrics-grid">
                     <div class="metric-card">
-                        <div class="metric-label">CPU Usage</div>
-                        <div class="metric-value" id="cpu-value">--</div>
+                        <div class="metric-label">Current Epoch</div>
+                        <div class="metric-value" id="stat-epoch">--</div>
                         <div class="metric-change">
-                            <i class="fas fa-arrow-up"></i> Real-time
+                            <i class="fas fa-sync fa-spin"></i> Live
                         </div>
                     </div>
 
                     <div class="metric-card">
-                        <div class="metric-label">RAM Usage</div>
-                        <div class="metric-value" id="ram-value">--</div>
-                        <div class="metric-change">
-                            <i class="fas fa-arrow-up"></i> Real-time
+                        <div class="metric-label">Training Loss</div>
+                        <div class="metric-value" id="stat-loss">--</div>
+                        <div class="metric-change negative">
+                            <i class="fas fa-arrow-down"></i> Minimizing
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <div class="metric-label">Training Speed</div>
-                        <div class="metric-value" id="speed-value">--</div>
+                        <div class="metric-value" id="stat-speed">--</div>
                         <div class="metric-change">
                             <i class="fas fa-bolt"></i> tokens/sec
                         </div>
                     </div>
 
                     <div class="metric-card">
-                        <div class="metric-label">Active Modules</div>
-                        <div class="metric-value">57</div>
+                        <div class="metric-label">Status</div>
+                        <div class="metric-value" id="connection-status" style="font-size:1.5rem">Connecting...</div>
                         <div class="metric-change">
-                            <i class="fas fa-check"></i> All systems nominal
+                            System Monitor
                         </div>
                     </div>
                 </div>
@@ -475,6 +476,8 @@
     </script>
     <!-- Component Loader -->
     <script src="/public/js/components.js"></script>
+    <!-- Live Stats -->
+    <script src="/public/js/live-stats.js"></script>
 </body>
 
 </html>
