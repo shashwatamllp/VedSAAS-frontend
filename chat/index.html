@@ -1393,27 +1393,82 @@
     function setAccountInfo({ email = '', mobile = '' }) { const em = document.getElementById('ac-email'); const mo = document.getElementById('ac-mobile'); if (em) em.value = email; if (mo) mo.value = mobile; }
 
     /* History */
+    /* History & Titles */
     function renderHistory() {
       const list = document.getElementById('history-list'); list.innerHTML = '';
       topics.forEach(t => {
-        const div = document.createElement('div'); div.className = 'history-item';
+        // Use 'topic' class matching CSS, not 'history-item'
+        const div = document.createElement('div');
+        div.className = 'topic';
         if (t.id === currentTopicId) div.classList.add('active');
 
         const span = document.createElement('span');
+        span.className = 'title-text';
         span.innerText = t.title || 'New Chat';
         span.style.flex = '1';
-        span.onclick = () => { currentTopicId = t.id; location.hash = '#/chat/' + encodeURIComponent(t.id); renderHistory(); renderChat(); updateUsage(); };
+        span.style.overflow = 'hidden';
+        span.style.textOverflow = 'ellipsis';
+        span.style.whiteSpace = 'nowrap';
+
+        // Navigate on text click
+        div.onclick = () => {
+          if (currentTopicId === t.id) return;
+          currentTopicId = t.id;
+          location.hash = '#/chat/' + encodeURIComponent(t.id);
+          renderHistory();
+          renderChat();
+          updateUsage();
+        };
 
         const delBtn = document.createElement('button');
         delBtn.innerHTML = '<i class="fas fa-trash"></i>';
         delBtn.className = 'history-del-btn';
         delBtn.title = 'Delete this chat';
-        delBtn.onclick = (e) => { e.stopPropagation(); if (confirm('Delete this chat?')) { deleteTopic(t.id); } };
+
+        // Add spacing ("chipka huaa" fix)
+        delBtn.style.marginLeft = '10px';
+        delBtn.style.opacity = '0.6';
+        delBtn.style.background = 'transparent';
+        delBtn.style.border = 'none';
+        delBtn.style.color = '#fff';
+        delBtn.style.cursor = 'pointer';
+
+        delBtn.onmouseover = () => delBtn.style.opacity = '1';
+        delBtn.onmouseout = () => delBtn.style.opacity = '0.6';
+
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (confirm(`Delete "${t.title}"?`)) {
+            deleteTopic(t.id);
+          }
+        };
 
         div.append(span, delBtn);
         list.appendChild(div);
       });
     }
+
+    function deleteTopic(id) {
+      topics = topics.filter(x => x.id !== id);
+      if (currentTopicId === id) {
+        currentTopicId = (topics[0] && topics[0].id) || null;
+        if (currentTopicId) {
+          location.hash = '#/chat/' + encodeURIComponent(currentTopicId);
+          renderHistory();
+          renderChat();
+        } else {
+          location.hash = '#/';
+          showLanding();
+          renderHistory(); // clear the list active state
+        }
+      } else {
+        renderHistory();
+      }
+      saveTopicsToLocal();
+      updateUsage();
+    }
+
+    /* Messages & Auto-Title */
 
     /* Messages */
     function messageNode(m) {
@@ -1648,6 +1703,18 @@
     sendBtn.addEventListener('click', async () => {
       const text = mainInput.value.trim(); if (!text || sending) return;
       if (!currentTopicId) { const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id); }
+
+      // Auto-rename title if it's "New Chat"
+      const t = topics.find(x => x.id === currentTopicId);
+      if (t && (t.title === 'New Chat' || !t.title)) {
+        // Take first 30 chars
+        let smartTitle = text.slice(0, 30);
+        if (text.length > 30) smartTitle += '...';
+        t.title = smartTitle;
+        saveTopicsToLocal();
+        renderHistory();
+      }
+
       appendMessage('user', text); mainInput.value = ''; setDraft(''); autosize(mainInput); updateSendState(); await sendToServer(text);
     });
     function restoreDraft() { const d = getDraft(); if (d) { mainInput.value = d; autosize(mainInput); } updateSendState(); }
