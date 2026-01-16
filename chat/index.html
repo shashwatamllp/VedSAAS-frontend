@@ -1380,559 +1380,560 @@
         const r = await fetch(api('/api/send-otp'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ identifier: ident }) });
         const d = await r.json(); banner(d.message || d.error || 'Done');
       } catch { banner('Server unreachable'); }
-      landingStart.addEventListener('click', async () => {
-        const text = (landingInput.value || '').trim(); if (!text) { landingInput.focus(); return; }
-        const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id);
-        appendMessage('user', text); landingInput.value = ''; autosize(landingInput); await sendToServer(text);
-      });
-      landingInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); landingStart.click(); } });
-      landingInput.addEventListener('input', () => autosize(landingInput));
+    });
+    landingStart.addEventListener('click', async () => {
+      const text = (landingInput.value || '').trim(); if (!text) { landingInput.focus(); return; }
+      const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id);
+      appendMessage('user', text); landingInput.value = ''; autosize(landingInput); await sendToServer(text);
+    });
+    landingInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); landingStart.click(); } });
+    landingInput.addEventListener('input', () => autosize(landingInput));
 
-      /* Composer */
-      const mainInput = document.getElementById('main-input'); const sendBtn = document.getElementById('send-btn');
-      function autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
-      function updateSendState() { sendBtn.disabled = sending || !mainInput.value.trim().length; }
-      mainInput.addEventListener('input', () => {
-        autosize(mainInput); setDraft(mainInput.value); updateSendState();
-      });
-      mainInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
-        if (e.key === 'Escape') { mainInput.value = ''; setDraft(''); updateSendState(); }
-      });
-      document.addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); mainInput.focus(); }
-      });
-      sendBtn.addEventListener('click', async () => {
-        const text = mainInput.value.trim(); if (!text || sending) return;
-        if (!currentTopicId) { const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id); }
-        appendMessage('user', text); mainInput.value = ''; setDraft(''); autosize(mainInput); updateSendState(); await sendToServer(text);
-      });
-      function restoreDraft() { const d = getDraft(); if (d) { mainInput.value = d; autosize(mainInput); } updateSendState(); }
-      restoreDraft();
+    /* Composer */
+    const mainInput = document.getElementById('main-input'); const sendBtn = document.getElementById('send-btn');
+    function autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
+    function updateSendState() { sendBtn.disabled = sending || !mainInput.value.trim().length; }
+    mainInput.addEventListener('input', () => {
+      autosize(mainInput); setDraft(mainInput.value); updateSendState();
+    });
+    mainInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+      if (e.key === 'Escape') { mainInput.value = ''; setDraft(''); updateSendState(); }
+    });
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); mainInput.focus(); }
+    });
+    sendBtn.addEventListener('click', async () => {
+      const text = mainInput.value.trim(); if (!text || sending) return;
+      if (!currentTopicId) { const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id); }
+      appendMessage('user', text); mainInput.value = ''; setDraft(''); autosize(mainInput); updateSendState(); await sendToServer(text);
+    });
+    function restoreDraft() { const d = getDraft(); if (d) { mainInput.value = d; autosize(mainInput); } updateSendState(); }
+    restoreDraft();
 
-      /* Chat send – Updated for Junction */
-      async function sendToServer(text) {
-        let lastErr = null;
-        sending = true;
+    /* Chat send – Updated for Junction */
+    async function sendToServer(text) {
+      let lastErr = null;
+      sending = true;
+      updateSendState();
+      showChat();
+      showTyping();
+
+      try {
+        const langPref = localStorage.getItem('pref_lang') || 'auto';
+
+        // Updated Payload for Junction /api/chat
+        const body = {
+          message: text,
+          language: langPref,
+          context: {
+            from: 'web_frontend',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          }
+        };
+
+        // NOTE: X-API-Token header is auto-injected by authFetch if 'token' is set
+        const res = await authFetch(
+          '/api/chat', // Correct Junction Endpoint
+          { method: 'POST', body: JSON.stringify(body) },
+          { timeoutMs: 30000 }
+        );
+
+        let data = null;
+        try { data = await res.json(); } catch { }
+
+        // Junction returns { "response": "..." } or { "success": true, "response": "..." }
+        const reply = pickResponse(data) || '';
+
+        if (reply) {
+          hideTyping();
+          typeWriteBot(reply);
+          serverOnline = true;
+          updateMeta();
+        } else {
+          throw new Error("Empty response from server");
+        }
+
+      } catch (e) {
+        hideTyping();
+        const msg = (e.message) || 'Network error';
+        banner(msg);
+        typeWriteBot("I apologize, but I am having trouble connecting to the brain right now. (" + msg + ")");
+        serverOnline = false;
+        updateMeta();
+      } finally {
+        sending = false;
         updateSendState();
-        showChat();
-        showTyping();
+      }
+    }
 
-        try {
-          const langPref = localStorage.getItem('pref_lang') || 'auto';
+    /* Scroll pill */
+    const chatArea = document.getElementById('chat-area'); const toBottom = document.getElementById('to-bottom');
+    function isAtBottom() { return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 8 }
+    function autoScroll(force = false) { if (force || isAtBottom()) chatArea.scrollTop = chatArea.scrollHeight; toggleBottomPill(); }
+    function toggleBottomPill() { toBottom.classList.toggle('show', !isAtBottom()); }
+    chatArea.addEventListener('scroll', toggleBottomPill);
+    toBottom.addEventListener('click', () => autoScroll(true));
 
-          // Updated Payload for Junction /api/chat
+    /* Settings + userpage */
+    const settingsHeader = document.getElementById('settings-header');
+    const settingsPanel = document.getElementById('settings-panel');
+    const settingsCaret = document.getElementById('settings-caret');
+    const userPage = document.getElementById('userpage');
+    const userPageClose = document.getElementById('userpage-close');
+
+    settingsHeader.addEventListener('click', () => {
+      userPage.classList.add('show');
+      userPage.querySelectorAll('.aside .nav button').forEach(b => b.classList.remove('active'));
+      const btn = userPage.querySelector('.aside .nav button[data-tab="account"]');
+      if (btn) btn.classList.add('active');
+      userPage.querySelectorAll('.main section').forEach(sec => {
+        sec.style.display = (sec.getAttribute('data-panel') === 'account') ? 'block' : 'none';
+      });
+      loadUserPage();
+    });
+    settingsCaret.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = settingsPanel.style.display === 'block';
+      settingsPanel.style.display = open ? 'none' : 'block';
+      settingsCaret.classList.toggle('fa-chevron-up', !open);
+    });
+    userPage.querySelector('.backdrop').addEventListener('click', () => userPage.classList.remove('show'));
+    userPageClose.addEventListener('click', () => userPage.classList.remove('show'));
+    document.getElementById('profile-open').addEventListener('click', () => {
+      userPage.classList.add('show');
+      loadUserPage();
+    });
+
+
+    /* Landing */
+    const landingInput = document.getElementById('landing-input'); const landingStart = document.getElementById('landing-start');
+    document.getElementById('landing-open-history').addEventListener('click', () => {
+      if (!currentTopicId && topics[0]) currentTopicId = topics[0].id;
+      if (currentTopicId) location.hash = '#/chat/' + encodeURIComponent(currentTopicId);
+      renderHistory(); renderChat();
+    });
+    landingStart.addEventListener('click', async () => {
+      const text = (landingInput.value || '').trim(); if (!text) { landingInput.focus(); return; }
+      const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id);
+      appendMessage('user', text); landingInput.value = ''; autosize(landingInput); await sendToServer(text);
+    });
+    landingInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); landingStart.click(); } });
+    landingInput.addEventListener('input', () => autosize(landingInput));
+
+    /* Composer */
+    const mainInput = document.getElementById('main-input'); const sendBtn = document.getElementById('send-btn');
+    function autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
+    function updateSendState() { sendBtn.disabled = sending || !mainInput.value.trim().length; }
+    mainInput.addEventListener('input', () => {
+      autosize(mainInput); setDraft(mainInput.value); updateSendState();
+    });
+    mainInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+      if (e.key === 'Escape') { mainInput.value = ''; setDraft(''); updateSendState(); }
+    });
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); mainInput.focus(); }
+    });
+    sendBtn.addEventListener('click', async () => {
+      const text = mainInput.value.trim(); if (!text || sending) return;
+      if (!currentTopicId) { const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id); }
+      appendMessage('user', text); mainInput.value = ''; setDraft(''); autosize(mainInput); updateSendState(); await sendToServer(text);
+    });
+    function restoreDraft() { const d = getDraft(); if (d) { mainInput.value = d; autosize(mainInput); } updateSendState(); }
+    restoreDraft();
+
+    /* Chat send – VedLLM first, fallback Engine1 */
+    async function sendToServer(text) {
+      let attempts = 0, lastErr = null;
+      sending = true;
+      updateSendState();
+      showChat();
+      showTyping();
+
+      try {
+        const langPref = localStorage.getItem('pref_lang') || 'auto';
+
+        const tryOnce = async (path, bodyObj) => {
           const body = {
-            message: text,
-            language: langPref,
-            context: {
-              from: 'web_frontend',
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-            }
+            assistant: ASSISTANT_NAME,
+            assistant_name: ASSISTANT_NAME,
+            lang: langPref,
+            ...bodyObj
           };
-
-          // NOTE: X-API-Token header is auto-injected by authFetch if 'token' is set
           const res = await authFetch(
-            '/api/chat', // Correct Junction Endpoint
+            path,
             { method: 'POST', body: JSON.stringify(body) },
-            { timeoutMs: 30000 }
+            { timeoutMs: 15000 }
           );
-
           let data = null;
           try { data = await res.json(); } catch { }
-
-          // Junction returns { "response": "..." } or { "success": true, "response": "..." }
           const reply = pickResponse(data) || '';
+          return sanitizeBotText(reply);
+        };
 
-          if (reply) {
+        // VedLLM (Ollama default)
+        try {
+          const reply1 = await tryOnce('/api/vedllm/ask', { q: text, user: 'web' });
+          if (reply1) {
             hideTyping();
-            typeWriteBot(reply);
+            typeWriteBot(reply1);
             serverOnline = true;
             updateMeta();
-          } else {
-            throw new Error("Empty response from server");
+            return;
           }
-
         } catch (e) {
-          hideTyping();
-          const msg = (e.message) || 'Network error';
-          banner(msg);
-          typeWriteBot("I apologize, but I am having trouble connecting to the brain right now. (" + msg + ")");
-          serverOnline = false;
-          updateMeta();
-        } finally {
-          sending = false;
-          updateSendState();
+          lastErr = e;
         }
-      }
 
-      /* Scroll pill */
-      const chatArea = document.getElementById('chat-area'); const toBottom = document.getElementById('to-bottom');
-      function isAtBottom() { return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 8 }
-      function autoScroll(force = false) { if (force || isAtBottom()) chatArea.scrollTop = chatArea.scrollHeight; toggleBottomPill(); }
-      function toggleBottomPill() { toBottom.classList.toggle('show', !isAtBottom()); }
-      chatArea.addEventListener('scroll', toggleBottomPill);
-      toBottom.addEventListener('click', () => autoScroll(true));
-
-      /* Settings + userpage */
-      const settingsHeader = document.getElementById('settings-header');
-      const settingsPanel = document.getElementById('settings-panel');
-      const settingsCaret = document.getElementById('settings-caret');
-      const userPage = document.getElementById('userpage');
-      const userPageClose = document.getElementById('userpage-close');
-
-      settingsHeader.addEventListener('click', () => {
-        userPage.classList.add('show');
-        userPage.querySelectorAll('.aside .nav button').forEach(b => b.classList.remove('active'));
-        const btn = userPage.querySelector('.aside .nav button[data-tab="account"]');
-        if (btn) btn.classList.add('active');
-        userPage.querySelectorAll('.main section').forEach(sec => {
-          sec.style.display = (sec.getAttribute('data-panel') === 'account') ? 'block' : 'none';
-        });
-        loadUserPage();
-      });
-      settingsCaret.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const open = settingsPanel.style.display === 'block';
-        settingsPanel.style.display = open ? 'none' : 'block';
-        settingsCaret.classList.toggle('fa-chevron-up', !open);
-      });
-      userPage.querySelector('.backdrop').addEventListener('click', () => userPage.classList.remove('show'));
-      userPageClose.addEventListener('click', () => userPage.classList.remove('show'));
-      document.getElementById('profile-open').addEventListener('click', () => {
-        userPage.classList.add('show');
-        loadUserPage();
-      });
-
-
-      /* Landing */
-      const landingInput = document.getElementById('landing-input'); const landingStart = document.getElementById('landing-start');
-      document.getElementById('landing-open-history').addEventListener('click', () => {
-        if (!currentTopicId && topics[0]) currentTopicId = topics[0].id;
-        if (currentTopicId) location.hash = '#/chat/' + encodeURIComponent(currentTopicId);
-        renderHistory(); renderChat();
-      });
-      landingStart.addEventListener('click', async () => {
-        const text = (landingInput.value || '').trim(); if (!text) { landingInput.focus(); return; }
-        const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id);
-        appendMessage('user', text); landingInput.value = ''; autosize(landingInput); await sendToServer(text);
-      });
-      landingInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); landingStart.click(); } });
-      landingInput.addEventListener('input', () => autosize(landingInput));
-
-      /* Composer */
-      const mainInput = document.getElementById('main-input'); const sendBtn = document.getElementById('send-btn');
-      function autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
-      function updateSendState() { sendBtn.disabled = sending || !mainInput.value.trim().length; }
-      mainInput.addEventListener('input', () => {
-        autosize(mainInput); setDraft(mainInput.value); updateSendState();
-      });
-      mainInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
-        if (e.key === 'Escape') { mainInput.value = ''; setDraft(''); updateSendState(); }
-      });
-      document.addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); mainInput.focus(); }
-      });
-      sendBtn.addEventListener('click', async () => {
-        const text = mainInput.value.trim(); if (!text || sending) return;
-        if (!currentTopicId) { const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id); }
-        appendMessage('user', text); mainInput.value = ''; setDraft(''); autosize(mainInput); updateSendState(); await sendToServer(text);
-      });
-      function restoreDraft() { const d = getDraft(); if (d) { mainInput.value = d; autosize(mainInput); } updateSendState(); }
-      restoreDraft();
-
-      /* Chat send – VedLLM first, fallback Engine1 */
-      async function sendToServer(text) {
-        let attempts = 0, lastErr = null;
-        sending = true;
-        updateSendState();
-        showChat();
-        showTyping();
-
-        try {
-          const langPref = localStorage.getItem('pref_lang') || 'auto';
-
-          const tryOnce = async (path, bodyObj) => {
-            const body = {
-              assistant: ASSISTANT_NAME,
-              assistant_name: ASSISTANT_NAME,
-              lang: langPref,
-              ...bodyObj
-            };
-            const res = await authFetch(
-              path,
-              { method: 'POST', body: JSON.stringify(body) },
-              { timeoutMs: 15000 }
-            );
-            let data = null;
-            try { data = await res.json(); } catch { }
-            const reply = pickResponse(data) || '';
-            return sanitizeBotText(reply);
-          };
-
-          // VedLLM (Ollama default)
+        // Optional small retry via Engine1
+        while (attempts < 1) {
+          attempts++;
+          await new Promise(r => setTimeout(r, 600));
           try {
-            const reply1 = await tryOnce('/api/vedllm/ask', { q: text, user: 'web' });
-            if (reply1) {
+            const reply2 = await tryOnce('/api/engine1/ask', { q: text, user: 'web' });
+            if (reply2) {
               hideTyping();
-              typeWriteBot(reply1);
+              typeWriteBot(reply2);
               serverOnline = true;
               updateMeta();
               return;
             }
-          } catch (e) {
-            lastErr = e;
+          } catch (e2) {
+            lastErr = e2;
           }
-
-          // Optional small retry via Engine1
-          while (attempts < 1) {
-            attempts++;
-            await new Promise(r => setTimeout(r, 600));
-            try {
-              const reply2 = await tryOnce('/api/engine1/ask', { q: text, user: 'web' });
-              if (reply2) {
-                hideTyping();
-                typeWriteBot(reply2);
-                serverOnline = true;
-                updateMeta();
-                return;
-              }
-            } catch (e2) {
-              lastErr = e2;
-            }
-          }
-
-          // All failed
-          hideTyping();
-          const msg = (lastErr && lastErr.message) || 'Network error';
-          banner(msg);
-          typeWriteBot(msg);
-          serverOnline = false;
-          updateMeta();
-        } finally {
-          sending = false;
-          updateSendState();
         }
-      }
 
-      /* Optional: server history */
-      async function loadHistoryFromServer() {
-        try {
-          const res = await authFetch('/api/chat/history');
-          const data = await res.json();
-          const h = Array.isArray(data.history) ? data.history : (data || []);
-          if (h.length) {
-            const serverTopic = {
-              id: 'server_' + Date.now(), title: 'Server History', created_at: Date.now(),
-              messages: h.map(it => ({ id: uid(), from: it.from === ASSISTANT_NAME ? 'bot' : (it.from === 'VedSAAS' ? 'bot' : 'user'), message: it.message, timestamp: it.timestamp || Date.now() }))
-            };
-            topics = topics.filter(t => t.id !== serverTopic.id);
-            topics.unshift(serverTopic);
-            saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage();
-          }
-        } catch { }
+        // All failed
+        hideTyping();
+        const msg = (lastErr && lastErr.message) || 'Network error';
+        banner(msg);
+        typeWriteBot(msg);
+        serverOnline = false;
+        updateMeta();
+      } finally {
+        sending = false;
+        updateSendState();
       }
+    }
 
-      /* Theme + prefs + profile */
-      document.getElementById('dark-toggle').addEventListener('click', () => document.body.classList.toggle('dark-mode'));
-      async function doLogout() {
-        try { localStorage.clear(); } catch { }
-        token = null;
-        try { document.getElementById('userpage').classList.remove('show'); } catch { }
-        showAuth('login'); banner('Logged out');
-      }
-      document.getElementById('logout-btn').addEventListener('click', doLogout);
-      document.getElementById('userpage-logout').addEventListener('click', doLogout);
-      document.getElementById('new-topic').addEventListener('click', () => {
-        const id = newTopic('New Chat');
-        location.hash = '#/chat/' + encodeURIComponent(id);
-        renderChat();
-        document.getElementById('main-input').focus();
+    /* Optional: server history */
+    async function loadHistoryFromServer() {
+      try {
+        const res = await authFetch('/api/chat/history');
+        const data = await res.json();
+        const h = Array.isArray(data.history) ? data.history : (data || []);
+        if (h.length) {
+          const serverTopic = {
+            id: 'server_' + Date.now(), title: 'Server History', created_at: Date.now(),
+            messages: h.map(it => ({ id: uid(), from: it.from === ASSISTANT_NAME ? 'bot' : (it.from === 'VedSAAS' ? 'bot' : 'user'), message: it.message, timestamp: it.timestamp || Date.now() }))
+          };
+          topics = topics.filter(t => t.id !== serverTopic.id);
+          topics.unshift(serverTopic);
+          saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage();
+        }
+      } catch { }
+    }
+
+    /* Theme + prefs + profile */
+    document.getElementById('dark-toggle').addEventListener('click', () => document.body.classList.toggle('dark-mode'));
+    async function doLogout() {
+      try { localStorage.clear(); } catch { }
+      token = null;
+      try { document.getElementById('userpage').classList.remove('show'); } catch { }
+      showAuth('login'); banner('Logged out');
+    }
+    document.getElementById('logout-btn').addEventListener('click', doLogout);
+    document.getElementById('userpage-logout').addEventListener('click', doLogout);
+    document.getElementById('new-topic').addEventListener('click', () => {
+      const id = newTopic('New Chat');
+      location.hash = '#/chat/' + encodeURIComponent(id);
+      renderChat();
+      document.getElementById('main-input').focus();
+    });
+    document.getElementById('refresh-history').addEventListener('click', () => loadHistoryFromServer());
+    document.getElementById('top-delete-chat').addEventListener('click', deleteCurrentChat);
+    document.getElementById('delete-topic').addEventListener('click', deleteCurrentChat);
+    document.getElementById('clear-all-chats').addEventListener('click', clearAllChats);
+
+    /* User Page Loader Hook */
+    // Note: loadUserPage definition is below this block, so it's fine.
+
+    document.getElementById('pf-save').addEventListener('click', async () => {
+      // ... (Simple UI logic - replaced by full logic below, but keeping listener attachment here if needed, 
+      // actually the full listener is redefined in lines 1837+ so we should avoid duplication.
+      // The conflicting block had duplicates. I will REMOVE the duplicates here and rely on the code below 1793.)
+      /* NOTE: The code below 1793 ALREADY has listeners for pf-save, pref-save, etc. */
+      /* So I only need to keep the unique listeners like logout, new-topic which might be missing below. */
+      /* Actually, lines 1793+ define loadUserPage and listeners. */
+    });
+
+
+
+
+    /* Scroll pill */
+    const chatArea = document.getElementById('chat-area'); const toBottom = document.getElementById('to-bottom');
+    function isAtBottom() { return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 8 }
+    function autoScroll(force = false) { if (force || isAtBottom()) chatArea.scrollTop = chatArea.scrollHeight; toggleBottomPill(); }
+    function toggleBottomPill() { toBottom.classList.toggle('show', !isAtBottom()); }
+    chatArea.addEventListener('scroll', toggleBottomPill);
+    toBottom.addEventListener('click', () => autoScroll(true));
+
+    /* Settings + userpage */
+    const settingsHeader = document.getElementById('settings-header');
+    const settingsPanel = document.getElementById('settings-panel');
+    const settingsCaret = document.getElementById('settings-caret');
+    const userPage = document.getElementById('userpage');
+    const userPageClose = document.getElementById('userpage-close');
+
+    settingsHeader.addEventListener('click', () => {
+      userPage.classList.add('show');
+      userPage.querySelectorAll('.aside .nav button').forEach(b => b.classList.remove('active'));
+      const btn = userPage.querySelector('.aside .nav button[data-tab="account"]');
+      if (btn) btn.classList.add('active');
+      userPage.querySelectorAll('.main section').forEach(sec => {
+        sec.style.display = (sec.getAttribute('data-panel') === 'account') ? 'block' : 'none';
       });
-      document.getElementById('refresh-history').addEventListener('click', () => loadHistoryFromServer());
-      document.getElementById('top-delete-chat').addEventListener('click', deleteCurrentChat);
-      document.getElementById('delete-topic').addEventListener('click', deleteCurrentChat);
-      document.getElementById('clear-all-chats').addEventListener('click', clearAllChats);
-
-      /* User Page Loader Hook */
-      // Note: loadUserPage definition is below this block, so it's fine.
-
-      document.getElementById('pf-save').addEventListener('click', async () => {
-        // ... (Simple UI logic - replaced by full logic below, but keeping listener attachment here if needed, 
-        // actually the full listener is redefined in lines 1837+ so we should avoid duplication.
-        // The conflicting block had duplicates. I will REMOVE the duplicates here and rely on the code below 1793.)
-        /* NOTE: The code below 1793 ALREADY has listeners for pf-save, pref-save, etc. */
-        /* So I only need to keep the unique listeners like logout, new-topic which might be missing below. */
-        /* Actually, lines 1793+ define loadUserPage and listeners. */
-      });
-
-
-
-
-      /* Scroll pill */
-      const chatArea = document.getElementById('chat-area'); const toBottom = document.getElementById('to-bottom');
-      function isAtBottom() { return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 8 }
-      function autoScroll(force = false) { if (force || isAtBottom()) chatArea.scrollTop = chatArea.scrollHeight; toggleBottomPill(); }
-      function toggleBottomPill() { toBottom.classList.toggle('show', !isAtBottom()); }
-      chatArea.addEventListener('scroll', toggleBottomPill);
-      toBottom.addEventListener('click', () => autoScroll(true));
-
-      /* Settings + userpage */
-      const settingsHeader = document.getElementById('settings-header');
-      const settingsPanel = document.getElementById('settings-panel');
-      const settingsCaret = document.getElementById('settings-caret');
-      const userPage = document.getElementById('userpage');
-      const userPageClose = document.getElementById('userpage-close');
-
-      settingsHeader.addEventListener('click', () => {
-        userPage.classList.add('show');
+      loadUserPage();
+    });
+    settingsCaret.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = settingsPanel.style.display === 'block';
+      settingsPanel.style.display = open ? 'none' : 'block';
+      settingsCaret.classList.toggle('fa-chevron-up', !open);
+    });
+    userPage.querySelector('.backdrop').addEventListener('click', () => userPage.classList.remove('show'));
+    userPageClose.addEventListener('click', () => userPage.classList.remove('show'));
+    document.getElementById('profile-open').addEventListener('click', () => {
+      userPage.classList.add('show');
+      loadUserPage();
+    });
+    Array.from(userPage.querySelectorAll('.aside .nav button[data-tab]')).forEach(btn => {
+      btn.addEventListener('click', () => {
         userPage.querySelectorAll('.aside .nav button').forEach(b => b.classList.remove('active'));
-        const btn = userPage.querySelector('.aside .nav button[data-tab="account"]');
-        if (btn) btn.classList.add('active');
+        btn.classList.add('active');
+        const tab = btn.getAttribute('data-tab');
         userPage.querySelectorAll('.main section').forEach(sec => {
-          sec.style.display = (sec.getAttribute('data-panel') === 'account') ? 'block' : 'none';
-        });
-        loadUserPage();
-      });
-      settingsCaret.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const open = settingsPanel.style.display === 'block';
-        settingsPanel.style.display = open ? 'none' : 'block';
-        settingsCaret.classList.toggle('fa-chevron-up', !open);
-      });
-      userPage.querySelector('.backdrop').addEventListener('click', () => userPage.classList.remove('show'));
-      userPageClose.addEventListener('click', () => userPage.classList.remove('show'));
-      document.getElementById('profile-open').addEventListener('click', () => {
-        userPage.classList.add('show');
-        loadUserPage();
-      });
-      Array.from(userPage.querySelectorAll('.aside .nav button[data-tab]')).forEach(btn => {
-        btn.addEventListener('click', () => {
-          userPage.querySelectorAll('.aside .nav button').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const tab = btn.getAttribute('data-tab');
-          userPage.querySelectorAll('.main section').forEach(sec => {
-            sec.style.display = (sec.getAttribute('data-panel') === tab) ? 'block' : 'none';
-          });
+          sec.style.display = (sec.getAttribute('data-panel') === tab) ? 'block' : 'none';
         });
       });
+    });
 
-      /* Export */
-      document.getElementById('export-topic').addEventListener('click', () => {
-        const t = topics.find(x => x.id === currentTopicId); if (!t) return banner('No conversation to export.');
-        let out = ''; t.messages.forEach(m => {
-          const who = m.from === 'user' ? 'You' : ASSISTANT_NAME;
-          out += `${who} • ${formatFull(m.timestamp)}\n${m.message}\n\n`;
-        });
-        const blob = new Blob([out], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `${(t.title || 'chat').replace(/\s+/g, '_')}.txt`;
-        document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    /* Export */
+    document.getElementById('export-topic').addEventListener('click', () => {
+      const t = topics.find(x => x.id === currentTopicId); if (!t) return banner('No conversation to export.');
+      let out = ''; t.messages.forEach(m => {
+        const who = m.from === 'user' ? 'You' : ASSISTANT_NAME;
+        out += `${who} • ${formatFull(m.timestamp)}\n${m.message}\n\n`;
       });
+      const blob = new Blob([out], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${(t.title || 'chat').replace(/\s+/g, '_')}.txt`;
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
 
-      /* Usage */
-      function renderStorageUsage() {
-        const size = (JSON.stringify(topics || []).length || 0);
-        const kb = Math.round(size / 1024);
-        const el = document.getElementById('usg-local'); if (el) el.innerText = `${kb} KB`;
-        const meta = document.getElementById('meta-info');
-        if (meta) { meta.innerText = `${serverOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`; meta.style.color = serverOnline ? '#9fe870' : '#ffb3b3'; }
-      }
-      function updateUsage() {
-        const conv = topics.length;
-        const msg = topics.reduce((n, t) => n + (t.messages?.length || 0), 0);
-        const last = topics[0]?.messages?.slice(-1)[0]?.timestamp || Date.now();
-        const c1 = document.getElementById('usg-conv'); if (c1) c1.innerText = conv;
-        const c2 = document.getElementById('usg-msg'); if (c2) c2.innerText = msg;
-        const c3 = document.getElementById('usg-last'); if (c3) c3.innerText = new Date(last).toLocaleString();
-        renderStorageUsage();
-      }
+    /* Usage */
+    function renderStorageUsage() {
+      const size = (JSON.stringify(topics || []).length || 0);
+      const kb = Math.round(size / 1024);
+      const el = document.getElementById('usg-local'); if (el) el.innerText = `${kb} KB`;
+      const meta = document.getElementById('meta-info');
+      if (meta) { meta.innerText = `${serverOnline ? 'Online' : 'Offline'} • Local: ${kb} KB`; meta.style.color = serverOnline ? '#9fe870' : '#ffb3b3'; }
+    }
+    function updateUsage() {
+      const conv = topics.length;
+      const msg = topics.reduce((n, t) => n + (t.messages?.length || 0), 0);
+      const last = topics[0]?.messages?.slice(-1)[0]?.timestamp || Date.now();
+      const c1 = document.getElementById('usg-conv'); if (c1) c1.innerText = conv;
+      const c2 = document.getElementById('usg-msg'); if (c2) c2.innerText = msg;
+      const c3 = document.getElementById('usg-last'); if (c3) c3.innerText = new Date(last).toLocaleString();
+      renderStorageUsage();
+    }
 
-      /* Optional: server history */
-      async function loadHistoryFromServer() {
+    /* Optional: server history */
+    async function loadHistoryFromServer() {
+      try {
+        const res = await authFetch('/api/chat/history');
+        const data = await res.json();
+        const h = Array.isArray(data.history) ? data.history : (data || []);
+        if (h.length) {
+          const serverTopic = {
+            id: 'server_' + Date.now(), title: 'Server History', created_at: Date.now(),
+            messages: h.map(it => ({ id: uid(), from: it.from === ASSISTANT_NAME ? 'bot' : (it.from === 'VedSAAS' ? 'bot' : 'user'), message: it.message, timestamp: it.timestamp || Date.now() }))
+          };
+          topics = topics.filter(t => t.id !== serverTopic.id);
+          topics.unshift(serverTopic);
+          saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage();
+        }
+      } catch { }
+    }
+
+    /* Theme + prefs + profile */
+    document.getElementById('dark-toggle').addEventListener('click', () => document.body.classList.toggle('dark-mode'));
+    async function doLogout() {
+      try { await fetch(api('/api/logout'), { method: 'POST', credentials: 'include' }); } catch { }
+      try { localStorage.clear(); } catch { }
+      token = null;
+      try { document.getElementById('userpage').classList.remove('show'); } catch { }
+      showAuth('login'); banner('Logged out');
+    }
+    document.getElementById('logout-btn').addEventListener('click', doLogout);
+    document.getElementById('userpage-logout').addEventListener('click', doLogout);
+    document.getElementById('new-topic').addEventListener('click', () => {
+      const id = newTopic('New Chat');
+      location.hash = '#/chat/' + encodeURIComponent(id);
+      renderChat();
+      document.getElementById('main-input').focus();
+    });
+    document.getElementById('refresh-history').addEventListener('click', () => loadHistoryFromServer());
+    document.getElementById('top-delete-chat').addEventListener('click', deleteCurrentChat);
+    document.getElementById('delete-topic').addEventListener('click', deleteCurrentChat);
+    document.getElementById('clear-all-chats').addEventListener('click', clearAllChats);
+
+    async function loadUserPage() {
+      const nameLS = localStorage.getItem('user_name') || 'User';
+      const handleLS = localStorage.getItem('user_handle') || '';
+      const emailLS = localStorage.getItem('user_email') || '';
+      const mobileLS = localStorage.getItem('user_mobile') || '';
+      const planLS = localStorage.getItem('user_plan') || 'Free';
+      const pfName = document.getElementById('pf-name');
+      const pfHandle = document.getElementById('pf-handle');
+      const acEmail = document.getElementById('ac-email');
+      const acMobile = document.getElementById('ac-mobile');
+      const planLbl = document.getElementById('plan-label');
+      const acPlanLbl = document.getElementById('ac-plan-label');
+      if (pfName) pfName.value = nameLS;
+      if (pfHandle) pfHandle.value = handleLS;
+      if (acEmail) acEmail.value = emailLS;
+      if (acMobile) acMobile.value = mobileLS;
+      if (planLbl) planLbl.innerHTML = `<i class="fas fa-crown"></i><span style="margin-left:6px">${planLS}</span>`;
+      if (acPlanLbl) acPlanLbl.innerText = planLS;
+      const langPref = localStorage.getItem('pref_lang') || 'auto';
+      const typePref = localStorage.getItem('pref_type_speed') || '55';
+      const selLang = document.getElementById('pref-lang');
+      const selType = document.getElementById('pref-type-speed');
+      if (selLang) selLang.value = langPref;
+      if (selType) selType.value = typePref;
+
+      if (token) {
         try {
-          const res = await authFetch('/api/chat/history');
-          const data = await res.json();
-          const h = Array.isArray(data.history) ? data.history : (data || []);
-          if (h.length) {
-            const serverTopic = {
-              id: 'server_' + Date.now(), title: 'Server History', created_at: Date.now(),
-              messages: h.map(it => ({ id: uid(), from: it.from === ASSISTANT_NAME ? 'bot' : (it.from === 'VedSAAS' ? 'bot' : 'user'), message: it.message, timestamp: it.timestamp || Date.now() }))
-            };
-            topics = topics.filter(t => t.id !== serverTopic.id);
-            topics.unshift(serverTopic);
-            saveTopicsToLocal(); renderHistory(); renderChat(); updateUsage();
+          const r = await authFetch('/api/user-profile');
+          if (r.ok) {
+            const d = await r.json();
+            if (d.name) { if (pfName) pfName.value = d.name; localStorage.setItem('user_name', d.name); setDisplayName(d.name); }
+            if (d.handle) { if (pfHandle) pfHandle.value = d.handle; localStorage.setItem('user_handle', d.handle); }
+            if (d.email) { if (acEmail) acEmail.value = d.email; localStorage.setItem('user_email', d.email); }
+            if (d.mobile) { if (acMobile) acMobile.value = d.mobile; localStorage.setItem('user_mobile', d.mobile); }
+            if (d.plan) {
+              if (planLbl) planLbl.innerHTML = `<i class="fas fa-crown"></i><span style="margin-left:6px">${d.plan}</span>`;
+              if (acPlanLbl) acPlanLbl.innerText = d.plan;
+              localStorage.setItem('user_plan', d.plan);
+            }
+            if (d.avatar_url) { localStorage.setItem('user_avatar_url', d.avatar_url); setDisplayName(localStorage.getItem('user_name') || 'User'); }
           }
         } catch { }
       }
-
-      /* Theme + prefs + profile */
-      document.getElementById('dark-toggle').addEventListener('click', () => document.body.classList.toggle('dark-mode'));
-      async function doLogout() {
-        try { await fetch(api('/api/logout'), { method: 'POST', credentials: 'include' }); } catch { }
-        try { localStorage.clear(); } catch { }
-        token = null;
-        try { document.getElementById('userpage').classList.remove('show'); } catch { }
-        showAuth('login'); banner('Logged out');
+    }
+    document.getElementById('pf-save').addEventListener('click', async () => {
+      const name = document.getElementById('pf-name').value.trim() || 'User';
+      const handle = document.getElementById('pf-handle').value.trim();
+      localStorage.setItem('user_name', name);
+      localStorage.setItem('user_handle', handle);
+      setDisplayName(name);
+      if (token) {
+        try {
+          const r = await authFetch('/api/user/profile', { method: 'POST', body: JSON.stringify({ name, handle }) });
+          if (!r.ok) { const d = await r.json().catch(() => ({})); banner(d.error || 'Saved locally'); }
+          else banner('Profile saved');
+        } catch { banner('Saved locally'); }
+      } else { banner('Profile saved locally'); }
+    });
+    document.getElementById('pf-avatar').addEventListener('change', async (e) => {
+      const file = e.target.files?.[0]; if (!file) return;
+      const url = URL.createObjectURL(file);
+      localStorage.setItem('user_avatar_url', url);
+      setDisplayName(localStorage.getItem('user_name') || 'User');
+      if (token) {
+        try {
+          const fd = new FormData(); fd.append('avatar', file);
+          const r = await fetch(api('/api/user/avatar'), { method: 'POST', body: fd, credentials: 'include', headers: token ? { 'Authorization': 'Bearer ' + token } : {} });
+          if (r.ok) {
+            const d = await r.json().catch(() => ({}));
+            if (d.url) { localStorage.setItem('user_avatar_url', d.url); setDisplayName(localStorage.getItem('user_name') || 'User'); }
+            banner('Avatar updated');
+          } else { banner('Avatar set locally'); }
+        } catch { banner('Avatar set locally'); }
       }
-      document.getElementById('logout-btn').addEventListener('click', doLogout);
-      document.getElementById('userpage-logout').addEventListener('click', doLogout);
-      document.getElementById('new-topic').addEventListener('click', () => {
-        const id = newTopic('New Chat');
-        location.hash = '#/chat/' + encodeURIComponent(id);
-        renderChat();
-        document.getElementById('main-input').focus();
-      });
-      document.getElementById('refresh-history').addEventListener('click', () => loadHistoryFromServer());
-      document.getElementById('top-delete-chat').addEventListener('click', deleteCurrentChat);
-      document.getElementById('delete-topic').addEventListener('click', deleteCurrentChat);
-      document.getElementById('clear-all-chats').addEventListener('click', clearAllChats);
-
-      async function loadUserPage() {
-        const nameLS = localStorage.getItem('user_name') || 'User';
-        const handleLS = localStorage.getItem('user_handle') || '';
-        const emailLS = localStorage.getItem('user_email') || '';
-        const mobileLS = localStorage.getItem('user_mobile') || '';
-        const planLS = localStorage.getItem('user_plan') || 'Free';
-        const pfName = document.getElementById('pf-name');
-        const pfHandle = document.getElementById('pf-handle');
-        const acEmail = document.getElementById('ac-email');
-        const acMobile = document.getElementById('ac-mobile');
-        const planLbl = document.getElementById('plan-label');
-        const acPlanLbl = document.getElementById('ac-plan-label');
-        if (pfName) pfName.value = nameLS;
-        if (pfHandle) pfHandle.value = handleLS;
-        if (acEmail) acEmail.value = emailLS;
-        if (acMobile) acMobile.value = mobileLS;
-        if (planLbl) planLbl.innerHTML = `<i class="fas fa-crown"></i><span style="margin-left:6px">${planLS}</span>`;
-        if (acPlanLbl) acPlanLbl.innerText = planLS;
-        const langPref = localStorage.getItem('pref_lang') || 'auto';
-        const typePref = localStorage.getItem('pref_type_speed') || '55';
-        const selLang = document.getElementById('pref-lang');
-        const selType = document.getElementById('pref-type-speed');
-        if (selLang) selLang.value = langPref;
-        if (selType) selType.value = typePref;
-
-        if (token) {
-          try {
-            const r = await authFetch('/api/user-profile');
-            if (r.ok) {
-              const d = await r.json();
-              if (d.name) { if (pfName) pfName.value = d.name; localStorage.setItem('user_name', d.name); setDisplayName(d.name); }
-              if (d.handle) { if (pfHandle) pfHandle.value = d.handle; localStorage.setItem('user_handle', d.handle); }
-              if (d.email) { if (acEmail) acEmail.value = d.email; localStorage.setItem('user_email', d.email); }
-              if (d.mobile) { if (acMobile) acMobile.value = d.mobile; localStorage.setItem('user_mobile', d.mobile); }
-              if (d.plan) {
-                if (planLbl) planLbl.innerHTML = `<i class="fas fa-crown"></i><span style="margin-left:6px">${d.plan}</span>`;
-                if (acPlanLbl) acPlanLbl.innerText = d.plan;
-                localStorage.setItem('user_plan', d.plan);
-              }
-              if (d.avatar_url) { localStorage.setItem('user_avatar_url', d.avatar_url); setDisplayName(localStorage.getItem('user_name') || 'User'); }
-            }
-          } catch { }
-        }
+    });
+    document.getElementById('pf-avatar-remove').addEventListener('click', () => {
+      localStorage.removeItem('user_avatar_url');
+      setDisplayName(localStorage.getItem('user_name') || 'User');
+      banner('Avatar removed');
+    });
+    document.getElementById('pref-theme-dark').addEventListener('click', () => {
+      localStorage.setItem('pref_theme', 'dark');
+      document.body.classList.add('dark-mode');
+      banner('Theme: Dark');
+    });
+    document.getElementById('pref-theme-light').addEventListener('click', () => {
+      localStorage.setItem('pref_theme', 'light');
+      document.body.classList.remove('dark-mode');
+      banner('Theme: Light');
+    });
+    document.getElementById('pref-theme-system').addEventListener('click', () => {
+      localStorage.setItem('pref_theme', 'system');
+      const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+      document.body.classList.toggle('dark-mode', prefersDark);
+      banner('Theme: System');
+    });
+    document.getElementById('pref-save').addEventListener('click', async () => {
+      const lang = document.getElementById('pref-lang').value;
+      const speed = document.getElementById('pref-type-speed').value;
+      localStorage.setItem('pref_lang', lang);
+      localStorage.setItem('pref_type_speed', String(speed));
+      banner('Preferences saved');
+      if (token) {
+        try {
+          await authFetch('/api/user/preferences', { method: 'POST', body: JSON.stringify({ lang, typing_speed: Number(speed) }) });
+        } catch { }
       }
-      document.getElementById('pf-save').addEventListener('click', async () => {
-        const name = document.getElementById('pf-name').value.trim() || 'User';
-        const handle = document.getElementById('pf-handle').value.trim();
-        localStorage.setItem('user_name', name);
-        localStorage.setItem('user_handle', handle);
-        setDisplayName(name);
-        if (token) {
-          try {
-            const r = await authFetch('/api/user/profile', { method: 'POST', body: JSON.stringify({ name, handle }) });
-            if (!r.ok) { const d = await r.json().catch(() => ({})); banner(d.error || 'Saved locally'); }
-            else banner('Profile saved');
-          } catch { banner('Saved locally'); }
-        } else { banner('Profile saved locally'); }
-      });
-      document.getElementById('pf-avatar').addEventListener('change', async (e) => {
-        const file = e.target.files?.[0]; if (!file) return;
-        const url = URL.createObjectURL(file);
-        localStorage.setItem('user_avatar_url', url);
-        setDisplayName(localStorage.getItem('user_name') || 'User');
-        if (token) {
-          try {
-            const fd = new FormData(); fd.append('avatar', file);
-            const r = await fetch(api('/api/user/avatar'), { method: 'POST', body: fd, credentials: 'include', headers: token ? { 'Authorization': 'Bearer ' + token } : {} });
-            if (r.ok) {
-              const d = await r.json().catch(() => ({}));
-              if (d.url) { localStorage.setItem('user_avatar_url', d.url); setDisplayName(localStorage.getItem('user_name') || 'User'); }
-              banner('Avatar updated');
-            } else { banner('Avatar set locally'); }
-          } catch { banner('Avatar set locally'); }
-        }
-      });
-      document.getElementById('pf-avatar-remove').addEventListener('click', () => {
-        localStorage.removeItem('user_avatar_url');
-        setDisplayName(localStorage.getItem('user_name') || 'User');
-        banner('Avatar removed');
-      });
-      document.getElementById('pref-theme-dark').addEventListener('click', () => {
-        localStorage.setItem('pref_theme', 'dark');
-        document.body.classList.add('dark-mode');
-        banner('Theme: Dark');
-      });
-      document.getElementById('pref-theme-light').addEventListener('click', () => {
-        localStorage.setItem('pref_theme', 'light');
-        document.body.classList.remove('dark-mode');
-        banner('Theme: Light');
-      });
-      document.getElementById('pref-theme-system').addEventListener('click', () => {
-        localStorage.setItem('pref_theme', 'system');
+    });
+
+    /* Mobile Sidebar Logic */
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const navToggle = document.getElementById('nav-toggle');
+
+    function toggleSidebar() {
+      const isOpen = sidebar.classList.contains('open');
+      if (isOpen) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+      } else {
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+      }
+    }
+
+    if (navToggle) navToggle.addEventListener('click', toggleSidebar);
+    if (overlay) overlay.addEventListener('click', toggleSidebar);
+
+    /* Boot */
+    (function boot() {
+      document.getElementById('brand-title').textContent = ASSISTANT_NAME;
+      loadTopicsFromLocal();
+      document.getElementById('app').style.display = 'flex';
+      renderHistory(); renderChat(); handleRoute(); updateUsage();
+      checkLoginAndOpen(); startPinger();
+      const pref = localStorage.getItem('pref_theme');
+      if (pref === 'dark') document.body.classList.add('dark-mode');
+      else if (pref === 'light') document.body.classList.remove('dark-mode');
+      else if (pref === 'system') {
         const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
         document.body.classList.toggle('dark-mode', prefersDark);
-        banner('Theme: System');
-      });
-      document.getElementById('pref-save').addEventListener('click', async () => {
-        const lang = document.getElementById('pref-lang').value;
-        const speed = document.getElementById('pref-type-speed').value;
-        localStorage.setItem('pref_lang', lang);
-        localStorage.setItem('pref_type_speed', String(speed));
-        banner('Preferences saved');
-        if (token) {
-          try {
-            await authFetch('/api/user/preferences', { method: 'POST', body: JSON.stringify({ lang, typing_speed: Number(speed) }) });
-          } catch { }
-        }
-      });
-
-      /* Mobile Sidebar Logic */
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebar-overlay');
-      const navToggle = document.getElementById('nav-toggle');
-
-      function toggleSidebar() {
-        const isOpen = sidebar.classList.contains('open');
-        if (isOpen) {
-          sidebar.classList.remove('open');
-          overlay.classList.remove('show');
-        } else {
-          sidebar.classList.add('open');
-          overlay.classList.add('show');
-        }
       }
-
-      if (navToggle) navToggle.addEventListener('click', toggleSidebar);
-      if (overlay) overlay.addEventListener('click', toggleSidebar);
-
-      /* Boot */
-      (function boot() {
-        document.getElementById('brand-title').textContent = ASSISTANT_NAME;
-        loadTopicsFromLocal();
-        document.getElementById('app').style.display = 'flex';
-        renderHistory(); renderChat(); handleRoute(); updateUsage();
-        checkLoginAndOpen(); startPinger();
-        const pref = localStorage.getItem('pref_theme');
-        if (pref === 'dark') document.body.classList.add('dark-mode');
-        else if (pref === 'light') document.body.classList.remove('dark-mode');
-        else if (pref === 'system') {
-          const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-          document.body.classList.toggle('dark-mode', prefersDark);
-        }
-      })();
+    })();
   </script>
   <!-- Component Loader -->
   <script src="/public/js/components.js"></script>
