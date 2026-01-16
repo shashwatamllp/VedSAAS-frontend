@@ -30,17 +30,158 @@
       box-sizing: border-box
     }
 
-    html,
-    body {
-      height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background: #1e1e2f;
-      color: #fff;
-      overflow: hidden
+    /* Design System Variables */
+    :root {
+      --bg-color: #1e1e2f;
+      --sidebar-bg: #202123;
+      --text-color: #fff;
+      --text-muted: #9ca3af;
+      --border-color: #333;
+      --composer-bg: #343541;
+      --hover-bg: #2a2b32;
+      --active-bg: #343541;
+      --user-msg-bg: transparent;
+      --modal-bg: #202123;
+      --modal-border: #4d4d4f;
+      --input-bg: #40414f;
     }
 
-    body.dark-mode {
-      background: #0e0e12
+    body.light-mode {
+      --bg-color: #ffffff;
+      --sidebar-bg: #f9f9f9;
+      --text-color: #333;
+      --text-muted: #666;
+      --border-color: #e5e5e5;
+      --composer-bg: #ffffff;
+      --hover-bg: #f0f0f0;
+      --active-bg: #e6e6e6;
+      --user-msg-bg: #f7f7f8;
+      --modal-bg: #ffffff;
+      --modal-border: #e5e5e5;
+      --input-bg: #ffffff;
+      color: #333;
+      background: #ffffff;
+    }
+
+    /* Apply Variables */
+    html,
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .sidebar {
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .sidebar .title {
+      color: var(--text-color);
+    }
+
+    .new-topic-btn {
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .new-topic-btn:hover {
+      background: var(--hover-bg);
+    }
+
+    .topic {
+      color: var(--text-color);
+    }
+
+    .topic:hover {
+      background: var(--hover-bg);
+    }
+
+    .topic.active {
+      background: var(--active-bg);
+    }
+
+    .topic .preview {
+      color: var(--text-muted);
+    }
+
+    .userpage .sheet {
+      background: var(--modal-bg);
+      border: 1px solid var(--modal-border);
+      color: var(--text-color);
+    }
+
+    .userpage .aside {
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--modal-border);
+    }
+
+    .userpage .nav button {
+      color: var(--text-color);
+    }
+
+    .userpage .nav button:hover {
+      background: var(--hover-bg);
+    }
+
+    .userpage .main {
+      background: var(--bg-color);
+    }
+
+    .userpage .section-title {
+      color: var(--text-color);
+      border-bottom: 1px solid var(--modal-border);
+    }
+
+    .userpage .kv label {
+      color: var(--text-color);
+    }
+
+    .ip {
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    .card {
+      background: var(--sidebar-bg) !important;
+      border: 1px solid var(--border-color) !important;
+    }
+
+    .composer {
+      background: var(--composer-bg);
+      border: 1px solid var(--border-color);
+    }
+
+    .composer textarea {
+      color: var(--text-color);
+    }
+
+    .composer .action-btn {
+      color: var(--text-color);
+    }
+
+    .message-row .msg-body {
+      color: var(--text-color);
+    }
+
+    /* Mobile transformations remain same but use vars where applicable */
+    @media (max-width: 900px) {
+      .topbar {
+        background: var(--bg-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .mobile-nav-toggle {
+        color: var(--text-color);
+      }
+
+      .composer-wrap {
+        background: var(--bg-color);
+      }
+
+      .composer {
+        background: var(--hover-bg);
+      }
     }
 
     .container {
@@ -1897,6 +2038,33 @@
     function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
     function initials(n) { return (n || 'U').split(' ').map(x => x[0]).join('').substring(0, 2).toUpperCase(); }
 
+    // Theme Handlers
+    function setTheme(mode) {
+      if (mode === 'dark') {
+        document.body.classList.remove('light-mode');
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('pref_theme', 'dark');
+      } else if (mode === 'light') {
+        document.body.classList.remove('dark-mode');
+        document.body.classList.add('light-mode');
+        localStorage.setItem('pref_theme', 'light');
+      } else {
+        localStorage.setItem('pref_theme', 'system');
+        const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          document.body.classList.add('dark-mode');
+          document.body.classList.remove('light-mode');
+        } else {
+          document.body.classList.remove('dark-mode');
+          document.body.classList.add('light-mode');
+        }
+      }
+    }
+
+    document.getElementById('pref-theme-system')?.addEventListener('click', () => setTheme('system'));
+    document.getElementById('pref-theme-dark')?.addEventListener('click', () => setTheme('dark'));
+    document.getElementById('pref-theme-light')?.addEventListener('click', () => setTheme('light'));
+
     // Event Listeners
     settingsHeader.addEventListener('click', () => openSettings('general'));
 
@@ -2011,10 +2179,11 @@
 
         const pref = localStorage.getItem('pref_theme');
         if (pref === 'dark') document.body.classList.add('dark-mode');
-        else if (pref === 'light') document.body.classList.remove('dark-mode');
-        else if (pref === 'system') {
+        else if (pref === 'light') document.body.classList.add('light-mode');
+        else if (pref === 'system' || !pref) {
           const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-          document.body.classList.toggle('dark-mode', prefersDark);
+          if (prefersDark) document.body.classList.add('dark-mode');
+          else document.body.classList.add('light-mode');
         }
       } catch (err) {
         console.error('Boot error:', err);
