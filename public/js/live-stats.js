@@ -12,7 +12,7 @@
     // Server URL (Auto-detects Prod/Local)
     // Using port 8000 for backend connection as per project convention
     const WS_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'ws://localhost:8000/api/ws/training'
+        ? 'ws://localhost:8080/api/ws/training'
         : 'wss://api.vedsaas.com/api/ws/training';
 
     // ==========================================
