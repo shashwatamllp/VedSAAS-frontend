@@ -29,9 +29,10 @@
             height: 100vh;
         }
 
-        /* Sidebar - Use variables */
+        /* Sidebar - Glass Polish */
         .dashboard-sidebar {
-            background: var(--bg-deep);
+            background: rgba(10, 10, 15, 0.6);
+            backdrop-filter: blur(20px);
             border-right: 1px solid var(--border-subtle);
             padding: 24px;
             display: flex;
@@ -159,16 +160,13 @@
             margin-bottom: 32px;
         }
 
+        /* Metrics will use .card-glass from civilization.css */
         .metric-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 24px;
-            transition: border-color 0.3s;
-        }
-
-        .metric-card:hover {
-            border-color: var(--border-active);
+            /* Layout specific to metrics, visual comes from card-glass */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 160px;
         }
 
         .metric-label {
@@ -198,11 +196,10 @@
 
         /* Charts */
         .chart-container {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
+            /* Inherits card-glass */
             padding: 24px;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .chart-header {
@@ -224,9 +221,7 @@
 
         /* Activity Log */
         .activity-log {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
+            /* Inherits card-glass */
             padding: 24px;
         }
 
@@ -288,7 +283,11 @@
         <!-- Main Dashboard -->
         <main class="dashboard-main">
             <header class="dashboard-header">
-                <div class="header-title">System Overview</div>
+                <div>
+                    <div class="header-title text-gradient" style="font-size: 1.8rem;">GOD MODE</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 1px;">SYSTEM OVERVIEW
+                        // VEDSAAS CORE</div>
+                </div>
                 <div style="display: flex; gap: 12px; align-items: center;">
                     <button id="theme-toggle" class="icon-btn" title="Toggle Theme" style="margin-right: 8px;">
                         <i class="fas fa-moon"></i>
@@ -304,7 +303,7 @@
                 <!-- Metrics Grid -->
                 <!-- Metrics Grid -->
                 <div class="metrics-grid">
-                    <div class="metric-card">
+                    <div class="card-glass metric-card" data-aos="zoom-in" data-aos-delay="0">
                         <div class="metric-label">Current Epoch</div>
                         <div class="metric-value" id="stat-epoch">--</div>
                         <div class="metric-change">
@@ -312,7 +311,7 @@
                         </div>
                     </div>
 
-                    <div class="metric-card">
+                    <div class="card-glass metric-card" data-aos="zoom-in" data-aos-delay="100">
                         <div class="metric-label">Training Loss</div>
                         <div class="metric-value" id="stat-loss">--</div>
                         <div class="metric-change negative">
@@ -320,7 +319,7 @@
                         </div>
                     </div>
 
-                    <div class="metric-card">
+                    <div class="card-glass metric-card" data-aos="zoom-in" data-aos-delay="200">
                         <div class="metric-label">Training Speed</div>
                         <div class="metric-value" id="stat-speed">--</div>
                         <div class="metric-change">
@@ -328,7 +327,7 @@
                         </div>
                     </div>
 
-                    <div class="metric-card">
+                    <div class="card-glass metric-card" data-aos="zoom-in" data-aos-delay="300">
                         <div class="metric-label">Status</div>
                         <div class="metric-value" id="connection-status" style="font-size:1.5rem">Connecting...</div>
                         <div class="metric-change">
@@ -338,13 +337,13 @@
                 </div>
 
                 <!-- Charts -->
-                <div class="chart-container">
+                <div class="card-glass chart-container" data-aos="fade-up">
                     <div class="chart-header">System Performance (Last Hour)</div>
                     <canvas id="performance-chart" class="chart-canvas"></canvas>
                 </div>
 
                 <!-- Activity Log -->
-                <div class="activity-log">
+                <div class="card-glass activity-log" data-aos="fade-up" data-aos-delay="100">
                     <div class="chart-header">Recent Activity</div>
                     <div class="log-item">
                         <span>Training batch #12,492 completed</span>
@@ -427,36 +426,61 @@
         setInterval(updateMetrics, 2000);
 
         // Simple Chart (Chart.js)
+        // Premium Chart (Chart.js)
         const ctx = document.getElementById('performance-chart').getContext('2d');
+
+        // Gradient for Chart
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(112, 0, 255, 0.05)');
+
         const perfChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: Array.from({ length: 20 }, (_, i) => i + 1),
                 datasets: [{
-                    label: 'System Load',
+                    label: 'Neural Load',
                     data: Array.from({ length: 20 }, () => Math.floor(Math.random() * 40 + 30)),
                     borderColor: '#00f0ff',
-                    backgroundColor: 'rgba(0, 240, 255, 0.1)',
-                    borderWidth: 2,
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#00f0ff',
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
                     fill: true,
-                    tension: 0.4,
-                    pointRadius: 0
+                    tension: 0.4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(5, 5, 7, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#00f0ff',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        displayColors: false,
+                        padding: 10,
+                        callbacks: {
+                            label: function (context) {
+                                return 'Load: ' + context.parsed.y + '%';
+                            }
+                        }
+                    }
                 },
                 scales: {
                     x: { display: false },
                     y: {
                         display: true,
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#888' },
+                        grid: { color: 'rgba(255,255,255,0.03)' },
+                        ticks: { color: '#666', font: { family: 'JetBrains Mono' } },
                         suggestedMin: 0,
-                        suggestedMax: 100
+                        suggestedMax: 100,
+                        border: { display: false }
                     }
                 },
                 animation: {
