@@ -3,73 +3,54 @@
     // ⚙️ CONFIGURATION: Map your existing HTML IDs here
     // ==========================================
     const CONFIG = {
-        epochId: 'stat-epoch',    // Replaced with YOUR Epoch ID
-        lossId: 'stat-loss',     // Replaced with YOUR Loss ID
-        speedId: 'stat-speed',    // Replaced with YOUR Speed ID
-        statusId: 'connection-status' // Replaced with YOUR Status ID
+        epochId: 'stat-epoch',
+        lossId: 'stat-loss',
+        speedId: 'stat-speed',
+        statusId: 'connection-status',
+        pollInterval: 2000 // 2 seconds
     };
 
-    // Server URL (Auto-detects Prod/Local)
-    // Using port 8000 for backend connection as per project convention
-    const WS_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'ws://localhost:8080/api/ws/training'
-        : 'wss://api.vedsaas.com/api/ws/training';
+    // Use Relative Path (Proxied by Junction)
+    const API_URL = '/api/stats/live';
 
     // ==========================================
-    // 🚀 CONNECTION LOGIC (Do Not Edit Below)
+    // 🚀 POLLING LOGIC (Robust & Firewall Friendly)
     // ==========================================
-    let socket;
-    function connect() {
-        // console.log("Connecting to Live Stream...", WS_URL);
+    async function fetchStats() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error("Network response was not ok");
 
-        // Update status to 'Connecting...' if element exists
-        if (document.getElementById(CONFIG.statusId)) {
-            document.getElementById(CONFIG.statusId).innerText = "Connecting...";
-            document.getElementById(CONFIG.statusId).style.color = "var(--text-secondary)";
+            const envelope = await response.json();
+            // Backend returns { ok: true, stats: { epoch: ..., loss: ...} }
+            const data = envelope.stats || envelope;
+
+            if (data) {
+                const elEpoch = document.getElementById(CONFIG.epochId);
+                const elLoss = document.getElementById(CONFIG.lossId);
+                const elSpeed = document.getElementById(CONFIG.speedId);
+
+                if (elEpoch) elEpoch.innerText = data.epoch || 0;
+                if (elLoss) elLoss.innerText = data.loss ? parseFloat(data.loss).toFixed(4) : "0.00";
+                if (elSpeed) elSpeed.innerText = data.speed || 0;
+            }
+
+            // Update Status Indicator
+            const statusEl = document.getElementById(CONFIG.statusId);
+            if (statusEl) {
+                statusEl.innerHTML = '<span style="color:#00ff9d">• Live</span>';
+            }
+
+        } catch (error) {
+            console.warn("Stats Poll Error:", error);
+            const statusEl = document.getElementById(CONFIG.statusId);
+            if (statusEl) {
+                statusEl.innerHTML = '<span style="color:#ffb3b3">• Connecting...</span>';
+            }
         }
-
-        socket = new WebSocket(WS_URL);
-
-        socket.onopen = () => {
-            // console.log("✅ WebSocket Connected");
-            if (document.getElementById(CONFIG.statusId)) {
-                document.getElementById(CONFIG.statusId).innerHTML = '<i class="fas fa-sync fa-spin"></i> Live';
-                document.getElementById(CONFIG.statusId).style.color = "#00ff9d"; // Neon Green
-            }
-        };
-
-        socket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-
-                // Update UI if data exists
-                if (data.epoch !== undefined) {
-                    const elEpoch = document.getElementById(CONFIG.epochId);
-                    const elLoss = document.getElementById(CONFIG.lossId);
-                    const elSpeed = document.getElementById(CONFIG.speedId);
-
-                    if (elEpoch) elEpoch.innerText = data.epoch;
-                    if (elLoss) elLoss.innerText = parseFloat(data.loss).toFixed(4);
-                    if (elSpeed) elSpeed.innerText = data.speed;
-                }
-            } catch (e) { console.error("Parse error:", e); }
-        };
-
-        socket.onclose = () => {
-            // console.log("❌ WebSocket Disconnected. Retrying...");
-            if (document.getElementById(CONFIG.statusId)) {
-                document.getElementById(CONFIG.statusId).innerText = "● Reconnecting...";
-                document.getElementById(CONFIG.statusId).style.color = "#ff4444";
-            }
-            setTimeout(connect, 3000); // Retry every 3s
-        };
-
-        socket.onerror = (err) => {
-            console.error("WebSocket Error:", err);
-            socket.close();
-        };
     }
 
-    // Start
-    connect();
+    // Start Polling
+    fetchStats(); // Initial call
+    setInterval(fetchStats, CONFIG.pollInterval);
 })();
