@@ -1514,23 +1514,28 @@
       // CRITICAL: Default to Junction on localhost:8000
       const FALLBACK = 'http://localhost:8000';
       try {
+        const o = location.origin || '';
+        const h = location.hostname || '';
+        console.log('API_BASE Debug:', { origin: o, hostname: h });
+
         // PRIORITY 1: Check environment/headers
         const meta = document.querySelector('meta[name="ved-api-base"]');
         const m = meta ? (meta.content || '').trim() : '';
         if (m && m !== '/api') return m.replace(/\/+$/, '');
 
         // PRIORITY 2: Localhost Detection (CRITICAL for development)
-        const o = location.origin || '';
-        const h = location.hostname || '';
-        if (h === 'localhost' || h === '127.0.0.1' || o.startsWith('file://')) {
-          // Check if we are on the same port as backend (8080/8000) or frontend (3000/5500)
-          // If pure frontend dev, assume backend is at 8080
+        // Regex for 192.168.x.x, 10.x.x.x, 172.16-31.x.x
+        const isLocalIP = /^127\.|^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(h);
+
+        if (h === 'localhost' || h === '0.0.0.0' || isLocalIP || o.startsWith('file://')) {
+          console.log('Detected Local Environment. Using localhost:8080');
           return 'http://localhost:8080';
         }
 
         // PRIORITY 3: Production Fallback
+        console.log('Detected Production Environment. Using api.vedsaas.com');
         return 'https://api.vedsaas.com';
-      } catch { return FALLBACK; }
+      } catch (e) { console.error(e); return FALLBACK; }
     })();
     function api(path) {
       let p = String(path || '');
