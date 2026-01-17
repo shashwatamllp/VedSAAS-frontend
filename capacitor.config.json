@@ -1,10 +1,13 @@
 {
-    "appId": "com.vedsaas.app",
+    "appId": "io.vedsaas.app",
     "appName": "VedSAAS",
-    "webDir": ".",
-    "bundledWebRuntime": false,
+    "webDir": "www",
     "server": {
-        "url": "https://www.vedsaas.com",
+        "androidScheme": "https",
+        "url": "https://vedsaas.com/chat/index.html",
         "cleartext": true
+    },
+    "android": {
+        "path": "android"
     }
 }

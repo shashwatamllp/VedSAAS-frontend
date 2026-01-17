@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VedSAAS</string>
+    <string name="title_activity_main">VedSAAS</string>
+    <string name="package_name">io.vedsaas.app</string>
+    <string name="custom_url_scheme">io.vedsaas.app</string>
+</resources>
