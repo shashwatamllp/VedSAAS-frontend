@@ -1514,16 +1514,21 @@
       // CRITICAL: Default to Junction on localhost:8000
       const FALLBACK = 'http://localhost:8000';
       try {
+        // PRIORITY 1: Check environment/headers
         const meta = document.querySelector('meta[name="ved-api-base"]');
         const m = meta ? (meta.content || '').trim() : '';
-        // Use meta if specific, but ignore default /api if we want local override
         if (m && m !== '/api') return m.replace(/\/+$/, '');
 
-        // If running on localhost/file, use localhost:8000
+        // PRIORITY 2: Localhost Detection (CRITICAL for development)
         const o = location.origin || '';
-        if (!o || o.startsWith('file://') || o.includes('localhost') || o.includes('127.0.0.1')) return FALLBACK;
+        const h = location.hostname || '';
+        if (h === 'localhost' || h === '127.0.0.1' || o.startsWith('file://')) {
+          // Check if we are on the same port as backend (8080/8000) or frontend (3000/5500)
+          // If pure frontend dev, assume backend is at 8080
+          return 'http://localhost:8080';
+        }
 
-        // On production (vedsaas.com), point to the dedicated API domain
+        // PRIORITY 3: Production Fallback
         return 'https://api.vedsaas.com';
       } catch { return FALLBACK; }
     })();
