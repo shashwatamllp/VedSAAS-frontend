@@ -41,19 +41,18 @@ async function initCivilization() {
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
 
-        console.log(`📍 Visitor Detected: ${data.city}, ${data.country_name} (${data.ip})`);
+        // [STEALTH MODE] Logging Disabled
+        // console.log(`📍 Visitor Detected: ${data.city}, ${data.country_name} (${data.ip})`);
 
         // 2. Logic: Determine Language
-        // Default to English ('en')
         let selectedLang = 'en';
 
         // If country is India (IN), switch to Hindi ('hi')
-        // Or if browser language implies Hindi
         if (data.country_code === 'IN' || navigator.language.startsWith('hi')) {
             selectedLang = 'hi';
-            console.log("🇮🇳 Detected India/Hindi -> Switching to Vedic Mode");
+            // console.log("🇮🇳 Detected India/Hindi -> Switching to Vedic Mode");
         } else {
-            console.log("🌍 Detected Global -> Switching to English Mode");
+            // console.log("🌍 Detected Global -> Switching to English Mode");
         }
 
         // 3. Apply Translations
