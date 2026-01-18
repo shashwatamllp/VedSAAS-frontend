@@ -53,6 +53,31 @@
     <!-- Navbar (Loaded Dynamically) -->
     <div id="navbar-placeholder"></div>
 
+    <!-- Floating Language Selector (Top Right) -->
+    <div class="card-glass"
+        style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 10px; display: flex; gap: 8px; align-items: center; border-radius: 50px;">
+        <span
+            style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 8px; margin-right: 4px;">BHASHA:</span>
+
+        <button onclick="changeLanguage('sa')" class="btn-ghost"
+            style="padding: 6px 12px; font-size: 0.9rem; border-radius: 20px; border: 1px solid rgba(255,153,51,0.3);"
+            title="Sanskrit">
+            🕉️ <span class="mobile-hide">Sanskrit</span>
+        </button>
+
+        <button onclick="changeLanguage('hi')" class="btn-ghost"
+            style="padding: 6px 12px; font-size: 0.9rem; border-radius: 20px; border: 1px solid rgba(0,255,136,0.3);"
+            title="Hindi">
+            🇮🇳 <span class="mobile-hide">Hindi</span>
+        </button>
+
+        <button onclick="changeLanguage('en')" class="btn-ghost"
+            style="padding: 6px 12px; font-size: 0.9rem; border-radius: 20px; border: 1px solid rgba(0,240,255,0.3);"
+            title="English">
+            🇺🇸 <span class="mobile-hide">English</span>
+        </button>
+    </div>
+
     <!-- Hero Section: The Beginning -->
     <header class="container"
         style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-top: 60px;">
