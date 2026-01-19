@@ -24,34 +24,34 @@ const DICTIONARY = {
         "arch_layer_c": "LAYER C: DeepBrain (Heavy Compute)"
     },
     "hi": {
-        "hero_badge": "System Sakriya & Vikassheel",
+        "hero_badge": "प्रणाली सक्रिय और विकसित",
         "hero_brand": "VedSAAS",
-        "hero_tagline": "Duniya ki Pehli <span class='text-gradient'>Swayam-Viksit (Self-Evolving)</span> AI Sabhyata",
-        "hero_subtitle": "Prachin Gyaan (Ved) aur Adhunik Buddhi (SAAS) ka Sangam. <br><span style='color: var(--accent-cyan);'>Swatah Upchar (Auto-Heal). Nirnay-Shakti. Privacy-Pratham.</span>",
-        "btn_start": "Baatcheet Shuru Karein",
-        "btn_explore": "Dimag Ko Samjhein",
+        "hero_tagline": "विश्व की पहली <span class='text-gradient'>स्वयं-विकसित (Self-Evolving)</span> एआई सभ्यता",
+        "hero_subtitle": "प्राचीन ज्ञान (वेद) और आधुनिक बुद्धि (SAAS) का संगम। <br><span style='color: var(--accent-cyan);'>स्वतः सुधार (Auto-Heal)। निर्णय क्षमता। गोपनीयता-प्रथम।</span>",
+        "btn_start": "वार्तालाप शुरू करें",
+        "btn_explore": "मस्तिष्क को जानें",
 
-        "arch_title": "Tri-Stariya Mastishk Rachna (3-Layer Brain)",
-        "arch_desc": "Ek aisa system jo bolne se pehle sochta hai. Brain Controller dwara sanchalit.",
-        "arch_controller": "🧠 Brain Controller (Sanchalak)",
-        "arch_layer_a": "LAYER A: TezzBrain (Local)",
-        "arch_layer_b": "LAYER B: Bahu-Model Sahmati (Consensus)",
-        "arch_layer_c": "LAYER C: GahanBrain (Deep Compute)"
+        "arch_title": "त्रि-स्तरीय मस्तिष्क संरचना",
+        "arch_desc": "एक ऐसी प्रणाली जो उत्तर देने से पहले विचार करती है। ब्रेन कंट्रोलर द्वारा संचालित।",
+        "arch_controller": "🧠 ब्रेन कंट्रोलर (संचालक)",
+        "arch_layer_a": "स्तर A: तीव्र-मस्तिष्क (Local)",
+        "arch_layer_b": "स्तर B: बहु-मॉडल सहमति (Consensus)",
+        "arch_layer_c": "स्तर C: गहन-मस्तिष्क (Deep Compute)"
     },
     "sa": {
-        "hero_badge": "Tantram Sakriyam & Vikashsheelam",
+        "hero_badge": "तन्त्रम् सक्रियम् & विकासशीलम्",
         "hero_brand": "VedSAAS",
-        "hero_tagline": "Vishwasya Prathamam <span class='text-gradient'>Atma-Viksit</span> Krutrim Buddhi Sabhyata",
-        "hero_subtitle": "Prachin Jananam (Ved) tatha Adhunik Prajna (SAAS) Summelanam. <br><span style='color: var(--accent-cyan);'>Atma-Upchar. Nirnay-Samarthya. Gopniyata-Pratham.</span>",
-        "btn_start": "Vartalapam Aarambham",
-        "btn_explore": "Mastishkam Pasyatu",
+        "hero_tagline": "विश्वस्य प्रथमं <span class='text-gradient'>आत्म-विकसितं</span> कृत्रिम-बुद्धि सभ्यता",
+        "hero_subtitle": "प्राचीनज्ञानस्य (वेद) आधुनिकप्रज्ञायाः (SAAS) च संगमः। <br><span style='color: var(--accent-cyan);'>आत्म-उपचारः। निर्णय-सामर्थ्यम्। गोपनीयता-प्रथम्।</span>",
+        "btn_start": "संवादं आरभत",
+        "btn_explore": "मस्तिष्कं पश्यतु",
 
-        "arch_title": "Tri-Stariya Mastishk Sanrachana",
-        "arch_desc": "Yat vadti tat purvam chintayti. 'Brain Controller' dwara niyantritam.",
-        "arch_controller": "🧠 Brain Controller (Niyantrak)",
-        "arch_layer_a": "STARA A: Shighra-Mati (Local)",
-        "arch_layer_b": "STARA B: Bahu-Model Sahmati",
-        "arch_layer_c": "STARA C: Gahan-Mati (Deep Compute)"
+        "arch_title": "त्रि-स्तरीय मस्तिष्क संरचना",
+        "arch_desc": "यत् वदति तत् पूर्वं चिन्तयति। 'ब्रेन कंट्रोलर' द्वारा नियन्त्रितम्।",
+        "arch_controller": "🧠 ब्रेन कंट्रोलर (नियन्त्रकः)",
+        "arch_layer_a": "स्तरः A: शीघ्र-मतिः (Local)",
+        "arch_layer_b": "स्तरः B: बहु-मॉडल सहमतिः",
+        "arch_layer_c": "स्तरः C: गहन-मतिः (Deep Compute)"
     }
 };
 
