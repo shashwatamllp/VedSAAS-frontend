@@ -11,17 +11,16 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     referrerpolicy="no-referrer" />
 
-  <!-- CSP -->
-  <!-- CSP: Allow localhost:8000 for Junction backend -->
+  <!-- CSP: Fully Permissive for Development/Production Hybrid -->
   <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-  img-src 'self' data: https://vedsaas.com;
-  style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
-  script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
-  script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
-  font-src 'self' https://cdnjs.cloudflare.com;
-  connect-src 'self' https://vedsaas.com https://*.vedsaas.com https://api.vedsaas.com http://localhost:8000 http://localhost:8080 http://127.0.0.1:8000 http://127.0.0.1:8080 ws://localhost:8000 ws://localhost:8080 http://127.0.0.1:8012 http://127.0.0.1:8010;
-  base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
+  default-src 'self' https://*.vedsaas.com https://*.vedsaas.in;
+  img-src 'self' data: https://*.vedsaas.com https://*.vedsaas.in https://vedsaas.com;
+  style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com;
+  script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://kit.fontawesome.com;
+  font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;
+  connect-src 'self' https://api.vedsaas.com https://*.vedsaas.com https://*.vedsaas.in https://ipapi.co http://localhost:* ws://localhost:*;
+  base-uri 'self';
+  upgrade-insecure-requests;
 ">
 
   <style>
