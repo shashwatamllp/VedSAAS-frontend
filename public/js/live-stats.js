@@ -13,6 +13,10 @@
     // Use Relative Path (Proxied by Junction)
     const API_URL = '/api/stats/live';
 
+    // WebSocket Configuration (For future real-time streaming)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const WS_URL = `${protocol}//${window.location.host}/api/ws/training`;
+
     // ==========================================
     // 🚀 POLLING LOGIC (Robust & Firewall Friendly)
     // ==========================================

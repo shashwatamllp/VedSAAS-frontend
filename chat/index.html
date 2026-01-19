@@ -2095,6 +2095,19 @@
           { timeoutMs: 30000 }
         );
 
+        if (res.status === 401) {
+          // Auth Token Expired or Invalid -> Redirect to Login
+          // Using a banner for now, or could redirect. Worksheet says "Redirect user to Login".
+          // Assuming a login modal or page exists.
+          banner('Session expired. Please log in.');
+          // Optional: window.location.href = '/login';
+          return;
+        }
+
+        if (res.status === 500) {
+          throw new Error("The Brain is tired");
+        }
+
         let data = null;
         try { data = await res.json(); } catch { }
 
