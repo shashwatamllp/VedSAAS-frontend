@@ -56,40 +56,30 @@ const DICTIONARY = {
 };
 
 async function initCivilization() {
-    // console.log("⚡ VedSAAS Core: Initializing...");
+    let visitorData = { city: "Unknown", country_name: "Unknown", country_code: "US" };
+    let deviceData = getDeviceData();
+    let selectedLang = localStorage.getItem('vedsaas_lang') || 'en';
 
     try {
         // 1. Get Visitor Data (IP, Location)
         const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
+        if (response.ok) {
+            visitorData = await response.json();
 
-        // 2. Get Device Data
-        const device = getDeviceData();
-
-        // [STEALTH LOG]
-        // console.log(`📍 Visitor: ${data.city}, ${data.country_name}`);
-        // console.log(`📱 Device: ${device.type} (${device.os})`);
-
-        // 3. Logic: Determine Language
-        // Check LocalStorage first, then Auto-Detect
-        let storedLang = localStorage.getItem('vedsaas_lang');
-        let selectedLang = storedLang || 'en';
-
-        if (!storedLang) {
-            if (data.country_code === 'IN' || navigator.language.startsWith('hi')) {
-                selectedLang = 'hi'; // Default to Hindi for India if no preference
+            // Auto-Detect Language (Only if not set manually)
+            if (!localStorage.getItem('vedsaas_lang')) {
+                if (visitorData.country_code === 'IN' || navigator.language.startsWith('hi')) {
+                    selectedLang = 'hi';
+                }
             }
         }
-
-        // 4. Apply Translations
+    } catch (e) {
+        // API Failed - Stay silent, use default data
+    } finally {
+        // 2. ALWAYS Apply Language & Analytics
         applyLanguage(selectedLang);
         updateLangDropdown(selectedLang);
-
-        // 5. Analytics Telemetry
-        saveVisitorLog(data, device);
-
-    } catch (e) {
-        // Fallback
+        saveVisitorLog(visitorData, deviceData);
     }
 }
 
@@ -116,22 +106,27 @@ function applyLanguage(lang) {
 
     const setHtml = (id, html) => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = html;
+        if (el) {
+            el.innerHTML = html;
+        } else {
+            // Stealthy console warning for missing elements
+            console.warn(`[VedSAAS Localization] Element with ID '${id}' not found.`);
+        }
     };
 
     setHtml('t-hero-badge', texts.hero_badge);
-    setHtml('t-hero-title', texts.hero_title);
+    setHtml('t-hero-brand', texts.hero_brand);
+    setHtml('t-hero-tagline', texts.hero_tagline);
     setHtml('t-hero-subtitle', texts.hero_subtitle);
-    setHtml('t-cta-story', texts.cta_story);
+    setHtml('t-btn-start', texts.btn_start);
+    setHtml('t-btn-explore', texts.btn_explore);
 
-    setHtml('t-ch1-title', texts.ch1_title);
-    setHtml('t-ch1-text', texts.ch1_text);
-
-    setHtml('t-ch2-title', texts.ch2_title);
-    setHtml('t-ch2-text', texts.ch2_text);
-
-    setHtml('t-ch3-title', texts.ch3_title);
-    setHtml('t-ch3-text', texts.ch3_text);
+    setHtml('t-arch-title', texts.arch_title);
+    setHtml('t-arch-desc', texts.arch_desc);
+    setHtml('t-arch-controller', texts.arch_controller);
+    setHtml('t-arch-layer-a', texts.arch_layer_a);
+    setHtml('t-arch-layer-b', texts.arch_layer_b);
+    setHtml('t-arch-layer-c', texts.arch_layer_c);
 }
 
 // Global Manual Toggle
@@ -141,7 +136,7 @@ window.changeLanguage = function (lang) {
 }
 
 function updateLangDropdown(lang) {
-    // Optional: Visual update if we have a label for proper selected state
+    // Optional: Add visual active state to buttons if needed
 }
 
 function saveVisitorLog(data, device) {
@@ -150,7 +145,7 @@ function saveVisitorLog(data, device) {
     const log = JSON.parse(localStorage.getItem('vedsaas_visitor_log') || '[]');
     log.push({
         timestamp: new Date().toISOString(),
-        ip: data.ip,
+        ip: data.ip || 'Hidden',
         city: data.city,
         country: data.country_name,
         device_type: device.type,
