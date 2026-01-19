@@ -37,9 +37,23 @@
     <meta property="og:url" content="https://vedsaas.com">
     <meta property="og:type" content="website">
 
-    <link rel="stylesheet" href="public/css/civilization.css">
+    <link rel="stylesheet" href="public/css/civilization.css?v=FORCE_RELOAD_2">
     <!-- AOS Animation Library -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- NUCLEAR CACHE BUSTER: Force Unregister Old SW -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    // Only unregister if it's an old version (logic typically complex, so we just unregister to force update)
+                    // console.log("Force updating SW");
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
+
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
@@ -718,8 +732,8 @@
 
     <!-- PWA Initialization -->
     <!-- Component Loader -->
-    <script src="/public/js/components.js"></script>
-    <script src="/pwa-init.js"></script>
+    <script src="/public/js/components.js?v=FORCE_RELOAD_2"></script>
+    <script src="/pwa-init.js?v=FORCE_RELOAD_2"></script>
 
     <!-- AOS Animation Init -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -732,9 +746,9 @@
     </script>
 
     <!-- Live Stats -->
-    <script src="/public/js/live-stats.js"></script>
-    <script src="public/js/security.js"></script>
-    <script src="public/js/logic_core.js"></script>
+    <script src="/public/js/live-stats.js?v=FORCE_RELOAD_2"></script>
+    <script src="public/js/security.js?v=FORCE_RELOAD_2"></script>
+    <script src="public/js/logic_core.js?v=FORCE_RELOAD_2"></script>
 </body>
 
 </html>
