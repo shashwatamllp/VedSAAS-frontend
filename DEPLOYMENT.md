@@ -1,134 +1,58 @@
-# VedSAAS Frontend - Production Deployment Guide
+# VedSAAS Frontend - Production Deployment Guide (Fortress Architecture)
 
-## 🎯 Overview
-This is a **static HTML/CSS/JavaScript** frontend. No build step required!
+## 🎯 Architecture: Unified Origin
+This frontend is designed to be served by the **Junction Gateway (Equation Server)**.
+- **Hosting**: Self-Hosted Nginx / Junction.
+- **Routing**: All API traffic uses relative `/api` paths.
+- **Security**: "Fortress Mode" - No direct access to Backend.
 
-## 📝 Configuration
+> 🛑 **DO NOT DEPLOY TO VERCEL OR NETLIFY**.
+> This application relies on the internal "Junction" gateway for security and routing.
 
-### Step 1: Update API URL in `index.html`
+## 📝 Configuration Rules
 
-Open `index.html` and find line **299**:
-
+### 1. Relative Paths Only
+Ensure `index.html` and `chat/index.html` use:
 ```javascript
-const FALLBACK = 'http://127.0.0.1:8000';
+const API_BASE = '/api'; // Allowed
+// const API_BASE = 'http://localhost:8010'; // 🛑 BANNED
 ```
 
-**Change to your production backend URL:**
-```javascript
-const FALLBACK = 'http://localhost:8010';  // Local
-// OR
-const FALLBACK = 'https://your-backend.com';  // Production
-```
-
-### Step 2: Update CSP (Content Security Policy)
-
-In `index.html` line **19**, update `connect-src`:
-
+### 2. CSP (Content Security Policy)
+We use a strict CSP that allows 'self'.
 ```html
-connect-src 'self' https://your-backend.com http://localhost:8010;
+connect-src 'self' https://api.vedsaas.com;
 ```
 
-## 🚀 Deployment Options
+## 🚀 Deployment Process (The "Clean Build" Strategy)
 
-### Option 1: Vercel (Recommended - Free)
+We do not upload the root directory (to avoid `node_modules` garbage).
 
-1. **Push to GitHub:**
-   ```bash
-   cd VedSAAS-frontend
-   git add .
-   git commit -m "Production config"
-   git push origin main
-   ```
-
-2. **Deploy on Vercel:**
-   - Go to [vercel.com](https://vercel.com)
-   - Import GitHub repository
-   - Framework Preset: **Other**
-   - Build Command: Leave empty
-   - Output Directory: `.` (root)
-   - Deploy!
-
-3. **Set Environment Variable** (if using dynamic API URL):
-   - Vercel Dashboard → Settings → Environment Variables
-   - Add: `API_URL` = `https://your-backend.com`
-
-### Option 2: Netlify
-
-1. **Drag & Drop:**
-   - Go to [netlify.com](https://netlify.com)
-   - Drag the entire `VedSAAS-frontend` folder
-   - Done!
-
-2. **Or via CLI:**
-   ```bash
-   npm install -g netlify-cli
-   netlify deploy --prod --dir=.
-   ```
-
-### Option 3: GitHub Pages
-
-1. **Enable GitHub Pages:**
-   - Repository Settings → Pages
-   - Source: `main` branch, `/` (root)
-   - Save
-
-2. **Access at:**
-   ```
-   https://shashwatamllp.github.io/VedSAAS-frontend
-   ```
-
-### Option 4: Self-Hosted (Nginx)
-
-```nginx
-server {
-    listen 80;
-    server_name frontend.yourdomain.com;
-    
-    root /var/www/vedsaas-frontend;
-    index index.html;
-    
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
+### Step 1: Create Build Pack
+Run this PowerShell command locally:
+```powershell
+# Create clean folder
+New-Item -ItemType Directory -Force -Path build_ready
+# Copy Core Files
+Copy-Item index.html, sw.js, manifest.json, pwa-init.js, login.html, register.html, verify.html, profile.html, favicon.ico build_ready/
+# Copy Directories
+Copy-Item -Recurse public build_ready/
+Copy-Item -Recurse chat build_ready/
+Copy-Item -Recurse subdomains build_ready/
 ```
 
-## ✅ Pre-Deployment Checklist
+### Step 2: Upload to Server
+Upload the **contents** of `build_ready` to the server:
 
-- [ ] Update `API_BASE` fallback URL in `index.html` (line 299)
-- [ ] Update CSP `connect-src` in `index.html` (line 19)
-- [ ] Test locally: `python -m http.server 3000`
-- [ ] Verify backend is accessible from frontend
-- [ ] Push to GitHub
-- [ ] Deploy to Vercel/Netlify
-
-## 🔗 Connect Frontend to Backend
-
-**Local Testing:**
-```
-Frontend: http://localhost:3000
-Backend:  http://localhost:8010
+```powershell
+cd build_ready
+scp -r . aiuser@163.223.145.140:/var/www/vedsaas-app/
 ```
 
-**Production:**
-```
-Frontend: https://vedsaas-frontend.vercel.app
-Backend:  https://your-backend.com (or Ngrok tunnel)
-```
-
-## 🧪 Test Deployment
-
-After deployment, open browser console and check:
-```javascript
-console.log(API_BASE);  // Should show your backend URL
-```
-
-Test health check:
-```
-http://localhost:3000
-```
-Click "New Chat" and send a message. Check Network tab for API calls.
+### Step 3: Notify
+Tell the Backend Team: *"Frontend Files Updated in /var/www/vedsaas-app"*.
+Nginx will serve these files at `https://app.vedsaas.com`.
 
 ---
+**Status**: Ready for Fortress Deployment �
 
-**Ready to Deploy!** 🚀
