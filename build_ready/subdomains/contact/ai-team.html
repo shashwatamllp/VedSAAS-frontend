@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Team - VedSAAS</title>
+    <link rel="stylesheet" href="../../public/css/civilization.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden
+        }
+
+        .hero {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, .08), rgba(112, 0, 255, .08), transparent 70%)
+        }
+
+        .email-box {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 24px;
+            padding: 60px 40px;
+            max-width: 700px;
+            margin: 0 auto;
+            text-align: center
+        }
+
+        .email-display {
+            background: linear-gradient(135deg, rgba(0, 240, 255, .1), rgba(112, 0, 255, .1));
+            padding: 24px;
+            border-radius: 16px;
+            margin: 32px 0;
+            font-size: 1.5rem;
+            font-family: var(--font-mono);
+            color: var(--accent-cyan);
+            word-break: break-all
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: #000;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all .3s;
+            margin: 0 8px
+        }
+
+        .btn-copy:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(0, 240, 255, .4)
+        }
+
+        .btn-email {
+            background: rgba(0, 240, 255, .1);
+            border: 2px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all .3s;
+            margin: 0 8px
+        }
+
+        .btn-email:hover {
+            background: rgba(0, 240, 255, .2);
+            transform: translateY(-2px)
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-20px)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+    <section class="hero">
+        <div style="max-width:900px;padding:60px 24px">
+            <div style="animation:float 4s ease-in-out infinite;margin-bottom:32px">
+                <i class="fas fa-robot"
+                    style="font-size:5rem;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 40px rgba(0,240,255,.6))"></i>
+            </div>
+            <h1
+                style="font-size:3.5rem;margin-bottom:24px;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+                AI Team</h1>
+            <p style="font-size:1.2rem;color:var(--text-secondary);max-width:600px;margin:0 auto">For AI model feedback,
+                feature requests, language support, and technical discussions</p>
+        </div>
+    </section>
+
+    <div style="max-width:1200px;margin:-80px auto 80px;padding:0 24px;position:relative;z-index:10">
+        <div class="email-box">
+            <h2 style="font-size:2rem;margin-bottom:32px">Contact AI Team</h2>
+
+            <div class="email-display" id="email">
+                vedsaasai@shashwatam.com
+            </div>
+
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+                <button class="btn-copy" onclick="copyEmail()">
+                    <i class="fas fa-copy"></i> Copy Email
+                </button>
+                <a href="mailto:vedsaasai@shashwatam.com" class="btn-email"
+                    style="text-decoration:none;display:inline-block">
+                    <i class="fas fa-envelope"></i> Send Email
+                </a>
+            </div>
+
+            <div
+                style="background:linear-gradient(135deg,rgba(0,240,255,.05),rgba(112,0,255,.05));padding:32px;border-radius:16px;text-align:left">
+                <h3 style="margin-bottom:20px;text-align:center">What We Work On:</h3>
+                <ul
+                    style="list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px">
+                    <li style="padding:12px;background:rgba(0,0,0,.2);border-radius:8px"><i class="fas fa-check"
+                            style="color:var(--accent-cyan);margin-right:8px"></i>AI Model Feedback</li>
+                    <li style="padding:12px;background:rgba(0,0,0,.2);border-radius:8px"><i class="fas fa-check"
+                            style="color:var(--accent-cyan);margin-right:8px"></i>Feature Requests</li>
+                    <li style="padding:12px;background:rgba(0,0,0,.2);border-radius:8px"><i class="fas fa-check"
+                            style="color:var(--accent-cyan);margin-right:8px"></i>Language Support</li>
+                    <li style="padding:12px;background:rgba(0,0,0,.2);border-radius:8px"><i class="fas fa-check"
+                            style="color:var(--accent-cyan);margin-right:8px"></i>Technical Discussions</li>
+                    <li style="padding:12px;background:rgba(0,0,0,.2);border-radius:8px"><i class="fas fa-check"
+                            style="color:var(--accent-cyan);margin-right:8px"></i>Model Performance</li>
+                    <li style="padding:12px;background:rgba(0,0,0,.2);border-radius:8px"><i class="fas fa-check"
+                            style="color:var(--accent-cyan);margin-right:8px"></i>Research Collaboration</li>
+                </ul>
+            </div>
+
+            <div
+                style="margin-top:40px;padding:32px;background:rgba(0,0,0,.2);border-radius:16px;border-left:4px solid var(--accent-cyan)">
+                <h3 style="margin-bottom:16px"><i class="fas fa-lightbulb"
+                        style="color:var(--accent-cyan);margin-right:8px"></i>Share Your Ideas</h3>
+                <p style="color:var(--text-secondary);line-height:1.8">
+                    We're constantly improving our AI models. Your feedback helps us build better, more accurate, and
+                    culturally aware AI for Indian languages. Share your suggestions, report issues, or propose new
+                    features!
+                </p>
+            </div>
+
+            <div style="margin-top:40px;padding-top:32px;border-top:1px solid var(--border-subtle)">
+                <p style="color:var(--text-secondary);margin-bottom:16px">Response Time: <strong
+                        style="color:var(--accent-cyan)">Within 24-48 hours</strong></p>
+                <p style="color:var(--text-secondary);font-size:.9rem">For urgent AI-related issues, please include
+                    "Urgent" in the subject line</p>
+            </div>
+        </div>
+
+        <div style="margin-top:60px;text-align:center">
+            <h3 style="margin-bottom:24px">Other Contact Options</h3>
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+                <a href="support.html"
+                    style="padding:16px 32px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;text-decoration:none;color:var(--text-primary);transition:all .2s">
+                    <i class="fas fa-headset" style="color:var(--accent-cyan);margin-right:8px"></i>General Support
+                </a>
+                <a href="investor.html"
+                    style="padding:16px 32px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;text-decoration:none;color:var(--text-primary);transition:all .2s">
+                    <i class="fas fa-chart-line" style="color:var(--accent-purple);margin-right:8px"></i>Investor
+                    Relations
+                </a>
+                <a href="../docs/docs.html"
+                    style="padding:16px 32px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;text-decoration:none;color:var(--text-primary);transition:all .2s">
+                    <i class="fas fa-book" style="color:var(--accent-cyan);margin-right:8px"></i>Documentation
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyEmail() {
+            const email = 'vedsaasai@shashwatam.com';
+            navigator.clipboard.writeText(email).then(() => {
+                const btn = event.target.closest('button');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.style.background = 'linear-gradient(135deg,var(--accent-cyan),var(--accent-purple))';
+                }, 2000);
+            });
+        }
+    </script>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
+
+</html>
+

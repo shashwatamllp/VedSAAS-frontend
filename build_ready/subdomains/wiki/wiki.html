@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VedSAAS Wiki</title>
+    <link rel="stylesheet" href="../../public/css/civilization.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0
+        }
+
+        .wiki-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 220px;
+            max-width: 1600px;
+            margin: 0 auto;
+            gap: 40px;
+            padding: 40px 24px
+        }
+
+        .wiki-sidebar {
+            position: sticky;
+            top: 24px;
+            height: fit-content
+        }
+
+        .wiki-toc {
+            position: sticky;
+            top: 24px;
+            height: fit-content
+        }
+
+        .wiki-main {
+            min-height: 100vh
+        }
+
+        .wiki-hero {
+            background: linear-gradient(135deg, rgba(0, 240, 255, .05), rgba(112, 0, 255, .05));
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin-bottom: 40px;
+            text-align: center;
+            border: 1px solid var(--border-subtle)
+        }
+
+        .nav-section {
+            margin-bottom: 32px
+        }
+
+        .nav-title {
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+
+        .nav-link {
+            display: block;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            transition: all .2s;
+            color: var(--text-primary);
+            text-decoration: none
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: linear-gradient(135deg, rgba(0, 240, 255, .1), rgba(112, 0, 255, .1));
+            transform: translateX(4px)
+        }
+
+        .wiki-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 32px;
+            transition: all .3s
+        }
+
+        .wiki-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 10px 40px rgba(0, 240, 255, .1)
+        }
+
+        .toc-link {
+            display: block;
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-left: 2px solid transparent;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: .9rem;
+            transition: all .2s
+        }
+
+        .toc-link:hover,
+        .toc-link.active {
+            border-left-color: var(--accent-cyan);
+            color: var(--text-primary);
+            transform: translateX(4px)
+        }
+
+        code {
+            background: rgba(0, 240, 255, .1);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            color: var(--accent-cyan)
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, .1);
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, .1);
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+    
+
+    <div class="wiki-container">
+        <aside class="wiki-sidebar">
+            <div style="margin-bottom:32px">
+                <img src="../../public/image/logopic.png" alt="VedSAAS" style="height:36px;margin-bottom:12px">
+                <div style="font-weight:800;font-size:1.2rem">Wiki</div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Getting Started</div>
+                <a href="#intro" class="nav-link active">Introduction</a>
+                <a href="#installation" class="nav-link">Installation</a>
+                <a href="#quickstart" class="nav-link">Quick Start</a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Core Concepts</div>
+                <a href="#modes" class="nav-link">AI Modes</a>
+                <a href="#languages" class="nav-link">Languages</a>
+                <a href="#authentication" class="nav-link">Authentication</a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Advanced</div>
+                <a href="#api" class="nav-link">API Integration</a>
+                <a href="#webhooks" class="nav-link">Webhooks</a>
+                <a href="#best-practices" class="nav-link">Best Practices</a>
+            </div>
+        </aside>
+
+        <main class="wiki-main">
+            <div class="wiki-hero">
+                <h1
+                    style="font-size:3rem;margin-bottom:16px;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+                    VedSAAS Knowledge Base</h1>
+                <p style="font-size:1.1rem;color:var(--text-secondary)">Everything you need to know about building with
+                    VedSAAS</p>
+            </div>
+
+            <div class="wiki-card" id="intro">
+                <h2 style="font-size:2rem;margin-bottom:20px">Introduction</h2>
+                <p style="line-height:1.8;color:var(--text-secondary);margin-bottom:16px">
+                    VedSAAS is India's first AI platform specifically designed for Indian languages and cultural
+                    context. Built from the ground up to understand the nuances of 22+ Indian languages, VedSAAS
+                    provides intelligent, context-aware responses that truly understand your users.
+                </p>
+                <div class="info-box">
+                    <strong>💡 Did you know?</strong> VedSAAS processes over 14,000 tokens per second and maintains
+                    99.9% uptime.
+                </div>
+            </div>
+
+            <div class="wiki-card" id="installation">
+                <h2 style="font-size:2rem;margin-bottom:20px">Installation</h2>
+                <h3 style="margin:24px 0 12px">NPM</h3>
+                <pre
+                    style="background:rgba(0,0,0,.5);padding:20px;border-radius:12px;overflow-x:auto"><code>npm install @vedsaas/sdk</code></pre>
+
+                <h3 style="margin:24px 0 12px">Python</h3>
+                <pre
+                    style="background:rgba(0,0,0,.5);padding:20px;border-radius:12px;overflow-x:auto"><code>pip install vedsaas</code></pre>
+
+                <h3 style="margin:24px 0 12px">CDN</h3>
+                <pre
+                    style="background:rgba(0,0,0,.5);padding:20px;border-radius:12px;overflow-x:auto"><code>&lt;script src="https://cdn.vedsaas.com/sdk/v1/vedsaas.min.js"&gt;&lt;/script&gt;</code></pre>
+            </div>
+
+            <div class="wiki-card" id="quickstart">
+                <h2 style="font-size:2rem;margin-bottom:20px">Quick Start</h2>
+                <p style="margin-bottom:20px;color:var(--text-secondary)">Get started with VedSAAS in under 5 minutes:
+                </p>
+
+                <h3 style="margin:24px 0 12px">1. Initialize the SDK</h3>
+                <pre style="background:rgba(0,0,0,.5);padding:20px;border-radius:12px;overflow-x:auto"><code>import { VedSAAS } from '@vedsaas/sdk';
+
+const ved = new VedSAAS({
+  apiKey: 'YOUR_API_KEY',
+  mode: 'hindi-vani'
+});</code></pre>
+
+                <h3 style="margin:24px 0 12px">2. Send a Message</h3>
+                <pre style="background:rgba(0,0,0,.5);padding:20px;border-radius:12px;overflow-x:auto"><code>const response = await ved.chat({
+  message: "नमस्ते, कैसे हैं आप?"
+});
+
+console.log(response.text);</code></pre>
+
+                <div class="warning-box">
+                    <strong>⚠️ Important:</strong> Never expose your API key in client-side code. Use environment
+                    variables or server-side proxies.
+                </div>
+            </div>
+
+            <div class="wiki-card" id="modes">
+                <h2 style="font-size:2rem;margin-bottom:20px">AI Modes</h2>
+                <p style="margin-bottom:20px;color:var(--text-secondary)">VedSAAS offers 57 specialized AI modes. Here
+                    are the most popular:</p>
+
+                <div style="display:grid;gap:16px">
+                    <div
+                        style="padding:20px;background:rgba(0,240,255,.05);border-radius:12px;border-left:3px solid var(--accent-cyan)">
+                        <h4 style="margin-bottom:8px">Hindi-Vani</h4>
+                        <p style="color:var(--text-secondary);font-size:.95rem">Natural conversations in Hindi with
+                            cultural context and idioms</p>
+                        <code style="margin-top:8px;display:inline-block">mode: "hindi-vani"</code>
+                    </div>
+
+                    <div
+                        style="padding:20px;background:rgba(112,0,255,.05);border-radius:12px;border-left:3px solid var(--accent-purple)">
+                        <h4 style="margin-bottom:8px">VedaLogic</h4>
+                        <p style="color:var(--text-secondary);font-size:.95rem">Ancient wisdom meets modern reasoning
+                            for deep insights</p>
+                        <code style="margin-top:8px;display:inline-block">mode: "vedalogic"</code>
+                    </div>
+
+                    <div
+                        style="padding:20px;background:rgba(0,240,255,.05);border-radius:12px;border-left:3px solid var(--accent-cyan)">
+                        <h4 style="margin-bottom:8px">Math-Rishi</h4>
+                        <p style="color:var(--text-secondary);font-size:.95rem">Advanced mathematical problem solving
+                            with step-by-step explanations</p>
+                        <code style="margin-top:8px;display:inline-block">mode: "math-rishi"</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wiki-card" id="languages">
+                <h2 style="font-size:2rem;margin-bottom:20px">Supported Languages</h2>
+                <p style="margin-bottom:20px;color:var(--text-secondary)">VedSAAS supports 22+ Indian languages:</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Hindi</div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Tamil</div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Telugu
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Bengali
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Marathi
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Gujarati
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Kannada
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Malayalam
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Punjabi
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Odia</div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">Assamese
+                    </div>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:8px;text-align:center">+11 more
+                    </div>
+                </div>
+            </div>
+
+            <div class="wiki-card">
+                <h2 style="font-size:2rem;margin-bottom:20px">Need More Help?</h2>
+                <div style="display:flex;gap:16px;flex-wrap:wrap">
+                    <a href="../docs/docs.html" class="btn btn-primary">View Full Documentation</a>
+                    <a href="../api/api.html" class="btn btn-secondary">API Reference</a>
+                    <a href="../help/help.html" class="btn btn-secondary">Help Center</a>
+                </div>
+            </div>
+        </main>
+
+        <aside class="wiki-toc">
+            <div style="font-weight:700;margin-bottom:16px;font-size:.9rem">On This Page</div>
+            <a href="#intro" class="toc-link active">Introduction</a>
+            <a href="#installation" class="toc-link">Installation</a>
+            <a href="#quickstart" class="toc-link">Quick Start</a>
+            <a href="#modes" class="toc-link">AI Modes</a>
+            <a href="#languages" class="toc-link">Languages</a>
+        </aside>
+    </div>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
+
+</html>
+

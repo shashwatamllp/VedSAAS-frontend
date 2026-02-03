@@ -1,141 +1,129 @@
-<!DOCTYPE html>
-<html lang="en">
+padding: 0;
+overflow-x: hidden
+}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Careers at VedSAAS</title>
-    <link rel="stylesheet" href="../../public/css/civilization.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden
-        }
+.careers-hero {
+min-height: 70vh;
+display: flex;
+align-items: center;
+justify-content: center;
+text-align: center;
+position: relative;
+background: radial-gradient(circle at 50% 50%, rgba(112, 0, 255, .1), transparent 70%)
+}
 
-        .careers-hero {
-            min-height: 70vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            position: relative;
-            background: radial-gradient(circle at 50% 50%, rgba(112, 0, 255, .1), transparent 70%)
-        }
+.hero-badge {
+display: inline-block;
+padding: 8px 20px;
+background: rgba(112, 0, 255, .1);
+border: 1px solid var(--accent-purple);
+border-radius: 99px;
+margin-bottom: 24px;
+font-size: .9rem;
+font-weight: 600;
+color: var(--accent-purple)
+}
 
-        .hero-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            background: rgba(112, 0, 255, .1);
-            border: 1px solid var(--accent-purple);
-            border-radius: 99px;
-            margin-bottom: 24px;
-            font-size: .9rem;
-            font-weight: 600;
-            color: var(--accent-purple)
-        }
+.job-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+gap: 24px;
+margin: 60px 0
+}
 
-        .job-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 24px;
-            margin: 60px 0
-        }
+.job-card {
+background: var(--bg-card);
+border: 1px solid var(--border-subtle);
+border-radius: 20px;
+padding: 32px;
+transition: all .3s;
+cursor: pointer;
+position: relative;
+overflow: hidden
+}
 
-        .job-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 20px;
-            padding: 32px;
-            transition: all .3s;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden
-        }
+.job-card::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 3px;
+background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+transform: scaleX(0);
+transition: transform .3s
+}
 
-        .job-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
-            transform: scaleX(0);
-            transition: transform .3s
-        }
+.job-card:hover {
+transform: translateY(-8px);
+border-color: var(--accent-purple);
+box-shadow: 0 20px 60px rgba(112, 0, 255, .2)
+}
 
-        .job-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--accent-purple);
-            box-shadow: 0 20px 60px rgba(112, 0, 255, .2)
-        }
+.job-card:hover::before {
+transform: scaleX(1)
+}
 
-        .job-card:hover::before {
-            transform: scaleX(1)
-        }
+.job-tag {
+display: inline-block;
+padding: 6px 12px;
+background: rgba(0, 240, 255, .1);
+border: 1px solid rgba(0, 240, 255, .3);
+border-radius: 8px;
+font-size: .85rem;
+margin-right: 8px;
+margin-top: 8px
+}
 
-        .job-tag {
-            display: inline-block;
-            padding: 6px 12px;
-            background: rgba(0, 240, 255, .1);
-            border: 1px solid rgba(0, 240, 255, .3);
-            border-radius: 8px;
-            font-size: .85rem;
-            margin-right: 8px;
-            margin-top: 8px
-        }
+.value-card {
+background: linear-gradient(135deg, rgba(0, 240, 255, .05), rgba(112, 0, 255, .05));
+border: 1px solid var(--border-subtle);
+border-radius: 20px;
+padding: 40px;
+text-align: center;
+transition: all .3s
+}
 
-        .value-card {
-            background: linear-gradient(135deg, rgba(0, 240, 255, .05), rgba(112, 0, 255, .05));
-            border: 1px solid var(--border-subtle);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            transition: all .3s
-        }
+.value-card:hover {
+transform: scale(1.05);
+border-color: var(--accent-cyan)
+}
 
-        .value-card:hover {
-            transform: scale(1.05);
-            border-color: var(--accent-cyan)
-        }
+.value-icon {
+font-size: 3.5rem;
+margin-bottom: 20px;
+filter: drop-shadow(0 0 20px rgba(0, 240, 255, .4))
+}
 
-        .value-icon {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px rgba(0, 240, 255, .4))
-        }
+@keyframes gradient-shift {
+0% {
+background-position: 0% 50%
+}
 
-        @keyframes gradient-shift {
-            0% {
-                background-position: 0% 50%
-            }
+50% {
+background-position: 100% 50%
+}
 
-            50% {
-                background-position: 100% 50%
-            }
+100% {
+background-position: 0% 50%
+}
+}
 
-            100% {
-                background-position: 0% 50%
-            }
-        }
-
-        .gradient-text {
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-cyan));
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradient-shift 3s ease infinite
-        }
-    </style>
+.gradient-text {
+background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-cyan));
+background-size: 200% auto;
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+animation: gradient-shift 3s ease infinite
+}
+</style>
 </head>
 
 <body>
     <!-- Navigation Bar -->
     <!-- Navbar (Loaded Dynamically) -->
     <div id="navbar-placeholder"></div>
-    
+
 
     <section class="careers-hero">
         <div style="max-width:900px;padding:60px 24px">
@@ -290,7 +278,6 @@
     </div>
     <!-- Component Loader -->
     <script src="/public/js/components.js"></script>
-    </body>
+</body>
 
 </html>
-

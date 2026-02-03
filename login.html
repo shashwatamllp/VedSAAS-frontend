@@ -4,11 +4,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- SEO Meta Tags -->
+  <title>Login to VedSAAS - India's First Self-Evolving AI Platform</title>
+  <meta name="description"
+    content="Login to VedSAAS to access India's first AI platform supporting 22+ Indian languages. Secure, fast, and intelligent AI assistance.">
+  <meta name="keywords" content="VedSAAS login, AI login, Indian AI platform, multilingual AI">
+  <meta name="robots" content="noindex, nofollow">
+
   <!-- Force prod API base; JS will honor this -->
   <meta name="ved-api-base" content="https://api.vedsaas.com" />
   <meta http-equiv="x-content-type-options" content="nosniff" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <title>VedSAAS • Login</title>
   <link rel="icon" href="./favicon.ico" />
 
   <style>
@@ -177,10 +184,8 @@
 </head>
 
 <body>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id="navbar-placeholder"></div>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id='navbar-placeholder'></div>
+  <!-- Navbar (Loaded Dynamically) -->
+  <div id="navbar-placeholder"></div>
   <div class="card" role="dialog" aria-labelledby="h1" aria-describedby="sub">
     <!-- Logo -->
     <div style="text-align: center; margin-bottom: 20px;">
@@ -200,7 +205,10 @@
     </div>
 
     <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
     <p class="note">
+      <a href="#" onclick="alert('Password reset feature coming soon!'); return false;" style="color:#76b7ff">Forgot
+        Password?</a><br />
       New to VedSAAS? <a href="./register.html" style="color:#76b7ff" rel="noopener">Sign up here</a>.<br />
       Already have an account? Enter your email/phone and tap <strong>Send OTP</strong>.
     </p>
@@ -290,8 +298,8 @@
     $('send-btn').addEventListener('click', sendOtp);
     $('identifier').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendOtp(); } });
   </script>
-    <!-- Component Loader -->
-    <script src="/public/js/components.js"></script>
-    </body>
+  <!-- Component Loader -->
+  <script src="/public/js/components.js"></script>
+</body>
 
 </html>

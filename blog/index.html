@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | VedSAAS - AI Insights & Updates</title>
+
+    <meta name="description"
+        content="Latest insights, updates, and best practices from VedSAAS - India's first AI civilization.">
+
+    <link rel="stylesheet" href="../public/css/civilization.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 32px;
+            margin: 60px 0;
+        }
+
+        .blog-card {
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .blog-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(112, 0, 255, 0.1));
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            margin-bottom: 24px;
+        }
+
+        .blog-meta {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .blog-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--accent-cyan);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div id="navbar-placeholder"></div>
+
+    <!-- Hero -->
+    <section class="container" style="padding: 120px 24px 60px; text-align: center;">
+        <h1 style="font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 24px; font-weight: 800;">
+            VedSAAS <span class="text-gradient">Blog</span>
+        </h1>
+        <p style="font-size: 1.3rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto;">
+            Insights, updates, and best practices from India's first AI civilization
+        </p>
+    </section>
+
+    <!-- Blog Grid -->
+    <section class="container" style="padding: 0 24px 100px;">
+        <div class="blog-grid">
+            <!-- Blog Post 1 -->
+            <div class="card-glass blog-card" style="padding: 0; overflow: hidden;">
+                <div class="blog-image">🚀</div>
+                <div style="padding: 0 32px 32px;">
+                    <div class="blog-meta">
+                        <span>📅 Feb 1, 2026</span>
+                        <span>⏱️ 5 min read</span>
+                    </div>
+                    <span class="blog-tag">PRODUCT UPDATE</span>
+                    <h3 style="font-size: 1.5rem; margin: 16px 0;">Introducing Multi-Model Consensus</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        Learn how our new multi-model consensus technology improves accuracy by 15% for complex queries.
+                    </p>
+                    <a href="blog/multi-model-consensus.html" style="color: var(--accent-cyan); font-weight: 600;">Read
+                        More →</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 2 -->
+            <div class="card-glass blog-card" style="padding: 0; overflow: hidden;">
+                <div class="blog-image">🇮🇳</div>
+                <div style="padding: 0 32px 32px;">
+                    <div class="blog-meta">
+                        <span>📅 Jan 28, 2026</span>
+                        <span>⏱️ 7 min read</span>
+                    </div>
+                    <span class="blog-tag">AI INSIGHTS</span>
+                    <h3 style="font-size: 1.5rem; margin: 16px 0;">Why Indian AI Needs Cultural Context</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        Global AI platforms struggle with Indian languages. Here's why cultural context matters more
+                        than translation.
+                    </p>
+                    <a href="blog/cultural-context.html" style="color: var(--accent-cyan); font-weight: 600;">Read More
+                        →</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 3 -->
+            <div class="card-glass blog-card" style="padding: 0; overflow: hidden;">
+                <div class="blog-image">🔒</div>
+                <div style="padding: 0 32px 32px;">
+                    <div class="blog-meta">
+                        <span>📅 Jan 20, 2026</span>
+                        <span>⏱️ 6 min read</span>
+                    </div>
+                    <span class="blog-tag">SECURITY</span>
+                    <h3 style="font-size: 1.5rem; margin: 16px 0;">On-Premise AI: Complete Data Privacy</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        Deploy VedSAAS on your own servers for 100% data privacy. A guide for enterprises.
+                    </p>
+                    <a href="blog/on-premise-deployment.html" style="color: var(--accent-cyan); font-weight: 600;">Read
+                        More →</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 4 -->
+            <div class="card-glass blog-card" style="padding: 0; overflow: hidden;">
+                <div class="blog-image">📊</div>
+                <div style="padding: 0 32px 32px;">
+                    <div class="blog-meta">
+                        <span>📅 Jan 15, 2026</span>
+                        <span>⏱️ 8 min read</span>
+                    </div>
+                    <span class="blog-tag">CASE STUDY</span>
+                    <h3 style="font-size: 1.5rem; margin: 16px 0;">How EdTech Scaled to 10K Students</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        A Bangalore startup used VedSAAS to provide personalized tutoring in 12 Indian languages.
+                    </p>
+                    <a href="/case-studies.html" style="color: var(--accent-cyan); font-weight: 600;">Read More →</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 5 -->
+            <div class="card-glass blog-card" style="padding: 0; overflow: hidden;">
+                <div class="blog-image">🧠</div>
+                <div style="padding: 0 32px 32px;">
+                    <div class="blog-meta">
+                        <span>📅 Jan 10, 2026</span>
+                        <span>⏱️ 10 min read</span>
+                    </div>
+                    <span class="blog-tag">TECHNICAL</span>
+                    <h3 style="font-size: 1.5rem; margin: 16px 0;">Self-Evolution: How AI Learns From Mistakes</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        Deep dive into our self-evolution technology that improved accuracy from 85% to 97%.
+                    </p>
+                    <a href="blog/self-evolution.html" style="color: var(--accent-cyan); font-weight: 600;">Read More
+                        →</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 6 -->
+            <div class="card-glass blog-card" style="padding: 0; overflow: hidden;">
+                <div class="blog-image">💡</div>
+                <div style="padding: 0 32px 32px;">
+                    <div class="blog-meta">
+                        <span>📅 Jan 5, 2026</span>
+                        <span>⏱️ 5 min read</span>
+                    </div>
+                    <span class="blog-tag">BEST PRACTICES</span>
+                    <h3 style="font-size: 1.5rem; margin: 16px 0;">10 Tips for Better AI Prompts</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">
+                        Get better results from VedSAAS with these proven prompt engineering techniques.
+                    </p>
+                    <a href="blog/prompt-tips.html" style="color: var(--accent-cyan); font-weight: 600;">Read More →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="container" style="padding: 0 24px 100px;">
+        <div class="card-glass"
+            style="padding: 60px; text-align: center; background: linear-gradient(135deg, rgba(0,240,255,0.05), rgba(112,0,255,0.05));">
+            <h2 style="font-size: 2.5rem; margin-bottom: 24px;">Stay Updated</h2>
+            <p
+                style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Get the latest AI insights, product updates, and best practices delivered to your inbox
+            </p>
+            <div
+                style="display: flex; gap: 12px; justify-content: center; max-width: 500px; margin: 0 auto; flex-wrap: wrap;">
+                <input type="email" placeholder="Enter your email"
+                    style="flex: 1; min-width: 250px; padding: 14px 20px; border-radius: 99px; border: 1px solid var(--border-subtle); background: var(--bg-input); color: var(--text-primary); font-size: 1rem;">
+                <button class="btn btn-primary" style="padding: 14px 32px;">Subscribe</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="border-top: 1px solid var(--border-subtle); padding: 40px 24px; text-align: center;">
+        <div class="container">
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                Made in Bharat 🇮🇳 • VedSAAS Powered by Shashwatam Eco-Chic Creations LLP • © 2026
+            </p>
+        </div>
+    </footer>
+
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+</body>
+
+</html>

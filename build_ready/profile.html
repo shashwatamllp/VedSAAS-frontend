@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>VedSAAS • Profile</title>
+  <link rel="icon" href="favicon.ico"/>
+  <style>
+    :root{
+      --bg:#1e1e2f; --card:#2c2c3e; --ip:#3a3a4d; --ip-focus:#4a4a5f;
+      --text:#fff; --muted:#b9bed1; --brand:#0078d4; --brand-2:#005ea2;
+      --ok:#27c093; --danger:#ff6b6b;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
+      background:var(--bg); color:var(--text);
+      display:flex; align-items:center; justify-content:center; padding:20px;
+    }
+    .bg{position:fixed; inset:0; background:url('images/logopic.png') center/480px no-repeat; opacity:.06; pointer-events:none}
+    .card{
+      position:relative; z-index:1;
+      width:min(1100px,96vw);
+      background:var(--card); border-radius:14px; padding:18px 18px 14px;
+      box-shadow:0 12px 34px rgba(0,0,0,.45);
+      max-height:92vh; overflow:auto; scrollbar-gutter:stable;
+    }
+    h2{margin-bottom:4px}
+    .sub{color:var(--muted); font-size:13px; margin-bottom:12px}
+
+    /* --- Grid: 2 columns desktop, 1 column mobile --- */
+    .grid{display:grid; grid-template-columns: 1fr 1fr; gap:12px 16px}
+    .span2{grid-column:1 / -1}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+
+    .kv label{display:block; font-size:12px; color:#cfd2e2; margin-bottom:6px}
+    .ip{
+      width:100%; padding:11px 12px; border:none; border-radius:10px;
+      background:var(--ip); color:#fff; outline:none; font-size:15px; transition:.15s background;
+    }
+    .ip:focus{background:var(--ip-focus)}
+    .readonly{opacity:.9}
+
+    .chip{
+      display:inline-flex; align-items:center; gap:6px;
+      background:#2e3c3a; color:#bff2df; border:1px solid #355e55;
+      font-size:11px; padding:4px 8px; border-radius:999px; margin-left:8px
+    }
+    .note{color:var(--muted); font-size:12px; margin-top:4px}
+    .limit{font-size:12px;color:#9fb}
+
+    .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:8px}
+    .btn{padding:11px 14px; border:none; border-radius:10px; cursor:pointer; font-weight:600; color:#fff; background:var(--brand)}
+    .btn:hover{background:var(--brand-2)}
+    .btn.secondary{background:#454754}
+
+    /* Avatar block */
+    .avatar-card{
+      display:grid; grid-template-columns: 92px 1fr; gap:12px; align-items:center;
+      background:#2a2a3a; border:1px solid #3a3a4d; border-radius:12px; padding:10px 12px;
+    }
+    .avatar{
+      width:86px; height:86px; border-radius:50%;
+      background:#444 center/cover no-repeat;
+      display:grid; place-items:center; font-weight:800; color:#e8e8e8; font-size:26px;
+      position:relative; overflow:hidden;
+    }
+    .avatar .cam{
+      position:absolute; right:6px; bottom:6px; background:#0009; border:1px solid #555; border-radius:8px;
+      padding:4px 6px; font-size:12px; cursor:pointer;
+    }
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chip-opt{
+      display:inline-flex; align-items:center; gap:8px; padding:7px 10px; border-radius:999px;
+      border:1px solid #465; background:#334; color:#dfe; cursor:pointer; user-select:none
+    }
+    .chip-opt input{appearance:none; width:14px;height:14px; border-radius:3px; border:1px solid #9ac}
+    .chip-opt input:checked{background:#3ad}
+    .banner{position:fixed; top:14px; left:50%; transform:translateX(-50%); background:#2b3347; color:#fff; padding:9px 12px; border-radius:10px; display:none}
+  </style>
+</head>
+<body>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id='navbar-placeholder'></div>
+  <div class="bg"></div>
+  <div id="banner" class="banner"></div>
+
+  <div class="card">
+    <h2>Profile</h2>
+    <div class="sub">Your account details. Verified identifiers are locked.</div>
+
+    <div class="grid">
+      <!-- Row 1 -->
+      <div class="kv">
+        <label>Display name</label>
+        <input id="pf-name" class="ip" placeholder="Your name"/>
+      </div>
+      <div class="kv">
+        <label>Username</label>
+        <input id="pf-handle" class="ip" placeholder="@username"/>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="kv">
+        <label>Email <span id="email-badge" class="chip" style="display:none">✔ Verified</span></label>
+        <input id="pf-email" class="ip readonly" placeholder="email@example.com" disabled/>
+        <div class="note">Email बदलना है तो logout करके नये email से OTP login करें.</div>
+      </div>
+      <div class="kv">
+        <label>Mobile <span id="mobile-badge" class="chip" style="display:none">✔ Verified</span></label>
+        <input id="pf-mobile" class="ip readonly" placeholder="+91XXXXXXXXXX" disabled/>
+        <div class="note">Mobile बदलना है तो logout करके नये number से OTP login करें.</div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="kv">
+        <label>Backup email (account recovery) <span class="limit">(optional)</span></label>
+        <input id="pf-backup" class="ip" placeholder="backup@example.com"/>
+      </div>
+
+      <!-- Avatar block (Right column uses space) -->
+      <div class="kv">
+        <label>Avatar</label>
+        <div class="avatar-card">
+          <div id="pf-preview" class="avatar">
+            <button id="btn-pick" class="cam">📷</button>
+          </div>
+          <div>
+            <input id="pf-avatar" type="file" accept="image/*" style="display:none"/>
+            <div style="display:flex; gap:8px">
+              <button id="btn-upload" class="btn secondary" type="button">Choose image</button>
+              <button id="btn-remove" class="btn secondary" type="button">Remove</button>
+            </div>
+            <div class="note">Max ~1 MB. Square image looks best.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4 (Bio spans 2) -->
+      <div class="kv span2">
+        <label>Bio <span id="bio-count" class="limit">(0/280)</span></label>
+        <textarea id="pf-bio" class="ip" rows="3" maxlength="280" placeholder="Tell us a little about yourself..."></textarea>
+      </div>
+
+      <!-- Row 5 (Hobbies spans 2) -->
+      <div class="kv span2">
+        <label>Hobbies / Interests</label>
+        <div id="pf-hobbies" class="chips"></div>
+        <div class="note">Tip: tick as many as you like.</div>
+      </div>
+
+      <!-- Row 6 -->
+      <div class="actions span2">
+        <a class="btn secondary" href="settings.html">Back</a>
+        <button id="save" class="btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  /* ===== Config ===== */
+  const API_BASE = (()=>{ const F='http://127.0.0.1:8000';
+    try{ const o=location.origin||''; if(!o || o.startsWith('file://')) return F;
+      if(o.includes(':3000')) return F; if(o.includes(':8000')) return o; return o.startsWith('http')?o:F;
+    }catch{return F}
+  })();
+  const $=id=>document.getElementById(id);
+  const banner=(m)=>{ const b=$('banner'); b.textContent=m; b.style.display='block'; clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',2200); };
+  const HOBBIES=["Reading","Music","Travel","Fitness","Yoga","Meditation","Gardening","Cooking","Photography","Gaming","Cricket","Football","Technology","Movies","Art","Design","Writing","Investing","Startups"];
+  const auth=()=>{ const t=localStorage.getItem('token'); return t?{Authorization:'Bearer '+t}:{ }; };
+  const validEmail=(v)=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v||'');
+
+  /* ===== Hobbies (chips) ===== */
+  function renderHobbyChips(selected=[]){
+    const host=$('pf-hobbies'); host.innerHTML='';
+    HOBBIES.forEach(h=>{
+      const id='hb_'+h.toLowerCase().replace(/\s+/g,'_');
+      const sel=selected.includes(h);
+      const el=document.createElement('label'); el.className='chip-opt';
+      el.innerHTML=`<input type="checkbox" ${sel?'checked':''} id="${id}"><span>${h}</span>`;
+      host.appendChild(el);
+    });
+  }
+  function getSelectedHobbies(){
+    return Array.from(document.querySelectorAll('#pf-hobbies input:checked')).map(i=>i.nextElementSibling.textContent);
+  }
+
+  /* ===== Avatar ===== */
+  let avatarDataURL = null;  // live selection
+  let serverAvatar = null;   // from server (url/base64)
+  function setAvatarFrom(str){
+    const box=$('pf-preview');
+    if(!box) return;
+    if(str){ box.style.backgroundImage=`url('${str}')`; box.textContent=''; }
+    else{
+      // initials fallback
+      const name = ($('pf-name')?.value||localStorage.getItem('pendingName')||'U').trim();
+      const initials = name.split(/\s+/).map(s=>s[0]||'').slice(0,2).join('').toUpperCase();
+      box.style.backgroundImage='none'; box.textContent=initials||'U';
+    }
+  }
+  $('btn-upload').onclick=()=>$('pf-avatar').click();
+  $('btn-pick').onclick=()=>$('pf-avatar').click();
+  $('pf-avatar').onchange=(e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    if(f.size>1024*1024){ banner('Image too large (max 1 MB)'); e.target.value=''; return; }
+    const rd=new FileReader(); rd.onload=()=>{ avatarDataURL=rd.result; setAvatarFrom(avatarDataURL); }; rd.readAsDataURL(f);
+  };
+  $('btn-remove').onclick=()=>{ avatarDataURL=null; localStorage.removeItem('pendingAvatar'); if(serverAvatar){ serverAvatar=null; } setAvatarFrom(null); };
+
+  /* ===== Counters ===== */
+  $('pf-bio').addEventListener('input',()=>{ const n=$('pf-bio').value.length; $('bio-count').textContent=`(${n}/280)`; });
+
+  /* ===== Load ===== */
+  async function load(){
+    const tok = localStorage.getItem('token'); if(!tok){ location.href='login.html'; return; }
+    try{
+      const r = await fetch(API_BASE+'/api/user-profile',{headers:{...auth()}});
+      const j = await r.json(); if(!j.ok){ banner(j.error||'Failed'); if(r.status===401) location.href='login.html'; return; }
+      const u = j.user||{};
+
+      $('pf-name').value   = u.name   || localStorage.getItem('pendingName') || '';
+      $('pf-handle').value = u.handle || u.nickname || '';
+      $('pf-email').value  = u.email  || '';
+      $('pf-mobile').value = u.mobile || '';
+      if(u.email)  $('email-badge').style.display='inline-flex';
+      if(u.mobile) $('mobile-badge').style.display='inline-flex';
+
+      // text fields
+      $('pf-backup').value = u.backup_email || localStorage.getItem('profile_backup') || '';
+      $('pf-bio').value    = u.bio          || localStorage.getItem('profile_bio')    || '';
+      $('pf-bio').dispatchEvent(new Event('input'));
+
+      // hobbies
+      const sel = Array.isArray(u.hobbies) ? u.hobbies
+                 : (localStorage.getItem('profile_hobbies')||'').split(',').filter(Boolean);
+      renderHobbyChips(sel);
+
+      // avatar preference: server -> localStorage -> initials
+      serverAvatar = u.avatar_url || u.avatar || null;
+      avatarDataURL = localStorage.getItem('pendingAvatar') || null;
+      setAvatarFrom(avatarDataURL || serverAvatar);
+
+    }catch(e){ banner('Network error'); }
+  }
+
+  /* ===== Save ===== */
+  $('save').onclick = async ()=>{
+    const name  = $('pf-name').value.trim();
+    const handle= $('pf-handle').value.trim();
+    const backup= $('pf-backup').value.trim();
+    const bio   = $('pf-bio').value.trim();
+    const hobbies = getSelectedHobbies();
+
+    if(backup && !validEmail(backup)) return banner('Enter valid backup email');
+
+    // optimistic local store
+    localStorage.setItem('profile_backup', backup);
+    localStorage.setItem('profile_bio', bio);
+    localStorage.setItem('profile_hobbies', hobbies.join(','));
+    if(name) localStorage.setItem('pendingName', name);
+
+    try{
+      // 1) basic fields
+      const r = await fetch(API_BASE+'/api/user/profile',{
+        method:'POST',
+        headers:{'Content-Type':'application/json', ...auth()},
+        body: JSON.stringify({ name, handle, backup_email: backup, bio, hobbies })
+      });
+      const j = await r.json().catch(()=>({})); if(!j?.ok){ banner(j?.error || 'Save failed'); return; }
+
+      // 2) avatar upload (if chosen)
+      if(avatarDataURL){
+        try{
+          const blob = await (await fetch(avatarDataURL)).blob();
+          const fd   = new FormData(); fd.append('avatar', blob, 'avatar.png');
+          const r2 = await fetch(API_BASE+'/api/user/avatar',{method:'POST', headers:{...auth()}, body:fd});
+          if(r2.ok){ localStorage.setItem('pendingAvatar', avatarDataURL); }
+        }catch{}
+      }
+
+      banner('Saved');
+    }catch(e){ banner('Network error'); }
+  };
+
+  load();
+</script>
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+    </body>
+</html>
+

@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and internal pages
+Disallow: /admin/
+Disallow: /subdomains/console/
+
+# Allow all other pages
+Allow: /chat/
+Allow: /blog/
+Allow: /subdomains/docs/
+Allow: /subdomains/api/
+Allow: /subdomains/help/
+
+# Sitemap
+Sitemap: https://vedsaas.com/sitemap.xml

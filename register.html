@@ -4,7 +4,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>VedSAAS • Signup</title>
+
+  <!-- SEO Meta Tags -->
+  <title>Sign Up for VedSAAS - India's First Self-Evolving AI Platform</title>
+  <meta name="description"
+    content="Create your free VedSAAS account and access India's first AI platform supporting 22+ Indian languages. Start with our free plan today.">
+  <meta name="keywords" content="VedSAAS signup, AI registration, Indian AI platform, create AI account">
+  <meta name="robots" content="noindex, nofollow">
+
   <link rel="icon" href="./favicon.ico" />
 
   <!-- 🔐 Provide API key here (or put it in localStorage.VED_API_KEY) -->
@@ -225,10 +232,8 @@
 </head>
 
 <body>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id="navbar-placeholder"></div>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id='navbar-placeholder'></div>
+  <!-- Navbar (Loaded Dynamically) -->
+  <div id="navbar-placeholder"></div>
   <div class="auth-bg"></div>
 
   <div class="card" id="card">
@@ -265,6 +270,7 @@
         <label for="pw">Password</label>
         <input id="pw" name="password" class="ip" type="password" placeholder="Create password" required
           autocomplete="new-password" />
+        <div id="pw-strength" style="margin-top:8px;font-size:0.85rem;display:none"></div>
       </div>
       <div>
         <label for="cpw">Confirm</label>
@@ -279,6 +285,13 @@
           <input id="avatar" name="avatar" class="ip" type="file" accept="image/*" />
           <div class="hint">Max 1 MB • Square image looks best</div>
         </div>
+      </div>
+
+      <div class="span3" style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <input type="checkbox" id="terms" required style="width:auto;margin:0">
+        <label for="terms" style="margin:0;font-size:0.9rem">I agree to the <a href="./terms.html" target="_blank"
+            style="color:#76b7ff">Terms of Service</a> and <a href="./privacy.html" target="_blank"
+            style="color:#76b7ff">Privacy Policy</a></label>
       </div>
 
       <div class="span3 actions">
@@ -325,6 +338,42 @@
       const rd = new FileReader();
       rd.onload = () => { $('preview').style.backgroundImage = `url('${rd.result}')`; };
       rd.readAsDataURL(f);
+    });
+
+    // Password strength indicator
+    $('pw').addEventListener('input', e => {
+      const pw = e.target.value;
+      const strength = $('pw-strength');
+
+      if (!pw) {
+        strength.style.display = 'none';
+        return;
+      }
+
+      strength.style.display = 'block';
+      let score = 0;
+      let text = '';
+      let color = '';
+
+      if (pw.length >= 8) score++;
+      if (pw.length >= 12) score++;
+      if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+      if (/\d/.test(pw)) score++;
+      if (/[^a-zA-Z0-9]/.test(pw)) score++;
+
+      if (score <= 2) {
+        text = '🔴 Weak password';
+        color = '#ff6b6b';
+      } else if (score <= 3) {
+        text = '🟡 Medium password';
+        color = '#ffd93d';
+      } else {
+        text = '🟢 Strong password';
+        color = '#6bcf7f';
+      }
+
+      strength.textContent = text;
+      strength.style.color = color;
     });
 
     const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v || "");
@@ -451,8 +500,8 @@
       }
     });
   </script>
-    <!-- Component Loader -->
-    <script src="/public/js/components.js"></script>
-    </body>
+  <!-- Component Loader -->
+  <script src="/public/js/components.js"></script>
+</body>
 
 </html>

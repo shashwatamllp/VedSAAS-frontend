@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VedSAAS</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#00f0ff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030304">
+    <!-- CSP: Fully Permissive for Development/Production Hybrid -->
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' https://*.vedsaas.com https://*.vedsaas.in;
+    img-src 'self' data: https://*.vedsaas.com https://*.vedsaas.in https://vedsaas.com;
+    style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com;
+    script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://kit.fontawesome.com;
+    font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;
+    connect-src 'self' https://api.vedsaas.com https://*.vedsaas.com https://*.vedsaas.in https://ipapi.co http://localhost:* ws://localhost:*;
+    base-uri 'self';
+    upgrade-insecure-requests;
+    ">
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VedSAAS">
+    <link rel="apple-touch-icon" href="/public/icons/apple-touch-icon.png">
+
+    <!-- MS Tiles -->
+    <meta name="msapplication-TileColor" content="#030304">
+    <meta name="msapplication-TileImage" content="/public/icons/icon-512x512.png">
+
+    <!-- SEO -->
+    <meta name="description"
+        content="India's First AI Platform supporting 22+ Indian languages with deep cultural understanding">
+    <meta name="keywords" content="AI, Indian languages, VedSAAS, chatbot, Hindi AI, multilingual AI">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:title" content="VedSAAS | The Artificial Civilization">
+    <meta property="og:description"
+        content="India's First AI Platform supporting 22+ Indian languages with deep cultural understanding.">
+    <meta property="og:image" content="https://vedsaas.com/public/icons/icon-512x512.png">
+    <meta property="og:url" content="https://vedsaas.com">
+    <meta property="og:type" content="website">
+
+    <link rel="stylesheet" href="public/css/civilization.css?v=FORCE_RELOAD_2">
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- NUCLEAR CACHE BUSTER: Force Unregister Old SW -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    // Only unregister if it's an old version (logic typically complex, so we just unregister to force update)
+                    // console.log("Force updating SW");
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+
+    <!-- Floating Language Selector (Top Right) -->
+    <div class="card-glass"
+        style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 10px; display: flex; gap: 8px; align-items: center; border-radius: 50px;">
+        <span
+            style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 8px; margin-right: 4px;">BHASHA:</span>
+
+        <button onclick="changeLanguage('sa')" class="btn-ghost"
+            style="padding: 6px 12px; font-size: 0.9rem; border-radius: 20px; border: 1px solid rgba(255,153,51,0.3);"
+            title="Sanskrit">
+            🕉️ <span class="mobile-hide">Sanskrit</span>
+        </button>
+
+        <button onclick="changeLanguage('hi')" class="btn-ghost"
+            style="padding: 6px 12px; font-size: 0.9rem; border-radius: 20px; border: 1px solid rgba(0,255,136,0.3);"
+            title="Hindi">
+            🇮🇳 <span class="mobile-hide">Hindi</span>
+        </button>
+
+        <button onclick="changeLanguage('en')" class="btn-ghost"
+            style="padding: 6px 12px; font-size: 0.9rem; border-radius: 20px; border: 1px solid rgba(0,240,255,0.3);"
+            title="English">
+            🇺🇸 <span class="mobile-hide">English</span>
+        </button>
+    </div>
+
+    <!-- Hero Section: Professional -->
+    <header class="container"
+        style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-top: 60px;">
+
+        <div data-aos="fade-down" style="margin-bottom: 24px;">
+            <span id="t-hero-badge" class="ticker-pill"
+                style="display: inline-flex; border-color: #00f0ff; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);">
+                <span class="status-dot"></span> System Online & Evolving
+            </span>
+        </div>
+
+        <h1 id="t-hero-brand" data-aos="fade-up" data-aos-delay="100"
+            style="font-size: clamp(3rem, 6vw, 6rem); line-height: 1.1; font-weight: 800; max-width: 1100px; margin-bottom: 16px; letter-spacing: -2px;">
+            VedSAAS
+        </h1>
+
+        <h2 id="t-hero-tagline" data-aos="fade-up" data-aos-delay="200"
+            style="font-size: clamp(1.5rem, 3vw, 2.5rem); color: #fff; margin-bottom: 24px; font-weight: 600;">
+            The World's First <span class="text-gradient">Self-Evolving</span> AI Civilization
+        </h2>
+
+        <p id="t-hero-subtitle" data-aos="fade-up" data-aos-delay="300"
+            style="color: var(--text-secondary); margin-bottom: 40px; font-size: 1.2rem; max-width: 800px; line-height: 1.6;">
+            Combines Ancient Wisdom (Ved) with Modern Intelligence (SAAS). <br>
+            <span style="color: var(--accent-cyan);">Auto-Healing. Decision-Making. Privacy-First.</span>
+        </p>
+
+        <!-- The Brain Visualization -->
+        <div data-aos="zoom-in" data-aos-delay="400"
+            style="width: 300px; height: 300px; position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto 50px;">
+            <canvas id="brain-canvas" width="300" height="300"></canvas>
+            <div
+                style="position: absolute; color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; bottom: -40px; text-transform: uppercase; letter-spacing: 2px;">
+                Quantum Core Active
+            </div>
+        </div>
+
+        <div data-aos="fade-up" data-aos-delay="500"
+            style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+            <a id="t-btn-start" href="/chat/" class="btn btn-primary"
+                style="padding: 16px 32px; font-size: 1.1rem;">Start Conversation →</a>
+            <a id="t-btn-explore" href="#architecture" class="btn btn-secondary"
+                style="padding: 16px 32px; font-size: 1.1rem;">Explore Brain</a>
+        </div>
+    </header>
+
+    <!-- Architecture Section -->
+    <section id="architecture" class="container" style="padding: 100px 24px;">
+        <div style="text-align: center; margin-bottom: 80px;" data-aos="fade-up">
+            <h2 id="t-arch-title" style="font-size: 3rem; margin-bottom: 16px;">The 3-Layer Brain Architecture</h2>
+            <p id="t-arch-desc"
+                style="color: var(--text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto;">
+                A system that thinks before it answers. Orchestrated by the Brain Controller.
+            </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: 0 auto;">
+
+            <!-- Controller -->
+            <div class="card-glass" style="border: 1px solid var(--accent-cyan); text-align: center; padding: 30px;"
+                data-aos="zoom-in">
+                <h3 id="t-arch-controller" style="color: var(--accent-cyan); font-size: 1.5rem; margin-bottom: 10px;">🧠
+                    Brain Controller
+                    (Orchestrator)</h3>
+            </div>
+
+            <!-- Arrows -->
+            <div style="display: flex; justify-content: space-between; padding: 0 40px; color: var(--text-secondary);">
+                <span>↓ Simple Query</span>
+                <span>↓ Complex Query</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Layer A -->
+                <div class="card-glass" style="border-top: 4px solid #00ff88; padding: 30px;" data-aos="fade-up"
+                    data-aos-delay="100">
+                    <h4 id="t-arch-layer-a" style="font-size: 1.2rem; color: #00ff88; margin-bottom: 10px;">LAYER A:
+                        FastBrain
+                        (Local)</h4>
+                </div>
+
+                <!-- Layer B & C -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="card-glass" style="border-top: 4px solid #ffcc00; padding: 30px;" data-aos="fade-up"
+                        data-aos-delay="200">
+                        <h4 id="t-arch-layer-b" style="font-size: 1.2rem; color: #ffcc00; margin-bottom: 10px;">LAYER B:
+                            Multi-Model
+                            Consensus</h4>
+                    </div>
+                    <div class="card-glass" style="border-top: 4px solid #ff3b30; padding: 30px;" data-aos="fade-up"
+                        data-aos-delay="300">
+                        <h4 id="t-arch-layer-c" style="font-size: 1.2rem; color: #ff3b30; margin-bottom: 10px;">LAYER C:
+                            DeepBrain
+                            (Heavy Compute)</h4>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Step 3 -->
+    <div class="card-glass"
+        style="width: 100%; max-width: 700px; padding: 40px; border: 1px solid #ffcc00; text-align: left;"
+        data-aos="fade-up">
+        <div style="font-size: 0.9rem; color: #ffcc00; letter-spacing: 2px; margin-bottom: 16px;">STEP 3:
+            PARINAM (EVOLUTION)</div>
+        <h3 style="font-size: 1.8rem; margin-bottom: 16px;">Self-Evolution</h3>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6;">
+            Har galti se ye seekhta hai. Aaj jo jawab galat diya, kal wahi jawab sahi dega. Bina kisi engineer
+            ke code change kiye.
+        </p>
+    </div>
+
+    </div>
+
+    </section>
+
+    <!-- Revolutionary Features -->
+    <section id="features" class="container" style="padding: 100px 24px;">
+        <div style="text-align: center; margin-bottom: 60px;" data-aos="fade-up">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Why VedSAAS is Revolutionary</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Features that exist nowhere else in the world.
+            </p>
+        </div>
+
+        <div class="grid-3" style="gap: 32px;">
+            <!-- USP 1 -->
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="0">
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">🧬</div>
+                <h3 style="margin-bottom: 12px;">True Self-Evolution</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">The system literally gets smarter with
+                    every query. No manual coding required.</p>
+                <div
+                    style="font-size: 0.85rem; color: var(--accent-cyan); border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+                    "Accuracy: Day 1 (85%) → Day 90 (97%)"
+                </div>
+            </div>
+
+            <!-- USP 2 -->
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="100">
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">💉</div>
+                <h3 style="margin-bottom: 12px;">AutoHeal Technology</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">Detects its own crashes before you notice.
+                    Automatically switches resources (GPU → CPU) for 0s downtime.</p>
+            </div>
+
+            <!-- USP 3 -->
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="200">
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">🗳️</div>
+                <h3 style="margin-bottom: 12px;">Multi-Model Democracy</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">Consensus voting between specialized
+                    VedSAAS-Model
+                    nodes. Higher accuracy than any single instance.</p>
+            </div>
+
+            <!-- USP 4 -->
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="300">
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">🛡️</div>
+                <h3 style="margin-bottom: 12px;">Fortress Privacy</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">Your data stays on YOUR server. 100% Local
+                    models available for sensitive queries.</p>
+            </div>
+
+            <!-- USP 5 -->
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="400">
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">💰</div>
+                <h3 style="margin-bottom: 12px;">80% Cost Reduction</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">Smart routing sends simple queries to Free
+                    models and complex ones to Paid GPUs.</p>
+            </div>
+
+            <!-- USP 6 -->
+            <div class="card-glass" style="padding: 32px;" data-aos="fade-up" data-aos-delay="500">
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">🧐</div>
+                <h3 style="margin-bottom: 12px;">Full Transparency</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">See the "Confidence Score" and "Reasoning
+                    Trace" for every single answer.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section id="comparison" class="container" style="padding: 0 24px 100px;">
+        <div style="text-align: center; margin-bottom: 60px;" data-aos="fade-up">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">VedSAAS vs The Giants</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Why we are different.</p>
+        </div>
+
+        <div class="card-glass" style="padding: 0; overflow: hidden;" data-aos="zoom-in">
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.05);">
+                            <th style="padding: 20px; text-align: left; border-bottom: 1px solid var(--border-subtle);">
+                                Feature</th>
+                            <th
+                                style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-subtle); color: var(--accent-cyan); font-weight: 800; font-size: 1.1rem;">
+                                VedSAAS</th>
+                            <th
+                                style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-subtle); opacity: 0.7;">
+                                ChatGPT</th>
+                            <th
+                                style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-subtle); opacity: 0.7;">
+                                Claude</th>
+                            <th
+                                style="padding: 20px; text-align: center; border-bottom: 1px solid var(--border-subtle); opacity: 0.7;">
+                                Gemini</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); font-weight: 600;">
+                                Self-Evolution</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; color: #00ff88;">
+                                ✅ YES</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); font-weight: 600;">
+                                AutoHeal</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; color: #00ff88;">
+                                ✅ YES</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); font-weight: 600;">
+                                Multi-Model Consensus</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; color: #00ff88;">
+                                ✅ YES</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                ❌</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); font-weight: 600;">
+                                Data Privacy</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; color: #00ff88;">
+                                ✅ 100% Local</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                Cloud</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                Cloud</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                Cloud</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); font-weight: 600;">
+                                Cost Optimization</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; color: #00ff88;">
+                                ✅ 80% Savings</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                Expensive</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                Expensive</td>
+                            <td
+                                style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); text-align: center; opacity: 0.5;">
+                                Expensive</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing (Kept for conversion) -->
+    <section id="pricing" class="container" style="padding: 100px 24px;">
+        <div style="text-align: center; margin-bottom: 60px;" data-aos="fade-up">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Simple Pricing</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Choose the plan that fits your needs</p>
+        </div>
+
+        <div class="grid-3" style="gap: 32px;">
+            <!-- Free Plan -->
+            <div class="card-glass" style="padding: 40px; text-align: center;" data-aos="flip-left" data-aos-delay="0">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Free</h3>
+                <div style="font-size: 3rem; font-weight: 800; margin: 20px 0;">₹0</div>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">Perfect for getting started</p>
+                <ul style="text-align: left; list-style: none; padding: 0; margin-bottom: 32px;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ 100 messages/day</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ Basic AI modes</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ Community support</li>
+                    <li style="padding: 8px 0;">✓ 5 languages</li>
+                </ul>
+                <a href="register.html" class="btn btn-secondary" style="width: 100%;">Get Started</a>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="card-glass"
+                style="padding: 40px; text-align: center; border: 2px solid var(--accent-cyan); position: relative;"
+                data-aos="flip-left" data-aos-delay="100">
+                <div
+                    style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent-cyan); color: #000; padding: 4px 16px; border-radius: 99px; font-size: 0.85rem; font-weight: 600;">
+                    POPULAR</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Pro</h3>
+                <div style="font-size: 3rem; font-weight: 800; margin: 20px 0;">₹499<span
+                        style="font-size: 1rem; font-weight: 400;">/mo</span></div>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">For power users</p>
+                <ul style="text-align: left; list-style: none; padding: 0; margin-bottom: 32px;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ Unlimited messages</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ All 57 AI modes</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ Priority support</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ 22+ languages</li>
+                    <li style="padding: 8px 0;">✓ Voice input</li>
+                </ul>
+                <a href="register.html" class="btn btn-primary" style="width: 100%;">Start Free Trial</a>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="card-glass" style="padding: 40px; text-align: center;" data-aos="flip-left"
+                data-aos-delay="200">
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Enterprise</h3>
+                <div style="font-size: 3rem; font-weight: 800; margin: 20px 0;">Custom</div>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">For organizations</p>
+                <ul style="text-align: left; list-style: none; padding: 0; margin-bottom: 32px;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ Everything in Pro</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ Custom AI modes</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ Dedicated support</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle);">✓ API access</li>
+                    <li style="padding: 8px 0;">✓ SLA guarantee</li>
+                </ul>
+                <a href="mailto:contact@vedsaas.com" class="btn btn-secondary" style="width: 100%;">Contact Sales</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="container"
+        style="padding: 100px 24px; background: var(--bg-card); border-radius: 24px; margin-bottom: 100px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Trusted by Thousands</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">12,000+ users across India</p>
+        </div>
+
+        <div class="grid-3" style="gap: 32px;">
+            <div class="card-glass" style="padding: 32px;">
+                <div style="margin-bottom: 16px;">⭐⭐⭐⭐⭐</div>
+                <p style="margin-bottom: 20px; font-style: italic;">"VedSAAS ने मेरी हिंदी में बात करने की समस्या को हल
+                    कर दिया। बहुत बढ़िया!"</p>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-cyan); display: flex; align-items: center; justify-content: center; color: #000; font-weight: 700;">
+                        R</div>
+                    <div>
+                        <div style="font-weight: 600;">Rajesh Kumar</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Student, Delhi</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass" style="padding: 32px;">
+                <div style="margin-bottom: 16px;">⭐⭐⭐⭐⭐</div>
+                <p style="margin-bottom: 20px; font-style: italic;">"The Math-Rishi mode helped me ace my engineering
+                    exams. Incredible explanations!"</p>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-cyan); display: flex; align-items: center; justify-content: center; color: #000; font-weight: 700;">
+                        P</div>
+                    <div>
+                        <div style="font-weight: 600;">Priya Sharma</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Engineer, Bangalore</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass" style="padding: 32px;">
+                <div style="margin-bottom: 16px;">⭐⭐⭐⭐⭐</div>
+                <p style="margin-bottom: 20px; font-style: italic;">"Finally, an AI that understands Indian context and
+                    culture. Game changer!"</p>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-cyan); display: flex; align-items: center; justify-content: center; color: #000; font-weight: 700;">
+                        A</div>
+                    <div>
+                        <div style="font-weight: 600;">Amit Patel</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Entrepreneur, Mumbai</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="container" style="padding: 100px 24px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Frequently Asked Questions</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Everything you need to know</p>
+        </div>
+
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">What makes VedSAAS different?</h3>
+                <p style="color: var(--text-secondary);">VedSAAS is India's first AI trained on Indian languages,
+                    culture, and context. We support 22+ Indian languages and understand local idioms, references, and
+                    cultural nuances.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">Is my data secure?</h3>
+                <p style="color: var(--text-secondary);">Absolutely. We use end-to-end encryption and never share your
+                    data with third parties. Your conversations are private and secure.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">Can I cancel anytime?</h3>
+                <p style="color: var(--text-secondary);">Yes! You can cancel your subscription at any time. No questions
+                    asked, no hidden fees.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">Which languages do you support?</h3>
+                <p style="color: var(--text-secondary);">We support 22+ Indian languages including Hindi, Tamil, Telugu,
+                    Bengali, Marathi, Gujarati, Kannada, Malayalam, Punjabi, and more.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px;">
+                <h3 style="margin-bottom: 12px;">Do you offer API access?</h3>
+                <p style="color: var(--text-secondary);">Yes! API access is available for Enterprise customers. Contact
+                    our sales team for more information.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="border-top: 1px solid var(--border-subtle); padding: 80px 24px 40px;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto;">
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 48px; margin-bottom: 60px;">
+                <!-- Company -->
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                        <img src="public/image/logopic.png" alt="VedSAAS" style="height: 28px;">
+                        <span style="font-weight: 800; font-size: 1.1rem;">VedSAAS</span>
+                    </div>
+                    <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">India's First AI in
+                        22+ Languages</p>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">by Shashwatam Eco-Chic Creations LLP
+                    </p>
+                </div>
+
+                <!-- Product -->
+                <div>
+                    <h4 style="margin-bottom: 16px; font-size: 0.9rem; font-weight: 700;">Product</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="#features"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Features</a>
+                        <a href="#pricing"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Pricing</a>
+                        <a href="chat/"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Chat
+                            Interface</a>
+                        <a href="admin/dashboard.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Admin
+                            Dashboard</a>
+                    </div>
+                </div>
+
+                <!-- Developers -->
+                <div>
+                    <h4 style="margin-bottom: 16px; font-size: 0.9rem; font-weight: 700;">Developers</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="subdomains/docs/docs.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Documentation</a>
+                        <a href="subdomains/api/api.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">API
+                            Reference</a>
+                        <a href="subdomains/console/console.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Developer
+                            Console</a>
+                        <a href="subdomains/wiki/wiki.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Wiki</a>
+                    </div>
+                </div>
+
+                <!-- Resources -->
+                <div>
+                    <h4 style="margin-bottom: 16px; font-size: 0.9rem; font-weight: 700;">Resources</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="subdomains/help/help.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Help
+                            Center</a>
+                        <a href="subdomains/status/status.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">System
+                            Status</a>
+                        <a href="subdomains/contact/contact.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Contact
+                            Us</a>
+                        <a href="#faq"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">FAQ</a>
+                        <a href="mailto:support@vedsaas.com"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Email
+                            Support</a>
+                    </div>
+                </div>
+
+                <!-- Company -->
+                <div>
+                    <h4 style="margin-bottom: 16px; font-size: 0.9rem; font-weight: 700;">Company</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="subdomains/careers/careers.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Careers</a>
+                        <a href="#"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">About
+                            Us</a>
+                        <a href="#"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Privacy
+                            Policy</a>
+                        <a href="#"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Terms
+                            of Service</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vision -->
+            <section id="vision" style="margin-bottom: 80px; text-align: center;" data-aos="fade-up">
+                <div class="card-glass"
+                    style="padding: 60px 24px; background: linear-gradient(180deg, rgba(0,240,255,0.05) 0%, rgba(0,0,0,0) 100%);">
+                    <h2 style="font-size: 2.5rem; margin-bottom: 24px;">Our Vision</h2>
+                    <p
+                        style="font-size: 1.5rem; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; margin-bottom: 32px;">
+                        "To build the world's most intelligent, private, and affordable AI civilization."
+                    </p>
+                    <div
+                        style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; color: var(--text-secondary);">
+                        <span>✅ 100% User Control</span> •
+                        <span>✅ Zero Downtime</span> •
+                        <span>✅ Ethical AI</span>
+                    </div>
+                </div>
+            </section>
+
+            <div
+                style="text-align: center; padding-top: 40px; border-top: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.9rem;">
+                <p>Made in Bharat 🇮🇳 • VedSAAS Powered by Shashwatam Eco-Chic Creations LLP v4.0 • © 2026</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Brain Animation (Inlined for reliability) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('brain-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                const body = document.body;
+                let points = [];
+                for (let i = 0; i < 150; i++) {
+                    const theta = Math.acos(2 * Math.random() - 1);
+                    const phi = Math.sqrt(150 * Math.PI) * theta;
+                    const r = 100;
+                    points.push({ x: r * Math.sin(theta) * Math.cos(phi), y: r * Math.sin(theta) * Math.sin(phi), z: r * Math.cos(theta) });
+                }
+
+                let rot = 0;
+                function animate() {
+                    ctx.clearRect(0, 0, 300, 300);
+                    const cx = 150, cy = 150;
+                    rot += 0.005;
+
+                    const isLight = body.classList.contains('light-mode');
+                    const color = isLight ? '#0066cc' : '#00f0ff';
+
+                    points.forEach(p => {
+                        let x = p.x * Math.cos(rot) - p.z * Math.sin(rot);
+                        let z = p.x * Math.sin(rot) + p.z * Math.cos(rot);
+                        let scale = 300 / (300 + z);
+
+                        ctx.fillStyle = color;
+                        ctx.globalAlpha = Math.max(0.1, (z + 100) / 200);
+                        ctx.beginPath();
+                        ctx.arc(cx + x * scale, cy + p.y * scale, 1.5 * scale, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            }
+        });
+    </script>
+
+    <!-- PWA Initialization -->
+    <!-- Component Loader -->
+    <script src="/public/js/components.js?v=FORCE_RELOAD_2"></script>
+    <script src="/pwa-init.js?v=FORCE_RELOAD_2"></script>
+
+    <!-- AOS Animation Init -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+    </script>
+
+    <!-- Live Stats -->
+    <script src="/public/js/live-stats.js?v=FORCE_RELOAD_2"></script>
+    <script src="public/js/security.js?v=FORCE_RELOAD_2"></script>
+    <script src="public/js/logic_core.js?v=FORCE_RELOAD_2"></script>
+</body>
+
+</html>

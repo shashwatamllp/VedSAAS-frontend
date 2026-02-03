@@ -4,7 +4,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VedSAAS</title>
+    <title>VedSAAS - India's First Self-Evolving AI Platform | 22+ Indian Languages</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="VedSAAS is India's first self-evolving AI platform supporting 22+ Indian languages. Get smarter AI with 97% accuracy, 99.9% uptime, and complete privacy. Made in Bharat 🇮🇳">
+    <meta name="keywords"
+        content="VedSAAS, Indian AI, Hindi AI, multilingual AI, self-evolving AI, AI India, Bharat AI, 22 languages, AI chatbot, AI platform">
+    <meta name="author" content="Shashwatam Eco-Chic Creations LLP">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://vedsaas.com/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vedsaas.com/">
+    <meta property="og:title" content="VedSAAS - India's First Self-Evolving AI Platform">
+    <meta property="og:description"
+        content="India's first AI platform supporting 22+ Indian languages with 97% accuracy. Self-evolving technology, complete privacy, and 99.9% uptime. Made in Bharat 🇮🇳">
+    <meta property="og:image" content="https://vedsaas.com/public/icons/icon-512x512.png">
+    <meta property="og:site_name" content="VedSAAS">
+    <meta property="og:locale" content="en_IN">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://vedsaas.com/">
+    <meta name="twitter:title" content="VedSAAS - India's First Self-Evolving AI Platform">
+    <meta name="twitter:description"
+        content="India's first AI platform supporting 22+ Indian languages with 97% accuracy. Self-evolving technology, complete privacy, and 99.9% uptime.">
+    <meta name="twitter:image" content="https://vedsaas.com/public/icons/icon-512x512.png">
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -13,13 +40,14 @@
     <meta name="theme-color" content="#00f0ff">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030304">
     <!-- CSP: Fully Permissive for Development/Production Hybrid -->
+    <!-- CSP: Fully Permissive for Development/Production Hybrid -->
     <meta http-equiv="Content-Security-Policy" content="
     default-src 'self' https://*.vedsaas.com https://*.vedsaas.in;
     img-src 'self' data: https://*.vedsaas.com https://*.vedsaas.in https://vedsaas.com;
     style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com;
     script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://kit.fontawesome.com;
     font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;
-    connect-src 'self' https://api.vedsaas.com https://*.vedsaas.com https://*.vedsaas.in https://ipapi.co http://localhost:* ws://localhost:*;
+    connect-src 'self' https://api.vedsaas.com https://app.vedsaas.com https://*.vedsaas.in https://ipapi.co;
     base-uri 'self';
     upgrade-insecure-requests;
     ">
@@ -128,6 +156,37 @@
             <span style="color: var(--accent-cyan);">Auto-Healing. Decision-Making. Privacy-First.</span>
         </p>
 
+        <!-- Live Training Stats (Added dynamically) -->
+        <div id="live-stats-widget" data-aos="fade-up" data-aos-delay="350"
+            style="display: inline-flex; gap: 32px; padding: 20px 40px; margin-bottom: 40px; background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 16px; backdrop-filter: blur(10px);">
+            <div>
+                <div
+                    style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                    Live Epoch</div>
+                <div id="epoch-count"
+                    style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace;">
+                    0</div>
+            </div>
+            <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+            <div>
+                <div
+                    style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                    Loss</div>
+                <div id="loss-val"
+                    style="font-size: 1.8rem; font-weight: 800; color: #00f0ff; font-family: 'JetBrains Mono', monospace;">
+                    0.00</div>
+            </div>
+            <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+            <div>
+                <div
+                    style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                    Speed</div>
+                <div id="speed-val"
+                    style="font-size: 1.8rem; font-weight: 800; color: #00ff9d; font-family: 'JetBrains Mono', monospace;">
+                    0 t/s</div>
+            </div>
+        </div>
+
         <!-- The Brain Visualization -->
         <div data-aos="zoom-in" data-aos-delay="400"
             style="width: 300px; height: 300px; position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto 50px;">
@@ -145,6 +204,47 @@
             <a id="t-btn-explore" href="#architecture" class="btn btn-secondary"
                 style="padding: 16px 32px; font-size: 1.1rem;">Explore Brain</a>
         </div>
+
+        <!-- Trust Badges & Social Proof -->
+        <div data-aos="fade-up" data-aos-delay="600"
+            style="margin-top: 60px; display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: center;">
+            <!-- Made in India -->
+            <div
+                style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(255, 153, 51, 0.1); border: 1px solid rgba(255, 153, 51, 0.3); border-radius: 50px;">
+                <span style="font-size: 1.3rem;">🇮🇳</span>
+                <span style="color: #ff9933; font-weight: 600; font-size: 0.95rem;">Made in Bharat</span>
+            </div>
+
+            <!-- GDPR Compliant -->
+            <div
+                style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 50px;">
+                <span style="font-size: 1.3rem;">🔒</span>
+                <span style="color: var(--accent-cyan); font-weight: 600; font-size: 0.95rem;">GDPR Compliant</span>
+            </div>
+
+            <!-- 99.9% Uptime -->
+            <div
+                style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 50px;">
+                <span style="font-size: 1.3rem;">⚡</span>
+                <span style="color: #00ff88; font-weight: 600; font-size: 0.95rem;">99.9% Uptime</span>
+            </div>
+
+            <!-- 15K+ Users -->
+            <div
+                style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(112, 0, 255, 0.1); border: 1px solid rgba(112, 0, 255, 0.3); border-radius: 50px;">
+                <span style="font-size: 1.3rem;">👥</span>
+                <span style="color: var(--accent-purple); font-weight: 600; font-size: 0.95rem;">15,000+ Active
+                    Users</span>
+            </div>
+
+            <!-- 22+ Languages -->
+            <div
+                style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.3); border-radius: 50px;">
+                <span style="font-size: 1.3rem;">🗣️</span>
+                <span style="color: var(--accent-pink); font-weight: 600; font-size: 0.95rem;">22+ Languages</span>
+            </div>
+        </div>
+
     </header>
 
     <!-- Architecture Section -->
@@ -217,6 +317,124 @@
 
     </div>
 
+    </section>
+
+    <!-- Screenshots Showcase -->
+    <section class="container" style="padding: 100px 24px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">See VedSAAS in Action</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Beautiful interface, powerful features</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 32px;">
+            <!-- Chat Interface Screenshot -->
+            <div class="card-glass" style="padding: 0; overflow: hidden;">
+                <div
+                    style="aspect-ratio: 16/10; background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(112, 0, 255, 0.1)); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                    <!-- Simulated Chat UI -->
+                    <div
+                        style="width: 90%; height: 85%; background: rgba(5, 5, 7, 0.9); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                        <div
+                            style="display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div
+                                style="width: 32px; height: 32px; background: var(--gradient-glow); border-radius: 50%;">
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.9rem; font-weight: 600;">VedSAAS AI</div>
+                                <div style="font-size: 0.75rem; color: #00ff88;">● Online</div>
+                            </div>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden;">
+                            <div
+                                style="align-self: flex-end; background: rgba(0, 240, 255, 0.2); padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; max-width: 70%;">
+                                मुझे AI के बारे में बताओ
+                            </div>
+                            <div
+                                style="align-self: flex-start; background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; max-width: 80%;">
+                                AI यानी Artificial Intelligence...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 20px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 8px;">Chat Interface</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem;">Seamless conversations in 22+ languages
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dashboard Screenshot -->
+            <div class="card-glass" style="padding: 0; overflow: hidden;">
+                <div
+                    style="aspect-ratio: 16/10; background: linear-gradient(135deg, rgba(112, 0, 255, 0.1), rgba(255, 0, 85, 0.1)); display: flex; align-items: center; justify-content: center; position: relative;">
+                    <!-- Simulated Dashboard -->
+                    <div
+                        style="width: 90%; height: 85%; background: rgba(5, 5, 7, 0.9); border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div
+                            style="background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 12px; padding: 12px;">
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Total
+                                Queries</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-cyan);">15.2K</div>
+                        </div>
+                        <div
+                            style="background: rgba(112, 0, 255, 0.1); border: 1px solid rgba(112, 0, 255, 0.3); border-radius: 12px; padding: 12px;">
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Accuracy
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-purple);">97%</div>
+                        </div>
+                        <div
+                            style="grid-column: 1 / -1; background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 12px; padding: 12px; height: 80px;">
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">Training
+                                Progress</div>
+                            <div
+                                style="background: rgba(0, 255, 136, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #00ff88; width: 75%; height: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 20px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 8px;">Admin Dashboard</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem;">Real-time analytics and insights</p>
+                </div>
+            </div>
+
+            <!-- Mobile App Screenshot -->
+            <div class="card-glass" style="padding: 0; overflow: hidden;">
+                <div
+                    style="aspect-ratio: 16/10; background: linear-gradient(135deg, rgba(255, 0, 85, 0.1), rgba(0, 240, 255, 0.1)); display: flex; align-items: center; justify-content: center; position: relative;">
+                    <!-- Simulated Mobile UI -->
+                    <div
+                        style="width: 50%; height: 95%; background: rgba(5, 5, 7, 0.95); border-radius: 24px; padding: 12px 8px; border: 2px solid rgba(255, 255, 255, 0.1); position: relative;">
+                        <div
+                            style="width: 40%; height: 4px; background: rgba(255, 255, 255, 0.3); border-radius: 2px; margin: 0 auto 12px;">
+                        </div>
+                        <div
+                            style="text-align: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.8rem; font-weight: 700;">VedSAAS</div>
+                        </div>
+                        <div style="padding: 12px 8px; display: flex; flex-direction: column; gap: 8px;">
+                            <div
+                                style="background: rgba(0, 240, 255, 0.1); padding: 8px; border-radius: 8px; font-size: 0.7rem;">
+                                💬 Chat
+                            </div>
+                            <div
+                                style="background: rgba(112, 0, 255, 0.1); padding: 8px; border-radius: 8px; font-size: 0.7rem;">
+                                📊 Dashboard
+                            </div>
+                            <div
+                                style="background: rgba(0, 255, 136, 0.1); padding: 8px; border-radius: 8px; font-size: 0.7rem;">
+                                ⚙️ Settings
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 20px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 8px;">Mobile App</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem;">Full-featured Android app available</p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Revolutionary Features -->
@@ -520,6 +738,99 @@
         </div>
     </section>
 
+    <!-- Case Study Preview -->
+    <section class="container"
+        style="padding: 100px 24px; background: rgba(0, 240, 255, 0.02); border-radius: 24px; margin-bottom: 100px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">Real Results, Real Businesses</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">See how companies are transforming with VedSAAS
+            </p>
+        </div>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin-bottom: 48px;">
+            <!-- Case Study 1 -->
+            <div class="card-glass" style="padding: 32px;">
+                <div
+                    style="display: inline-block; padding: 6px 12px; background: rgba(0, 240, 255, 0.1); border-radius: 20px; margin-bottom: 16px;">
+                    <span style="color: var(--accent-cyan); font-size: 0.85rem; font-weight: 600;">E-COMMERCE</span>
+                </div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 12px;">Delhi Fashion Store</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.7;">
+                    Increased sales by 40% with Hindi-first customer support
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div
+                        style="text-align: center; padding: 16px; background: rgba(0, 240, 255, 0.05); border-radius: 12px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--accent-cyan);">40%</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Sales ↑</div>
+                    </div>
+                    <div
+                        style="text-align: center; padding: 16px; background: rgba(0, 240, 255, 0.05); border-radius: 12px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--accent-cyan);">65%</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Cart Recovery</div>
+                    </div>
+                </div>
+                <a href="/case-studies.html" style="color: var(--accent-cyan); font-weight: 600;">Read Full Story →</a>
+            </div>
+
+            <!-- Case Study 2 -->
+            <div class="card-glass" style="padding: 32px;">
+                <div
+                    style="display: inline-block; padding: 6px 12px; background: rgba(112, 0, 255, 0.1); border-radius: 20px; margin-bottom: 16px;">
+                    <span style="color: var(--accent-purple); font-size: 0.85rem; font-weight: 600;">EDUCATION</span>
+                </div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 12px;">EdTech Startup</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.7;">
+                    Scaled to 10,000+ students with multilingual AI tutoring
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div
+                        style="text-align: center; padding: 16px; background: rgba(112, 0, 255, 0.05); border-radius: 12px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--accent-purple);">10K+</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Students</div>
+                    </div>
+                    <div
+                        style="text-align: center; padding: 16px; background: rgba(112, 0, 255, 0.05); border-radius: 12px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--accent-purple);">12</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Languages</div>
+                    </div>
+                </div>
+                <a href="/case-studies.html" style="color: var(--accent-purple); font-weight: 600;">Read Full Story
+                    →</a>
+            </div>
+
+            <!-- Case Study 3 -->
+            <div class="card-glass" style="padding: 32px;">
+                <div
+                    style="display: inline-block; padding: 6px 12px; background: rgba(0, 255, 136, 0.1); border-radius: 20px; margin-bottom: 16px;">
+                    <span style="color: #00ff88; font-size: 0.85rem; font-weight: 600;">HEALTHCARE</span>
+                </div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 12px;">Mumbai Clinic Chain</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.7;">
+                    Reduced patient wait times by 50% with AI assistance
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div
+                        style="text-align: center; padding: 16px; background: rgba(0, 255, 136, 0.05); border-radius: 12px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #00ff88;">50%</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Wait Time ↓</div>
+                    </div>
+                    <div
+                        style="text-align: center; padding: 16px; background: rgba(0, 255, 136, 0.05); border-radius: 12px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #00ff88;">75%</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Automation</div>
+                    </div>
+                </div>
+                <a href="/case-studies.html" style="color: #00ff88; font-weight: 600;">Read Full Story →</a>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="/case-studies.html" class="btn btn-ghost" style="padding: 14px 28px;">View All Case Studies →</a>
+        </div>
+    </section>
+
     <!-- FAQ -->
     <section id="faq" class="container" style="padding: 100px 24px;">
         <div style="text-align: center; margin-bottom: 60px;">
@@ -529,34 +840,109 @@
 
         <div style="max-width: 800px; margin: 0 auto;">
             <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
-                <h3 style="margin-bottom: 12px;">What makes VedSAAS different?</h3>
-                <p style="color: var(--text-secondary);">VedSAAS is India's first AI trained on Indian languages,
-                    culture, and context. We support 22+ Indian languages and understand local idioms, references, and
-                    cultural nuances.</p>
+                <h3 style="margin-bottom: 12px;">What makes VedSAAS different from ChatGPT or other AI platforms?</h3>
+                <p style="color: var(--text-secondary);">VedSAAS is India's first AI specifically trained on Indian
+                    languages,
+                    culture, and context. Unlike global platforms, we understand Hindi idioms, regional festivals,
+                    cultural references,
+                    and local nuances. Plus, we offer self-evolution technology, multi-model consensus, and 100% local
+                    deployment options
+                    for complete privacy.</p>
             </div>
 
             <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
-                <h3 style="margin-bottom: 12px;">Is my data secure?</h3>
-                <p style="color: var(--text-secondary);">Absolutely. We use end-to-end encryption and never share your
-                    data with third parties. Your conversations are private and secure.</p>
+                <h3 style="margin-bottom: 12px;">Is VedSAAS really free?</h3>
+                <p style="color: var(--text-secondary);">Yes! We offer a generous free tier with 100 messages per day
+                    and access
+                    to basic AI modes. For unlimited messages, advanced features, and priority support, upgrade to Pro
+                    (₹499/month) or
+                    Enterprise (custom pricing).</p>
             </div>
 
             <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
-                <h3 style="margin-bottom: 12px;">Can I cancel anytime?</h3>
-                <p style="color: var(--text-secondary);">Yes! You can cancel your subscription at any time. No questions
-                    asked, no hidden fees.</p>
+                <h3 style="margin-bottom: 12px;">Is my data secure and private?</h3>
+                <p style="color: var(--text-secondary);">Absolutely. We use end-to-end encryption (AES-256), never sell
+                    your data
+                    to third parties, and offer 100% local deployment options where your data never leaves your server.
+                    We're GDPR compliant
+                    and follow strict security protocols.</p>
             </div>
 
             <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
                 <h3 style="margin-bottom: 12px;">Which languages do you support?</h3>
                 <p style="color: var(--text-secondary);">We support 22+ Indian languages including Hindi, Tamil, Telugu,
-                    Bengali, Marathi, Gujarati, Kannada, Malayalam, Punjabi, and more.</p>
+                    Bengali, Marathi, Gujarati, Kannada, Malayalam, Punjabi, Odia, Assamese, Sanskrit, and more. Each
+                    language
+                    is trained to understand cultural context, not just literal translation.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">Can I use VedSAAS for my business?</h3>
+                <p style="color: var(--text-secondary);">Yes! Our Enterprise plan offers custom AI modes, API access,
+                    dedicated support,
+                    SLA guarantees, and on-premise deployment. Perfect for e-commerce, customer support, education,
+                    healthcare, and more.
+                    Contact our sales team for a demo.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">Do you offer API access?</h3>
+                <p style="color: var(--text-secondary);">Yes! API access is available for Enterprise customers with
+                    comprehensive
+                    documentation, SDKs for Python/JavaScript/Java, webhooks, and 99.9% uptime SLA. Check our
+                    <a href="/subdomains/docs/docs.html" style="color: var(--accent-cyan);">documentation</a> for
+                    details.
+                </p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">Can I cancel my subscription anytime?</h3>
+                <p style="color: var(--text-secondary);">Yes! Cancel anytime with no questions asked and no cancellation
+                    fees.
+                    Your subscription remains active until the end of your billing period. No refunds for partial
+                    months.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">What is "Self-Evolution" technology?</h3>
+                <p style="color: var(--text-secondary);">Our AI literally gets smarter with every conversation. When it
+                    makes
+                    a mistake, it learns and improves automatically—no manual retraining needed. Accuracy has improved
+                    from 85% (Day 1)
+                    to 97% (current) through continuous learning.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">Is there a mobile app?</h3>
+                <p style="color: var(--text-secondary);">Yes! Our Android app is available now with full feature parity.
+                    iOS app is coming soon. The web app is also fully responsive and works great on mobile browsers.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">How accurate is VedSAAS compared to other AI?</h3>
+                <p style="color: var(--text-secondary);">For Indian languages and cultural context, VedSAAS outperforms
+                    global
+                    platforms. Our current accuracy is 97% for Hindi conversations, with multi-model consensus providing
+                    even higher
+                    reliability for complex queries.</p>
+            </div>
+
+            <div class="card-glass" style="padding: 24px; margin-bottom: 16px;">
+                <h3 style="margin-bottom: 12px;">What kind of support do you offer?</h3>
+                <p style="color: var(--text-secondary);">Free users get community support and email support (48-hour
+                    response).
+                    Pro users get priority email support (24-hour response). Enterprise customers get dedicated support,
+                    phone support,
+                    and custom SLAs.</p>
             </div>
 
             <div class="card-glass" style="padding: 24px;">
-                <h3 style="margin-bottom: 12px;">Do you offer API access?</h3>
-                <p style="color: var(--text-secondary);">Yes! API access is available for Enterprise customers. Contact
-                    our sales team for more information.</p>
+                <h3 style="margin-bottom: 12px;">Can I integrate VedSAAS into my existing application?</h3>
+                <p style="color: var(--text-secondary);">Absolutely! Our REST API and SDKs make integration simple. We
+                    provide
+                    code examples, webhooks, and comprehensive documentation. Enterprise customers get dedicated
+                    integration support
+                    and custom solutions.</p>
             </div>
         </div>
     </section>
@@ -637,15 +1023,15 @@
                 <div>
                     <h4 style="margin-bottom: 16px; font-size: 0.9rem; font-weight: 700;">Company</h4>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <a href="subdomains/careers/careers.html"
-                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Careers</a>
-                        <a href="#"
+                        <a href="/about.html"
                             style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">About
                             Us</a>
-                        <a href="#"
+                        <a href="subdomains/careers/careers.html"
+                            style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Careers</a>
+                        <a href="/privacy.html"
                             style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Privacy
                             Policy</a>
-                        <a href="#"
+                        <a href="/terms.html"
                             style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s;">Terms
                             of Service</a>
                     </div>
