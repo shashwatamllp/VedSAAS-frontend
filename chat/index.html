@@ -1576,11 +1576,28 @@ function api(path) {
 
       appendMessage('user', text);
       renderHistory();
-      sendToServer(text);
-    };
+      async function sendToServer(text) {
+  if (!currentTopicId) return;
+  sending = true;
+  updateSendState();
+  showTyping();
 
-    /* Scroll pill */
-    function uid() { return Math.random().toString(36).slice(2, 9) }
+  try {
+    const res = await authFetch('/engine/ask', {
+      method: 'POST',
+      body: JSON.stringify({ message: text })
+    }, { timeoutMs: 60000 });
+
+    const data = await res.json();
+    const reply = pickResponse(data);
+    typeWriteBot(reply || 'No response.');
+  } catch (err) {
+    appendMessage('bot', 'I apologize, but I am having trouble connecting to the brain right now. (' + err.message + ')');
+  } finally {
+    sending = false;
+    updateSendState();
+  }
+}
     function pickResponse(o) {
       // Check for Junction standard response format
       if (o.response) return String(o.response);
@@ -2064,7 +2081,7 @@ sendBtn.addEventListener('click', async () => {
 
         // NOTE: X-API-Token header is auto-injected by authFetch if 'token' is set
         const res = await authFetch(
-          '/chat', // Correct Junction Endpoint
+          '/engine/ask', // Correct Junction Endpoint
           { method: 'POST', body: JSON.stringify(body) },
           { timeoutMs: 30000 }
         );
