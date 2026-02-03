@@ -1899,16 +1899,10 @@ function api(path) {
 
     /* Auth + profile */
     async function checkLoginAndOpen() {
-      // Auto-guest login if no token
-      if (!token) {
-        try {
-          const res = await fetch(api('/auth/guest'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.api_token) {
-              token = data.api_token;
-              localStorage.setItem('token', token);
-            }
+  // Guest auth disabled for Junction-only production
+  hideAuth();
+  showLanding();
+}
           }
         } catch (e) { console.log('Guest auth failed', e); }
       }
@@ -2065,7 +2059,7 @@ function api(path) {
 
         // NOTE: X-API-Token header is auto-injected by authFetch if 'token' is set
         const res = await authFetch(
-          '/api/chat', // Correct Junction Endpoint
+          '/chat', // Correct Junction Endpoint
           { method: 'POST', body: JSON.stringify(body) },
           { timeoutMs: 30000 }
         );
