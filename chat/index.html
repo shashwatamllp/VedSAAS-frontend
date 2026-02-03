@@ -2014,6 +2014,17 @@ function api(path) {
 
     /* Composer */
     const mainInput = document.getElementById('main-input'); const sendBtn = document.getElementById('send-btn');
+
+// === SAFE ENTER KEY HANDLER (FINAL) ===
+if (mainInput && sendBtn) {
+  mainInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendBtn.click();
+    }
+  });
+}
+
     function autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
     function updateSendState() {
   sendBtn.disabled = sending || !mainInput.value.trim();
@@ -2021,8 +2032,7 @@ function api(path) {
     mainInput.addEventListener('input', () => {
       autosize(mainInput); setDraft(mainInput.value); updateSendState();
     });
-    mainInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+    sendBtn.click(); }
       if (e.key === 'Escape') { mainInput.value = ''; setDraft(''); updateSendState(); }
     });
     document.addEventListener('keydown', e => {
@@ -2030,10 +2040,7 @@ function api(path) {
     });
     // SAFE_ENTER_HANDLER
 
-mainInput.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendBtn.click();
+sendBtn.click();
   }
 });
 
