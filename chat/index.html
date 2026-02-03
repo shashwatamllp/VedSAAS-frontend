@@ -2015,34 +2015,18 @@ function api(path) {
     /* Composer */
     const mainInput = document.getElementById('main-input'); const sendBtn = document.getElementById('send-btn');
 
-// === SAFE ENTER KEY HANDLER (FINAL) ===
+// === FINAL ENTER HANDLER (STABLE) ===
 if (mainInput && sendBtn) {
   mainInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!sendBtn.disabled) sendBtn.click();
+      sendBtn.click();
     }
   });
 }
 
-    function autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
-    function updateSendState() {
-  sendBtn.disabled = sending || !mainInput.value.trim();
-}
-    mainInput.addEventListener('input', () => {
-      autosize(mainInput); setDraft(mainInput.value); updateSendState();
-    });
-    sendBtn.click(); }
-      if (e.key === 'Escape') { mainInput.value = ''; setDraft(''); updateSendState(); }
-    });
-    document.addEventListener('keydown', e => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); mainInput.focus(); }
-    });
-    // SAFE_ENTER_HANDLER
 
-sendBtn.click();
-  }
-});
+);
 
 
 sendBtn.addEventListener('click', async () => {
@@ -2377,6 +2361,7 @@ sendBtn.addEventListener('click', async () => {
 
     /* Boot */
     (function boot() {
+  try { document.getElementById('auth-overlay').style.display = 'none'; } catch(e) {}
       try {
         console.log('Booting VedSAAS...');
         document.getElementById('brand-title').textContent = ASSISTANT_NAME;
