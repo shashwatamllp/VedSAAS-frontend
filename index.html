@@ -257,49 +257,130 @@
             </p>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: 0 auto;">
+        <div style="max-width: 1000px; margin: 0 auto;">
 
-            <!-- Controller -->
-            <div class="card-glass" style="border: 1px solid var(--accent-cyan); text-align: center; padding: 30px;"
+            <!-- Brain Controller (Top) -->
+            <div class="card-glass"
+                style="border: 2px solid var(--accent-cyan); padding: 40px; text-align: center; background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(112, 0, 255, 0.05)); position: relative;"
                 data-aos="zoom-in">
-                <h3 id="t-arch-controller" style="color: var(--accent-cyan); font-size: 1.5rem; margin-bottom: 10px;">🧠
+                <div style="font-size: 3rem; margin-bottom: 12px;">🧠</div>
+                <h3 id="t-arch-controller"
+                    style="color: var(--accent-cyan); font-size: 1.8rem; margin-bottom: 12px; font-weight: 800;">
                     Brain Controller
-                    (Orchestrator)</h3>
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                    Orchestrates query routing • Decides which layer handles each request
+                </p>
             </div>
 
-            <!-- Arrows -->
-            <div style="display: flex; justify-content: space-between; padding: 0 40px; color: var(--text-secondary);">
-                <span>↓ Simple Query</span>
-                <span>↓ Complex Query</span>
+            <!-- Connecting Arrow -->
+            <div style="text-align: center; padding: 24px 0; color: var(--text-secondary); font-size: 1.2rem;">
+                ↓<br>
+                <span style="font-size: 0.9rem; opacity: 0.7;">Routes to appropriate layer</span>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Layer A -->
-                <div class="card-glass" style="border-top: 4px solid #00ff88; padding: 30px;" data-aos="fade-up"
-                    data-aos-delay="100">
-                    <h4 id="t-arch-layer-a" style="font-size: 1.2rem; color: #00ff88; margin-bottom: 10px;">LAYER A:
-                        FastBrain
-                        (Local)</h4>
+            <!-- Three Layers (Horizontal) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+
+                <!-- Layer A: FastBrain -->
+                <div class="card-glass"
+                    style="border-top: 4px solid #00ff88; padding: 32px; text-align: center; background: linear-gradient(180deg, rgba(0, 255, 136, 0.05), transparent);"
+                    data-aos="fade-up" data-aos-delay="100">
+                    <div style="font-size: 2.5rem; margin-bottom: 16px;">⚡</div>
+                    <h4 id="t-arch-layer-a"
+                        style="font-size: 1.4rem; color: #00ff88; margin-bottom: 12px; font-weight: 700;">
+                        LAYER A: FastBrain
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 16px;">
+                        Local • Instant Responses
+                    </p>
+                    <div
+                        style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 12px; padding: 16px; text-align: left;">
+                        <div style="font-size: 0.85rem; color: #00ff88; margin-bottom: 8px; font-weight: 600;">Best For:
+                        </div>
+                        <ul
+                            style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; padding-left: 20px; line-height: 1.6;">
+                            <li>Simple queries</li>
+                            <li>Quick facts</li>
+                            <li>Cached responses</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <!-- Layer B & C -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div class="card-glass" style="border-top: 4px solid #ffcc00; padding: 30px;" data-aos="fade-up"
-                        data-aos-delay="200">
-                        <h4 id="t-arch-layer-b" style="font-size: 1.2rem; color: #ffcc00; margin-bottom: 10px;">LAYER B:
-                            Multi-Model
-                            Consensus</h4>
-                    </div>
-                    <div class="card-glass" style="border-top: 4px solid #ff3b30; padding: 30px;" data-aos="fade-up"
-                        data-aos-delay="300">
-                        <h4 id="t-arch-layer-c" style="font-size: 1.2rem; color: #ff3b30; margin-bottom: 10px;">LAYER C:
-                            DeepBrain
-                            (Heavy Compute)</h4>
+                <!-- Layer B: Multi-Model -->
+                <div class="card-glass"
+                    style="border-top: 4px solid #ffcc00; padding: 32px; text-align: center; background: linear-gradient(180deg, rgba(255, 204, 0, 0.05), transparent);"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div style="font-size: 2.5rem; margin-bottom: 16px;">🤝</div>
+                    <h4 id="t-arch-layer-b"
+                        style="font-size: 1.4rem; color: #ffcc00; margin-bottom: 12px; font-weight: 700;">
+                        LAYER B: Multi-Model
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 16px;">
+                        Consensus • Balanced Accuracy
+                    </p>
+                    <div
+                        style="background: rgba(255, 204, 0, 0.1); border: 1px solid rgba(255, 204, 0, 0.3); border-radius: 12px; padding: 16px; text-align: left;">
+                        <div style="font-size: 0.85rem; color: #ffcc00; margin-bottom: 8px; font-weight: 600;">Best For:
+                        </div>
+                        <ul
+                            style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; padding-left: 20px; line-height: 1.6;">
+                            <li>Medium complexity</li>
+                            <li>Verification needed</li>
+                            <li>Multiple perspectives</li>
+                        </ul>
                     </div>
                 </div>
+
+                <!-- Layer C: DeepBrain -->
+                <div class="card-glass"
+                    style="border-top: 4px solid #ff3b30; padding: 32px; text-align: center; background: linear-gradient(180deg, rgba(255, 59, 48, 0.05), transparent);"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div style="font-size: 2.5rem; margin-bottom: 16px;">🔥</div>
+                    <h4 id="t-arch-layer-c"
+                        style="font-size: 1.4rem; color: #ff3b30; margin-bottom: 12px; font-weight: 700;">
+                        LAYER C: DeepBrain
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 16px;">
+                        Heavy Compute • Maximum Power
+                    </p>
+                    <div
+                        style="background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); border-radius: 12px; padding: 16px; text-align: left;">
+                        <div style="font-size: 0.85rem; color: #ff3b30; margin-bottom: 8px; font-weight: 600;">Best For:
+                        </div>
+                        <ul
+                            style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; padding-left: 20px; line-height: 1.6;">
+                            <li>Complex reasoning</li>
+                            <li>Research tasks</li>
+                            <li>Deep analysis</li>
+                        </ul>
+                    </div>
+                </div>
+
             </div>
 
-        </div>
+            <!-- Performance Stats -->
+            <div style="margin-top: 48px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;"
+                data-aos="fade-up" data-aos-delay="400">
+                <div
+                    style="text-align: center; padding: 24px; background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 16px;">
+                    <div style="font-size: 2rem; font-weight: 800; color: #00ff88; margin-bottom: 8px;">
+                        < 100ms</div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">FastBrain Response</div>
+                    </div>
+                    <div
+                        style="text-align: center; padding: 24px; background: rgba(255, 204, 0, 0.05); border: 1px solid rgba(255, 204, 0, 0.2); border-radius: 16px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #ffcc00; margin-bottom: 8px;">~2s</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">Multi-Model Time</div>
+                    </div>
+                    <div
+                        style="text-align: center; padding: 24px; background: rgba(255, 59, 48, 0.05); border: 1px solid rgba(255, 59, 48, 0.2); border-radius: 16px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #ff3b30; margin-bottom: 8px;">~5s</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">DeepBrain Power</div>
+                    </div>
+                </div>
+
+            </div>
     </section>
 
     <!-- Step 3 -->
