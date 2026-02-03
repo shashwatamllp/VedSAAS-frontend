@@ -1899,25 +1899,18 @@ function api(path) {
 
     /* Auth + profile */
     async function checkLoginAndOpen() {
-  // Guest auth disabled for Junction-only production
+  // Junction-only production: no guest auto-login
+  const name = localStorage.getItem('user_name') || 'Guest';
+  const email = localStorage.getItem('user_email') || '';
+  const mobile = localStorage.getItem('user_mobile') || '';
+  setDisplayName(name);
+  setAccountInfo({ email, mobile });
   hideAuth();
-  showLanding();
+  renderHistory();
+  renderChat();
+  handleRoute();
+  updateUsage();
 }
-          }
-        } catch (e) { console.log('Guest auth failed', e); }
-      }
-
-      const name = localStorage.getItem('user_name') || 'Guest';
-      const email = localStorage.getItem('user_email') || '';
-      const mobile = localStorage.getItem('user_mobile') || '';
-      setDisplayName(name);
-      setAccountInfo({ email, mobile });
-      hideAuth();
-      renderHistory();
-      renderChat();
-      handleRoute();
-      updateUsage();
-    }
 
     /* Auth handlers */
     document.getElementById('login-submit').addEventListener('click', async () => {
