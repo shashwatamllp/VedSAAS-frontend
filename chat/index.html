@@ -1998,7 +1998,9 @@ function api(path) {
     /* Composer */
     const mainInput = document.getElementById('main-input'); const sendBtn = document.getElementById('send-btn');
     function autosize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
-    function updateSendState() { sendBtn.disabled = sending || !mainInput.value.trim().length; }
+    function updateSendState() {
+  sendBtn.disabled = sending || !mainInput.value.trim();
+}
     mainInput.addEventListener('input', () => {
       autosize(mainInput); setDraft(mainInput.value); updateSendState();
     });
@@ -2009,7 +2011,17 @@ function api(path) {
     document.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); mainInput.focus(); }
     });
-    sendBtn.addEventListener('click', async () => {
+    // SAFE_ENTER_HANDLER
+
+mainInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendBtn.click();
+  }
+});
+
+
+sendBtn.addEventListener('click', async () => {
       const text = mainInput.value.trim(); if (!text || sending) return;
       if (!currentTopicId) { const id = newTopic('New Chat'); location.hash = '#/chat/' + encodeURIComponent(id); }
 
