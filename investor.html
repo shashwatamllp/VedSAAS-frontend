@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO Meta Tags -->
+    <title>Invest in VedSAAS - India's First Self-Evolving AI Platform</title>
+    <meta name="description"
+        content="Join VedSAAS's growth journey. Multiple investment options available. Connect directly with the founder. Building India's first self-evolving AI platform supporting 22+ languages.">
+    <meta name="keywords"
+        content="VedSAAS investment, AI startup investment, Indian AI investment, equity investment, angel investment">
+    <meta name="author" content="VedSAAS">
+
+    <link rel="icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./public/css/civilization.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .investor-hero {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            background: radial-gradient(circle at 50% 30%, rgba(112, 0, 255, .15), transparent 70%);
+            overflow: hidden;
+        }
+
+        .investor-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('./public/image/logopic.png') center/600px no-repeat;
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, .1), rgba(112, 0, 255, .1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 99px;
+            margin-bottom: 32px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(112, 0, 255, .3);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(112, 0, 255, .6);
+            }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            margin: 60px 0;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 20px 60px rgba(0, 240, 255, .2);
+        }
+
+        .metric-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .investment-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 32px;
+            margin: 60px 0;
+        }
+
+        .option-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 40px;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0, 240, 255, .05), rgba(112, 0, 255, .05));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .option-card:hover {
+            transform: translateY(-12px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 30px 80px rgba(112, 0, 255, .3);
+        }
+
+        .option-card:hover::after {
+            opacity: 1;
+        }
+
+        .option-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, .1), rgba(112, 0, 255, .1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .option-title {
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .option-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            margin: 16px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .option-features {
+            list-style: none;
+            padding: 0;
+            margin: 24px 0;
+            text-align: left;
+            position: relative;
+            z-index: 1;
+        }
+
+        .option-features li {
+            padding: 12px 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .option-features li::before {
+            content: '✓';
+            color: var(--accent-cyan);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: #000;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(0, 240, 255, .4);
+        }
+
+        .founder-section {
+            background: linear-gradient(135deg, rgba(0, 240, 255, .05), rgba(112, 0, 255, .05));
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 60px 40px;
+            margin: 80px 0;
+            text-align: center;
+        }
+
+        .founder-avatar {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #000;
+            font-weight: 800;
+        }
+
+        .contact-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .contact-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-cyan);
+        }
+
+        .contact-icon {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin-bottom: 12px;
+        }
+
+        .why-invest {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            margin: 60px 0;
+        }
+
+        .why-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .why-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 20px 60px rgba(112, 0, 255, .2);
+        }
+
+        .why-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .metric-value {
+                font-size: 2rem;
+            }
+
+            .option-amount {
+                font-size: 2rem;
+            }
+
+            .investor-hero {
+                min-height: 60vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar (Loaded Dynamically) -->
+    <div id="navbar-placeholder"></div>
+
+    <!-- Hero Section -->
+    <section class="investor-hero">
+        <div style="max-width: 1000px; padding: 80px 24px; position: relative; z-index: 1;">
+            <div class="hero-badge">
+                💰 Investment Opportunity • Series A
+            </div>
+            <h1 class="gradient-text" style="font-size: clamp(2.5rem, 5vw, 4.5rem); margin-bottom: 24px;">
+                Invest in India's AI Future
+            </h1>
+            <p style="font-size: 1.3rem; color: var(--text-secondary); margin-bottom: 40px; line-height: 1.6;">
+                Join us in building India's first <strong style="color: var(--accent-cyan);">self-evolving AI
+                    platform</strong>
+                supporting 22+ Indian languages. Be part of the AI revolution that's democratizing technology for 1.4
+                billion Indians.
+            </p>
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <a href="#investment-options" class="cta-button">
+                    <i class="fas fa-rocket"></i> View Investment Options
+                </a>
+                <a href="#founder-contact" class="cta-button"
+                    style="background: transparent; border: 2px solid var(--accent-cyan); color: var(--accent-cyan);">
+                    <i class="fas fa-user"></i> Contact Founder
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Metrics -->
+    <div style="max-width: 1400px; margin: 0 auto; padding: 80px 24px;">
+        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 48px;">
+            Our <span class="gradient-text">Growth Story</span>
+        </h2>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">15K+</div>
+                <div class="metric-label">Active Users</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">22+</div>
+                <div class="metric-label">Languages Supported</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">97%</div>
+                <div class="metric-label">Accuracy Rate</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">99.9%</div>
+                <div class="metric-label">Uptime SLA</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">57</div>
+                <div class="metric-label">AI Modes</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">₹5Cr</div>
+                <div class="metric-label">Current Valuation</div>
+            </div>
+        </div>
+
+        <!-- Why Invest -->
+        <div style="margin-top: 100px;">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 48px;">
+                Why Invest in <span class="gradient-text">VedSAAS</span>?
+            </h2>
+
+            <div class="why-invest">
+                <div class="why-card">
+                    <div class="why-icon">🇮🇳</div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 12px;">Made for India</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        First AI platform specifically trained on Indian languages, culture, and context.
+                        Addressing a massive untapped market of 1.4 billion people.
+                    </p>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">🚀</div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 12px;">Unique Technology</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        Self-evolving AI with AutoHeal, Multi-Model Democracy, and Fortress Privacy.
+                        Patent-pending technology with no direct competitors.
+                    </p>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">📈</div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 12px;">Proven Growth</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        15,000+ active users in 6 months. 40% month-over-month growth.
+                        Strong product-market fit with 97% accuracy and 99.9% uptime.
+                    </p>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">💰</div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 12px;">Revenue Model</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        Freemium + Enterprise SaaS. ₹499/month Pro plan, custom Enterprise pricing.
+                        Multiple revenue streams including API access and white-label solutions.
+                    </p>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">🎯</div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 12px;">Market Opportunity</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        Indian AI market projected to reach $7.8 billion by 2025.
+                        First-mover advantage in regional language AI space.
+                    </p>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">🏆</div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 12px;">Recognition</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        DPIIT recognized startup. Featured in leading tech publications.
+                        Strong partnerships with educational institutions and enterprises.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Investment Options -->
+        <div id="investment-options" style="margin-top: 100px;">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 16px;">
+                <span class="gradient-text">Investment Options</span>
+            </h2>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 60px;">
+                Choose the investment option that aligns with your goals
+            </p>
+
+            <div class="investment-options">
+                <!-- Angel Investment -->
+                <div class="option-card">
+                    <div class="option-icon">👼</div>
+                    <h3 class="option-title">Angel Investment</h3>
+                    <div class="option-amount">₹10L - ₹50L</div>
+                    <ul class="option-features">
+                        <li>Equity stake: 0.5% - 2%</li>
+                        <li>Board observer rights</li>
+                        <li>Quarterly updates</li>
+                        <li>Early access to new features</li>
+                        <li>Networking opportunities</li>
+                        <li>Exit options after 3 years</li>
+                    </ul>
+                    <a href="#founder-contact" class="cta-button" style="width: 100%; text-align: center;">
+                        Connect Now
+                    </a>
+                </div>
+
+                <!-- Seed Round -->
+                <div class="option-card" style="border-color: var(--accent-purple); transform: scale(1.05);">
+                    <div
+                        style="position: absolute; top: 20px; right: 20px; background: var(--accent-purple); color: #000; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; z-index: 2;">
+                        POPULAR
+                    </div>
+                    <div class="option-icon">🌱</div>
+                    <h3 class="option-title">Seed Round</h3>
+                    <div class="option-amount">₹50L - ₹2Cr</div>
+                    <ul class="option-features">
+                        <li>Equity stake: 2% - 8%</li>
+                        <li>Board seat (for ₹1Cr+)</li>
+                        <li>Monthly strategic meetings</li>
+                        <li>Co-branding opportunities</li>
+                        <li>Priority support & SLA</li>
+                        <li>Preferred liquidation rights</li>
+                        <li>Anti-dilution protection</li>
+                    </ul>
+                    <a href="#founder-contact" class="cta-button" style="width: 100%; text-align: center;">
+                        Connect Now
+                    </a>
+                </div>
+
+                <!-- Strategic Partnership -->
+                <div class="option-card">
+                    <div class="option-icon">🤝</div>
+                    <h3 class="option-title">Strategic Partnership</h3>
+                    <div class="option-amount">₹2Cr+</div>
+                    <ul class="option-features">
+                        <li>Equity stake: 8% - 15%</li>
+                        <li>Board seat guaranteed</li>
+                        <li>Strategic advisory role</li>
+                        <li>White-label solutions</li>
+                        <li>Custom integrations</li>
+                        <li>Revenue sharing options</li>
+                        <li>Exclusive regional rights</li>
+                        <li>Co-development opportunities</li>
+                    </ul>
+                    <a href="#founder-contact" class="cta-button" style="width: 100%; text-align: center;">
+                        Connect Now
+                    </a>
+                </div>
+            </div>
+
+            <!-- Alternative Investment Methods -->
+            <div style="margin-top: 80px;">
+                <h3 style="text-align: center; font-size: 2rem; margin-bottom: 40px;">
+                    Other Investment Methods
+                </h3>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                    <div class="contact-card">
+                        <div class="contact-icon"><i class="fas fa-file-contract"></i></div>
+                        <h4 style="margin-bottom: 12px;">Convertible Note</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                            Debt instrument that converts to equity at next funding round.
+                            Discount: 20-25%, Valuation cap: ₹10Cr
+                        </p>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-icon"><i class="fas fa-handshake"></i></div>
+                        <h4 style="margin-bottom: 12px;">SAFE Agreement</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                            Simple Agreement for Future Equity.
+                            Flexible terms, no interest, converts at next priced round.
+                        </p>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-icon"><i class="fas fa-chart-line"></i></div>
+                        <h4 style="margin-bottom: 12px;">Revenue Sharing</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                            Invest and receive % of monthly revenue until 2-3x return.
+                            No equity dilution, predictable returns.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Founder Contact Section -->
+        <div id="founder-contact" class="founder-section">
+            <h2 style="font-size: 2.5rem; margin-bottom: 16px;">
+                Connect Directly with the <span class="gradient-text">Founder</span>
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 40px;">
+                Have questions? Want to discuss investment opportunities? Reach out directly.
+            </p>
+
+            <div class="founder-avatar">RS</div>
+            <h3 style="font-size: 1.8rem; margin-bottom: 8px;">Rakesh Sharma</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 40px;">
+                Founder & CEO • VedSAAS<br>
+                <span style="font-size: 0.9rem;">Building India's AI Future</span>
+            </p>
+
+            <div class="contact-methods">
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                    <h4 style="margin-bottom: 8px;">Email</h4>
+                    <a href="mailto:investor@vedsaas.com"
+                        style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">
+                        investor@vedsaas.com
+                    </a>
+                </div>
+
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fas fa-phone"></i></div>
+                    <h4 style="margin-bottom: 8px;">Phone</h4>
+                    <a href="tel:+919876543210"
+                        style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">
+                        +91 98765 43210
+                    </a>
+                </div>
+
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fab fa-linkedin"></i></div>
+                    <h4 style="margin-bottom: 8px;">LinkedIn</h4>
+                    <a href="https://linkedin.com/company/vedsaas" target="_blank"
+                        style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">
+                        Connect on LinkedIn
+                    </a>
+                </div>
+
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fas fa-calendar"></i></div>
+                    <h4 style="margin-bottom: 8px;">Schedule Meeting</h4>
+                    <a href="mailto:investor@vedsaas.com?subject=Investment Meeting Request"
+                        style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">
+                        Book a Call
+                    </a>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 40px; padding: 24px; background: rgba(0, 240, 255, .05); border-radius: 16px; border: 1px solid rgba(0, 240, 255, .2);">
+                <p style="color: var(--text-secondary); line-height: 1.8; margin: 0;">
+                    <strong style="color: var(--accent-cyan);">Response Time:</strong> We typically respond within 24
+                    hours.
+                    For urgent inquiries, please call directly or mention "Urgent" in your email subject.
+                </p>
+            </div>
+        </div>
+
+        <!-- Documents & Resources -->
+        <div style="margin-top: 80px;">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 48px;">
+                Investment <span class="gradient-text">Resources</span>
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                <div class="why-card">
+                    <div class="why-icon">📊</div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 12px;">Pitch Deck</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Comprehensive overview of our vision, technology, market, and financials.
+                    </p>
+                    <a href="mailto:investor@vedsaas.com?subject=Request Pitch Deck" class="cta-button"
+                        style="font-size: 0.95rem; padding: 12px 24px;">
+                        Request Deck
+                    </a>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">📈</div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 12px;">Financial Projections</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Detailed 5-year financial model with revenue, expenses, and growth metrics.
+                    </p>
+                    <a href="mailto:investor@vedsaas.com?subject=Request Financial Projections" class="cta-button"
+                        style="font-size: 0.95rem; padding: 12px 24px;">
+                        Request Projections
+                    </a>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">📄</div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 12px;">Term Sheet</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Standard investment terms, conditions, and legal framework.
+                    </p>
+                    <a href="mailto:investor@vedsaas.com?subject=Request Term Sheet" class="cta-button"
+                        style="font-size: 0.95rem; padding: 12px 24px;">
+                        Request Terms
+                    </a>
+                </div>
+
+                <div class="why-card">
+                    <div class="why-icon">🔍</div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 12px;">Due Diligence Pack</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Complete documentation for investor due diligence process.
+                    </p>
+                    <a href="mailto:investor@vedsaas.com?subject=Request Due Diligence Pack" class="cta-button"
+                        style="font-size: 0.95rem; padding: 12px 24px;">
+                        Request Pack
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ for Investors -->
+        <div style="margin-top: 100px; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 48px;">
+                Investor <span class="gradient-text">FAQs</span>
+            </h2>
+
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <details
+                    style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; cursor: pointer;">
+                    <summary style="font-weight: 700; font-size: 1.1rem; margin-bottom: 12px;">
+                        What is the current valuation?
+                    </summary>
+                    <p
+                        style="color: var(--text-secondary); line-height: 1.8; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                        Our current pre-money valuation is ₹5 Crore. This is based on our user growth, revenue
+                        trajectory,
+                        technology IP, and market opportunity. We're raising ₹2 Crore in this seed round.
+                    </p>
+                </details>
+
+                <details
+                    style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; cursor: pointer;">
+                    <summary style="font-weight: 700; font-size: 1.1rem; margin-bottom: 12px;">
+                        What are the exit opportunities?
+                    </summary>
+                    <p
+                        style="color: var(--text-secondary); line-height: 1.8; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                        Multiple exit paths: (1) Acquisition by larger tech companies, (2) IPO after 5-7 years,
+                        (3) Secondary sale to later-stage investors, (4) Buyback options after 3 years.
+                        We're building for long-term value creation.
+                    </p>
+                </details>
+
+                <details
+                    style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; cursor: pointer;">
+                    <summary style="font-weight: 700; font-size: 1.1rem; margin-bottom: 12px;">
+                        How will the funds be used?
+                    </summary>
+                    <p
+                        style="color: var(--text-secondary); line-height: 1.8; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                        40% - AI model training and infrastructure, 30% - Team expansion (AI engineers, sales),
+                        20% - Marketing and user acquisition, 10% - Legal, compliance, and operations.
+                        Detailed breakdown available in pitch deck.
+                    </p>
+                </details>
+
+                <details
+                    style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; cursor: pointer;">
+                    <summary style="font-weight: 700; font-size: 1.1rem; margin-bottom: 12px;">
+                        What protection do investors get?
+                    </summary>
+                    <p
+                        style="color: var(--text-secondary); line-height: 1.8; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                        Standard investor protections: Anti-dilution rights, liquidation preference (1x),
+                        information rights (quarterly updates), tag-along rights, and drag-along rights.
+                        Board seat for investments ₹1Cr+.
+                    </p>
+                </details>
+
+                <details
+                    style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; cursor: pointer;">
+                    <summary style="font-weight: 700; font-size: 1.1rem; margin-bottom: 12px;">
+                        What makes VedSAAS different from ChatGPT?
+                    </summary>
+                    <p
+                        style="color: var(--text-secondary); line-height: 1.8; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                        (1) Trained specifically on Indian languages and cultural context, (2) Self-evolving technology
+                        that improves autonomously, (3) Multi-model democracy for better accuracy, (4) Data stays in
+                        India
+                        (compliance advantage), (5) Affordable pricing for Indian market.
+                    </p>
+                </details>
+            </div>
+        </div>
+
+        <!-- Final CTA -->
+        <div
+            style="text-align: center; margin-top: 100px; padding: 80px 40px; background: linear-gradient(135deg, rgba(0, 240, 255, .08), rgba(112, 0, 255, .08)); border-radius: 24px; border: 1px solid var(--border-subtle);">
+            <h2 style="font-size: 2.5rem; margin-bottom: 24px;">
+                Ready to Join the <span class="gradient-text">AI Revolution</span>?
+            </h2>
+            <p
+                style="color: var(--text-secondary); font-size: 1.2rem; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">
+                Be part of India's AI success story. Connect with our founder today to discuss investment opportunities.
+            </p>
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <a href="mailto:investor@vedsaas.com" class="cta-button" style="font-size: 1.2rem; padding: 18px 48px;">
+                    <i class="fas fa-envelope"></i> Email Founder
+                </a>
+                <a href="tel:+919876543210" class="cta-button"
+                    style="background: transparent; border: 2px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 1.2rem; padding: 18px 48px;">
+                    <i class="fas fa-phone"></i> Call Now
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Loader -->
+    <script src="/public/js/components.js"></script>
+</body>
+
+</html>
