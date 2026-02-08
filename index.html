@@ -4,99 +4,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VedSAAS - India's First Self-Evolving AI Platform | 22+ Indian Languages</title>
 
-    <!-- SEO Meta Tags -->
-    <meta name="description"
-        content="VedSAAS is India's first self-evolving AI platform supporting 22+ Indian languages. Get smarter AI with 97% accuracy, 99.9% uptime, and complete privacy. Made in Bharat 🇮🇳">
-    <meta name="keywords"
-        content="VedSAAS, Indian AI, Hindi AI, multilingual AI, self-evolving AI, AI India, Bharat AI, 22 languages, AI chatbot, AI platform">
-    <meta name="author" content="Shashwatam Eco-Chic Creations LLP">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://vedsaas.com/">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://vedsaas.com/">
-    <meta property="og:title" content="VedSAAS - India's First Self-Evolving AI Platform">
-    <meta property="og:description"
-        content="India's first AI platform supporting 22+ Indian languages with 97% accuracy. Self-evolving technology, complete privacy, and 99.9% uptime. Made in Bharat 🇮🇳">
-    <meta property="og:image" content="https://vedsaas.com/public/icons/icon-512x512.png">
-    <meta property="og:site_name" content="VedSAAS">
-    <meta property="og:locale" content="en_IN">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://vedsaas.com/">
-    <meta name="twitter:title" content="VedSAAS - India's First Self-Evolving AI Platform">
-    <meta name="twitter:description"
-        content="India's first AI platform supporting 22+ Indian languages with 97% accuracy. Self-evolving technology, complete privacy, and 99.9% uptime.">
-    <meta name="twitter:image" content="https://vedsaas.com/public/icons/icon-512x512.png">
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
-
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#00f0ff">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030304">
-    <!-- CSP: Fully Permissive for Development/Production Hybrid -->
-    <!-- CSP: Fully Permissive for Development/Production Hybrid -->
-    <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' https://*.vedsaas.com https://*.vedsaas.in;
-    img-src 'self' data: https://*.vedsaas.com https://*.vedsaas.in https://vedsaas.com;
-    style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com;
-    script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://kit.fontawesome.com;
-    font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;
-    connect-src 'self' https://api.vedsaas.com https://app.vedsaas.com https://*.vedsaas.in https://ipapi.co;
-    base-uri 'self';
-    upgrade-insecure-requests;
-    ">
-    <!-- iOS Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="VedSAAS">
-    <link rel="apple-touch-icon" href="/public/icons/apple-touch-icon.png">
-
-    <!-- MS Tiles -->
-    <meta name="msapplication-TileColor" content="#030304">
-    <meta name="msapplication-TileImage" content="/public/icons/icon-512x512.png">
+    <!-- Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="/public/image/logopic.png" as="image">
 
     <!-- SEO -->
+    <title>VedSAAS | India's First Self-Evolving AI Platform in 22+ Languages</title>
     <meta name="description"
-        content="India's First AI Platform supporting 22+ Indian languages with deep cultural understanding">
-    <meta name="keywords" content="AI, Indian languages, VedSAAS, chatbot, Hindi AI, multilingual AI">
+        content="Experience India's most advanced AI platform supporting 22+ Indian languages. Chat, code, create content with cultural context.">
+    <meta name="keywords" content="AI platform India, Hindi AI, Indian languages AI, chatbot, code generation">
+    <link rel="canonical" href="https://vedsaas.com/">
 
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:title" content="VedSAAS | The Artificial Civilization">
+    <!-- Open Graph -->
+    <meta property="og:title" content="VedSAAS | India's First Self-Evolving AI Platform">
     <meta property="og:description"
-        content="India's First AI Platform supporting 22+ Indian languages with deep cultural understanding.">
-    <meta property="og:image" content="https://vedsaas.com/public/icons/icon-512x512.png">
-    <meta property="og:url" content="https://vedsaas.com">
+        content="AI platform built for India. 22+ languages, cultural context, privacy-first.">
+    <meta property="og:image" content="https://vedsaas.com/public/image/logopic.png">
+    <meta property="og:url" content="https://vedsaas.com/">
     <meta property="og:type" content="website">
 
-    <link rel="stylesheet" href="public/css/civilization.css?v=FORCE_RELOAD_2">
-    <!-- AOS Animation Library -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="VedSAAS | India's AI Platform">
+    <meta name="twitter:description" content="Chat with AI in your language. Made in Bharat 🇮🇳">
+    <meta name="twitter:image" content="https://vedsaas.com/public/image/logopic.png">
 
-    <!-- NUCLEAR CACHE BUSTER: Force Unregister Old SW -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                for (let registration of registrations) {
-                    // Only unregister if it's an old version (logic typically complex, so we just unregister to force update)
-                    // console.log("Force updating SW");
-                    registration.unregister();
-                }
-            });
-        }
-    </script>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#030304">
+    <link rel="apple-touch-icon" href="/public/image/logopic.png">
 
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap"
-        rel="stylesheet">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="/public/css/civilization.css">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "VedSAAS",
+    "url": "https://vedsaas.com",
+    "description": "India's First Self-Evolving AI Platform in 22+ Languages",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://vedsaas.com/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
 
 <body>
@@ -1070,6 +1030,7 @@
     <script src="/public/js/live-stats.js?v=FORCE_RELOAD_2"></script>
     <script src="public/js/security.js?v=FORCE_RELOAD_2"></script>
     <script src="public/js/logic_core.js?v=FORCE_RELOAD_2"></script>
+    <script src="/public/js/main.js" defer></script>
 </body>
 
 </html>
