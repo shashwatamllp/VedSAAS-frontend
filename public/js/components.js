@@ -5,39 +5,75 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     loadNavbar();
+    loadFooter();
 });
+
+function getComponentPath(filename) {
+    // Check if we are in a subdomain or subdirectory
+    const path = window.location.pathname;
+    const depth = (path.match(/\//g) || []).length;
+
+    // Default to absolute path for server environments
+    // But facilitate relative paths for local file:// testing if needed in future
+    // For now, we stick to absolute paths as they are reliable on servers (localhost/production)
+    return `/components/${filename}`;
+}
 
 async function loadNavbar() {
     try {
-        // 1. Determine the path to components relative to current page
-        // Since we are running on a server (localhost), absolute paths work best.
-        // But for file:// protocol support (if strict static), we might need relative handling.
-        // For now, we assume server environment as per serve_frontend.py
-        const componentPath = '/components/navbar.html';
-
-        // 2. Fetch the navbar HTML
+        const componentPath = getComponentPath('navbar.html');
         const response = await fetch(componentPath);
         if (!response.ok) throw new Error('Failed to load navbar');
         const html = await response.text();
 
-        // 3. Inject it
-        // We look for a dedicated placeholder, or inject at the start of body
         const placeholder = document.getElementById('navbar-placeholder');
-
         if (placeholder) {
             placeholder.innerHTML = html;
         } else {
-            // Fallback: Prepend to body
             document.body.insertAdjacentHTML('afterbegin', html);
         }
 
-        // 4. Initialize Navbar Logic (Theme Toggle, Install Button, etc.)
         initNavbarLogic();
-        initNavbarEvents(); // New helper for UI events
+        initNavbarEvents();
+        highlightActiveLink();
 
     } catch (error) {
-        console.error('VedSAAS Component Loader Error:', error);
+        console.error('VedSAAS Navbar Loader Error:', error);
     }
+}
+
+async function loadFooter() {
+    try {
+        const componentPath = getComponentPath('footer.html');
+        const response = await fetch(componentPath);
+        if (!response.ok) throw new Error('Failed to load footer');
+        const html = await response.text();
+
+        const placeholder = document.getElementById('footer-placeholder');
+        if (placeholder) {
+            placeholder.innerHTML = html;
+        } else {
+            // Check if there is a specific script tag at the end to insert before, or just append
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+    } catch (error) {
+        console.error('VedSAAS Footer Loader Error:', error);
+    }
+}
+
+function highlightActiveLink() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('nav a');
+
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        // Simple match: if current path ends with the href, or exactly matches
+        if (currentPath === href || (href !== '/' && currentPath.includes(href))) {
+            link.style.color = 'var(--accent-cyan)';
+            link.classList.add('active');
+        }
+    });
 }
 
 function initNavbarEvents() {
@@ -104,10 +140,15 @@ function initNavbarEvents() {
     // Add hover effects to navbar links
     document.querySelectorAll('nav a[href^="#"]').forEach(link => {
         link.addEventListener('mouseenter', function () {
-            this.style.color = 'var(--accent-cyan)';
+            // Only change color if not active
+            if (!this.classList.contains('active')) {
+                this.style.color = 'var(--accent-cyan)';
+            }
         });
         link.addEventListener('mouseleave', function () {
-            this.style.color = 'var(--text-primary)';
+            if (!this.classList.contains('active')) {
+                this.style.color = 'var(--text-primary)';
+            }
         });
     });
 }

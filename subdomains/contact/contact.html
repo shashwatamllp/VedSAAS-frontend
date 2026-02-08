@@ -1,134 +1,148 @@
-margin: 0;
-padding: 0;
-overflow-x: hidden
-}
+<!DOCTYPE html>
+<html lang="en">
 
-.contact-hero {
-min-height: 50vh;
-display: flex;
-align-items: center;
-justify-content: center;
-text-align: center;
-position: relative;
-background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, .08), transparent 70%)
-}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - VedSAAS</title>
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="../../public/css/civilization.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
-.contact-grid {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-gap: 32px;
-max-width: 1200px;
-margin: 0 auto;
-padding: 60px 24px
-}
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden
+        }
 
-.contact-card {
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 24px;
-padding: 48px 40px;
-text-align: center;
-transition: all .3s;
-position: relative;
-overflow: hidden
-}
+        .contact-hero {
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, .08), transparent 70%)
+        }
 
-.contact-card::before {
-content: '';
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-height: 4px;
-background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
-transform: scaleX(0);
-transition: transform .3s
-}
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 24px
+        }
 
-.contact-card:hover {
-transform: translateY(-12px);
-border-color: var(--accent-cyan);
-box-shadow: 0 20px 60px rgba(0, 240, 255, .2)
-}
+        .contact-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 48px 40px;
+            text-align: center;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
 
-.contact-card:hover::before {
-transform: scaleX(1)
-}
+        .contact-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            transform: scaleX(0);
+            transition: transform .3s
+        }
 
-.contact-icon {
-width: 80px;
-height: 80px;
-margin: 0 auto 24px;
-background: linear-gradient(135deg, rgba(0, 240, 255, .1), rgba(112, 0, 255, .1));
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 2rem;
-transition: all .3s
-}
+        .contact-card:hover {
+            transform: translateY(-12px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 20px 60px rgba(0, 240, 255, .2)
+        }
 
-.contact-card:hover .contact-icon {
-transform: scale(1.1);
-box-shadow: 0 0 40px rgba(0, 240, 255, .3)
-}
+        .contact-card:hover::before {
+            transform: scaleX(1)
+        }
 
-.email-link {
-display: inline-block;
-padding: 16px 32px;
-background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-color: #000;
-border-radius: 12px;
-text-decoration: none;
-font-weight: 700;
-margin-top: 24px;
-transition: all .3s
-}
+        .contact-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, .1), rgba(112, 0, 255, .1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: all .3s
+        }
 
-.email-link:hover {
-transform: scale(1.05);
-box-shadow: 0 10px 40px rgba(0, 240, 255, .4)
-}
+        .contact-card:hover .contact-icon {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(0, 240, 255, .3)
+        }
 
-.copy-btn {
-background: rgba(0, 240, 255, .1);
-border: 1px solid rgba(0, 240, 255, .3);
-color: var(--accent-cyan);
-padding: 8px 16px;
-border-radius: 8px;
-cursor: pointer;
-font-size: .85rem;
-margin-top: 12px;
-transition: all .2s
-}
+        .email-link {
+            display: inline-block;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: #000;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            margin-top: 24px;
+            transition: all .3s
+        }
 
-.copy-btn:hover {
-background: rgba(0, 240, 255, .2);
-transform: translateY(-2px)
-}
+        .email-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(0, 240, 255, .4)
+        }
 
-@keyframes float {
+        .copy-btn {
+            background: rgba(0, 240, 255, .1);
+            border: 1px solid rgba(0, 240, 255, .3);
+            color: var(--accent-cyan);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: .85rem;
+            margin-top: 12px;
+            transition: all .2s
+        }
 
-0%,
-100% {
-transform: translateY(0)
-}
+        .copy-btn:hover {
+            background: rgba(0, 240, 255, .2);
+            transform: translateY(-2px)
+        }
 
-50% {
-transform: translateY(-20px)
-}
-}
+        @keyframes float {
 
-.floating {
-animation: float 4s ease-in-out infinite
-}
+            0%,
+            100% {
+                transform: translateY(0)
+            }
 
-.gradient-text {
-background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
--webkit-background-clip: text;
--webkit-text-fill-color: transparent
-}
-</style>
+            50% {
+                transform: translateY(-20px)
+            }
+        }
+
+        .floating {
+            animation: float 4s ease-in-out infinite
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+    </style>
 </head>
 
 <body>
@@ -264,8 +278,11 @@ background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
                 }, 2000);
             });
         }
-    </script>
-    <!-- Component Loader -->
+    <!-- Footer (Loaded Dynamically) -->
+    <div id="footer-placeholder"></div>
+    <!--Component Loader-- >
+    < !--Footer(Loaded Dynamically) -->
+    <div id="footer-placeholder"></div>
     <script src="/public/js/components.js"></script>
 </body>
 

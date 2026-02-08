@@ -1,170 +1,186 @@
-overflow-x: hidden
-}
+<!DOCTYPE html>
+<html lang="en">
 
-.docs-hero {
-min-height: 60vh;
-display: flex;
-align-items: center;
-justify-content: center;
-text-align: center;
-position: relative;
-overflow: hidden
-}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - VedSAAS</title>
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="../../public/css/civilization.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
-.docs-hero::before {
-content: '';
-position: absolute;
-inset: 0;
-background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, .1), transparent 70%);
-animation: pulse 4s ease-in-out infinite
-}
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden
+        }
 
-@keyframes pulse {
+        .docs-hero {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden
+        }
 
-0%,
-100% {
-opacity: .3
-}
+        .docs-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, .1), transparent 70%);
+            animation: pulse 4s ease-in-out infinite
+        }
 
-50% {
-opacity: .6
-}
-}
+        @keyframes pulse {
 
-.particle {
-position: absolute;
-width: 2px;
-height: 2px;
-background: var(--accent-cyan);
-border-radius: 50%;
-animation: float 20s linear infinite
-}
+            0%,
+            100% {
+                opacity: .3
+            }
 
-@keyframes float {
-0% {
-transform: translateY(100vh) translateX(0)
-}
+            50% {
+                opacity: .6
+            }
+        }
 
-100% {
-transform: translateY(-100vh) translateX(100px)
-}
-}
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            animation: float 20s linear infinite
+        }
 
-.docs-container {
-display: grid;
-grid-template-columns: 300px 1fr;
-max-width: 1400px;
-margin: 0 auto;
-gap: 40px;
-padding: 40px 24px
-}
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0)
+            }
 
-.sidebar {
-position: sticky;
-top: 24px;
-height: fit-content
-}
+            100% {
+                transform: translateY(-100vh) translateX(100px)
+            }
+        }
 
-.nav-link {
-display: block;
-padding: 12px 16px;
-margin-bottom: 8px;
-border-radius: 12px;
-transition: all .3s;
-position: relative;
-overflow: hidden
-}
+        .docs-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 40px;
+            padding: 40px 24px
+        }
 
-.nav-link::before {
-content: '';
-position: absolute;
-inset: 0;
-background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
-opacity: 0;
-transition: opacity .3s
-}
+        .sidebar {
+            position: sticky;
+            top: 24px;
+            height: fit-content
+        }
 
-.nav-link:hover::before,
-.nav-link.active::before {
-opacity: .1
-}
+        .nav-link {
+            display: block;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden
+        }
 
-.nav-link:hover {
-transform: translateX(8px)
-}
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            opacity: 0;
+            transition: opacity .3s
+        }
 
-.doc-card {
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 20px;
-padding: 32px;
-margin-bottom: 32px;
-backdrop-filter: blur(10px);
-transition: all .3s
-}
+        .nav-link:hover::before,
+        .nav-link.active::before {
+            opacity: .1
+        }
 
-.doc-card:hover {
-transform: translateY(-4px);
-border-color: var(--accent-cyan);
-box-shadow: 0 20px 60px rgba(0, 240, 255, .1)
-}
+        .nav-link:hover {
+            transform: translateX(8px)
+        }
 
-code {
-background: rgba(0, 240, 255, .1);
-padding: 4px 10px;
-border-radius: 8px;
-font-family: var(--font-mono);
-border: 1px solid rgba(0, 240, 255, .2)
-}
+        .doc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            backdrop-filter: blur(10px);
+            transition: all .3s
+        }
 
-pre {
-background: rgba(0, 0, 0, .3);
-padding: 24px;
-border-radius: 16px;
-border: 1px solid var(--border-subtle);
-position: relative;
-overflow-x: auto
-}
+        .doc-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 20px 60px rgba(0, 240, 255, .1)
+        }
 
-pre::before {
-content: '';
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-height: 1px;
-background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent)
-}
+        code {
+            background: rgba(0, 240, 255, .1);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            border: 1px solid rgba(0, 240, 255, .2)
+        }
 
-.feature-grid {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-gap: 24px;
-margin: 40px 0
-}
+        pre {
+            background: rgba(0, 0, 0, .3);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            position: relative;
+            overflow-x: auto
+        }
 
-.feature-card {
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 16px;
-padding: 24px;
-text-align: center;
-transition: all .3s;
-cursor: pointer
-}
+        pre::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent)
+        }
 
-.feature-card:hover {
-transform: scale(1.05);
-border-color: var(--accent-cyan);
-box-shadow: 0 10px 40px rgba(0, 240, 255, .15)
-}
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 40px 0
+        }
 
-.feature-icon {
-font-size: 3rem;
-margin-bottom: 16px;
-filter: drop-shadow(0 0 20px rgba(0, 240, 255, .3))
-}
-</style>
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all .3s;
+            cursor: pointer
+        }
+
+        .feature-card:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 10px 40px rgba(0, 240, 255, .15)
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 20px rgba(0, 240, 255, .3))
+        }
+    </style>
 </head>
 
 <body>
@@ -299,6 +315,8 @@ console.log(response.text);</code></pre>
         </main>
     </div>
     <!-- Component Loader -->
+    <!-- Footer (Loaded Dynamically) -->
+    <div id="footer-placeholder"></div>
     <script src="/public/js/components.js"></script>
 </body>
 
