@@ -1,40 +1,85 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Settings — VedSAAS</title>
-<link rel="icon" href="/favicon.ico"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-<style>
-  :root{
-    --bg: #0e0f14;
-    --surface: #0f1720;
-    --muted: #94a3b8;
-    --text: #e9edf4;
-    --accent: #2a7;
-  }
-  .light-theme{
-    --bg: #f7fafc;
-    --surface: #ffffff;
-    --muted: #475569;
-    --text: #0b1220;
-    --accent: #1366d6;
-  }
-  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif; background:var(--bg); color:var(--text) }
-  .wrap{ max-width:960px; margin:24px auto; padding:16px }
-  h1,h2{ margin:0 0 12px 0 }
-  .card{ background:var(--surface); padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.03) }
-  .row{ display:flex; gap:12px; align-items:center; margin-top:10px }
-  select, button{ padding:8px 10px; border-radius:8px; background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.03) }
-  a.btn{ display:inline-block; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.02); color:var(--text) }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Settings — VedSAAS</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg: #0e0f14;
+      --surface: #0f1720;
+      --muted: #94a3b8;
+      --text: #e9edf4;
+      --accent: #2a7;
+    }
+
+    .light-theme {
+      --bg: #f7fafc;
+      --surface: #ffffff;
+      --muted: #475569;
+      --text: #0b1220;
+      --accent: #1366d6;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text)
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 24px auto;
+      padding: 16px
+    }
+
+    h1,
+    h2 {
+      margin: 0 0 12px 0
+    }
+
+    .card {
+      background: var(--surface);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.03)
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px
+    }
+
+    select,
+    button {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.03)
+    }
+
+    a.btn {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text)
+    }
+  </style>
 </head>
+
 <body>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id="navbar-placeholder"></div>
-    <!-- Navbar (Loaded Dynamically) -->
-    <div id='navbar-placeholder'></div>
+  <!-- Navbar (Loaded Dynamically) -->
+  <div id="navbar-placeholder"></div>
+  <!-- Navbar (Loaded Dynamically) -->
+  <div id='navbar-placeholder'></div>
   <div class="wrap">
     <h1>Settings</h1>
 
@@ -69,46 +114,82 @@
       </div>
     </section>
 
+    <div style="margin-top:24px">
+      <h2>Session Info (Telemetry)</h2>
+      <section class="card">
+        <div class="row">
+          <div style="width:100px;color:var(--muted)">IP Address</div>
+          <div id="si-ip">Loading...</div>
+        </div>
+        <div class="row">
+          <div style="width:100px;color:var(--muted)">Location</div>
+          <div id="si-loc">Loading...</div>
+        </div>
+        <div class="row">
+          <div style="width:100px;color:var(--muted)">Device</div>
+          <div id="si-device">Loading...</div>
+        </div>
+        <div class="row">
+          <div style="width:100px;color:var(--muted)">Browser</div>
+          <div id="si-browser">Loading...</div>
+        </div>
+        <div class="row">
+          <div style="width:100px;color:var(--muted)">Resolution</div>
+          <div id="si-res">Loading...</div>
+        </div>
+        <div class="row">
+          <div style="width:100px;color:var(--muted)">Language</div>
+          <div id="si-lang">Loading...</div>
+        </div>
+      </section>
+
+      <h2 style="margin-top:20px">Browser Storage (Debug)</h2>
+      <section class="card" style="background:#0002;padding:0">
+        <pre id="storage-dump"
+          style="margin:0;padding:12px;font-size:11px;color:#aaa;white-space:pre-wrap;word-break:break-all;max-height:150px;overflow-y:auto">Loading...</pre>
+      </section>
+    </div>
+
     <div style="margin-top:18px">
       <a href="index.html" class="btn" aria-label="Back to chat">← Back to chat</a>
     </div>
   </div>
 
-<script>
-/* Shared keys */
-const THEME_KEY = 'vedsaas_theme';
-const LANG_KEY = 'vedsaas_chat_lang';
+  <script>
+    /* Shared keys */
+    const THEME_KEY = 'vedsaas_theme';
+    const LANG_KEY = 'vedsaas_chat_lang';
 
-function applyTheme(theme){
-  if(theme === 'light') document.documentElement.classList.add('light-theme');
-  else document.documentElement.classList.remove('light-theme');
-  document.querySelectorAll('[data-theme-indicator]').forEach(el=> el.textContent = theme);
-}
-function getSavedTheme(){ return localStorage.getItem(THEME_KEY) || 'dark'; }
-function setSavedTheme(t){ localStorage.setItem(THEME_KEY, t); applyTheme(t); }
+    function applyTheme(theme) {
+      if (theme === 'light') document.documentElement.classList.add('light-theme');
+      else document.documentElement.classList.remove('light-theme');
+      document.querySelectorAll('[data-theme-indicator]').forEach(el => el.textContent = theme);
+    }
+    function getSavedTheme() { return localStorage.getItem(THEME_KEY) || 'dark'; }
+    function setSavedTheme(t) { localStorage.setItem(THEME_KEY, t); applyTheme(t); }
 
-function setSavedLang(lang){
-  localStorage.setItem(LANG_KEY, lang);
-  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = lang);
-}
-function getSavedLang(){ return localStorage.getItem(LANG_KEY) || 'Auto'; }
+    function setSavedLang(lang) {
+      localStorage.setItem(LANG_KEY, lang);
+      document.querySelectorAll('[data-chat-lang-indicator]').forEach(el => el.textContent = lang);
+    }
+    function getSavedLang() { return localStorage.getItem(LANG_KEY) || 'Auto'; }
 
-/* Settings user area */
-async function loadUserArea(){
-  const container = document.getElementById('user-settings');
-  const loginHref = 'login.html';
-  const registerHref = 'register.html';
+    /* Settings user area */
+    async function loadUserArea() {
+      const container = document.getElementById('user-settings');
+      const loginHref = 'login.html';
+      const registerHref = 'register.html';
 
-  function renderLoggedOut(){
-    container.innerHTML = `
+      function renderLoggedOut() {
+        container.innerHTML = `
       <p>You are not signed in.</p>
       <a href="${loginHref}" class="btn" role="button" aria-label="Login">Login</a>
       <a href="${registerHref}" class="btn" role="button" aria-label="Register" style="margin-left:8px">Register</a>
     `;
-  }
+      }
 
-  function renderUser(user){
-    container.innerHTML = `
+      function renderUser(user) {
+        container.innerHTML = `
       <h3>${user.name || user.email || 'User'}</h3>
       <p><strong>Email:</strong> ${user.email || '—'}</p>
       <p><strong>Plan:</strong> ${user.plan || 'Free'}</p>
@@ -116,66 +197,106 @@ async function loadUserArea(){
         <button id="logout-btn" class="btn" aria-label="Logout">Logout</button>
       </div>
     `;
-    const logoutBtn = document.getElementById('logout-btn');
-    if(logoutBtn && window.VedAPI && typeof VedAPI.logout === 'function'){
-      logoutBtn.addEventListener('click', async ()=>{
-        try{
-          await VedAPI.logout();
-          location.reload();
-        }catch(e){
-          console.error('Logout failed', e);
-          location.reload();
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn && window.VedAPI && typeof VedAPI.logout === 'function') {
+          logoutBtn.addEventListener('click', async () => {
+            try {
+              await VedAPI.logout();
+              location.reload();
+            } catch (e) {
+              console.error('Logout failed', e);
+              location.reload();
+            }
+          });
         }
+      }
+
+      try {
+        if (window.VedAPI && typeof VedAPI.getUser === 'function') {
+          const user = await VedAPI.getUser();
+          if (user && (user.email || user.name)) {
+            renderUser(user);
+          } else {
+            renderLoggedOut();
+          }
+        } else {
+          if (window.USER && (USER.email || USER.name)) {
+            renderUser(window.USER);
+          } else {
+            renderLoggedOut();
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        renderLoggedOut();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // apply theme and language saved values
+      applyTheme(getSavedTheme());
+      document.querySelectorAll('[data-chat-lang-indicator]').forEach(el => el.textContent = getSavedLang());
+
+      // Theme toggle
+      const tBtn = document.getElementById('theme-toggle-btn');
+      if (tBtn) tBtn.addEventListener('click', () => {
+        const current = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';
+        const next = current === 'light' ? 'dark' : 'light';
+        setSavedTheme(next);
       });
-    }
-  }
 
-  try{
-    if(window.VedAPI && typeof VedAPI.getUser === 'function'){
-      const user = await VedAPI.getUser();
-      if(user && (user.email || user.name)){
-        renderUser(user);
-      } else {
-        renderLoggedOut();
+      // Language selector
+      const sel = document.getElementById('chat-lang-select-settings');
+      if (sel) {
+        sel.value = getSavedLang();
+        sel.addEventListener('change', (e) => setSavedLang(e.target.value));
       }
-    } else {
-      if(window.USER && (USER.email || USER.name)){
-        renderUser(window.USER);
-      } else {
-        renderLoggedOut();
-      }
-    }
-  }catch(err){
-    console.error(err);
-    renderLoggedOut();
-  }
-}
 
-document.addEventListener('DOMContentLoaded', ()=>{
-  // apply theme and language saved values
-  applyTheme(getSavedTheme());
-  document.querySelectorAll('[data-chat-lang-indicator]').forEach(el=> el.textContent = getSavedLang());
+      loadUserArea();
+    });
+  </script>
+  <!-- Component Loader -->
+  <script src="/public/js/components.js"></script>
+  <script src="/public/js/logic_core.js"></script>
 
-  // Theme toggle
-  const tBtn = document.getElementById('theme-toggle-btn');
-  if(tBtn) tBtn.addEventListener('click', ()=>{
-    const current = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';
-    const next = current === 'light' ? 'dark' : 'light';
-    setSavedTheme(next);
-  });
+  <script>
+    // Telemetry UI Logic for Settings Page
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        try {
+          const sessionData = JSON.parse(localStorage.getItem('vedsaas_session_data') || '{}');
+          const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt || 'Unknown'; };
 
-  // Language selector
-  const sel = document.getElementById('chat-lang-select-settings');
-  if(sel){
-    sel.value = getSavedLang();
-    sel.addEventListener('change', (e)=> setSavedLang(e.target.value));
-  }
+          setTxt('si-ip', sessionData.ip);
+          setTxt('si-loc', `${sessionData.city || ''}, ${sessionData.region || ''}, ${sessionData.country_name || ''}`.replace(/^, /, '').replace(/, $/, ''));
+          setTxt('si-device', `${sessionData.type || 'Desktop'} (${sessionData.os || 'Unknown'})`);
+          setTxt('si-browser', sessionData.browser || 'Unknown');
+          setTxt('si-res', sessionData.screen_res || `${window.screen.width}x${window.screen.height}`);
+          setTxt('si-lang', sessionData.browser_lang || navigator.language);
 
-  loadUserArea();
-});
-</script>
-    <!-- Component Loader -->
-    <script src="/public/js/components.js"></script>
-    </body>
+          // Populate Storage Dump
+          const dumpEl = document.getElementById('storage-dump');
+          if (dumpEl) {
+            let dumpText = '';
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              let val = localStorage.getItem(key);
+              if (val.length > 100 && (val.startsWith('[') || val.startsWith('{'))) {
+                try {
+                  const parsed = JSON.parse(val);
+                  if (Array.isArray(parsed)) val = `[Array(${parsed.length})]`;
+                  else val = `[Object Keys: ${Object.keys(parsed).join(', ')}]`;
+                } catch (e) { val = val.substring(0, 50) + '...'; }
+              }
+              dumpText += `${key}: ${val}\n`;
+            }
+            dumpText += `\n--- Navigator ---\nUserAgent: ${navigator.userAgent}\nPlatform: ${navigator.platform}\nCores: ${navigator.hardwareConcurrency || '?'}\nMemory: ${navigator.deviceMemory || '?'} GB\n`;
+            dumpEl.innerText = dumpText;
+          }
+        } catch (e) { console.error('Settings Telemetry Error', e); }
+      }, 1000); // Delay to allow logic_core to run
+    });
+  </script>
+</body>
+
 </html>
-

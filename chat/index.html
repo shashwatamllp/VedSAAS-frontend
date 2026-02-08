@@ -989,17 +989,36 @@
 
         <section data-panel="data" style="display:none">
           <div class="section-title">Data & Export</div>
-          <div class="kv"><label>Export Data</label>
-            <div class="muted" style="margin-bottom:8px">Download your current conversation history.</div>
-            <button id="data-export-btn" class="cta secondary"><i class="fas fa-download"></i> Export Chat
-              (.txt)</button>
-          </div>
-          <div class="kv" style="border-top:1px solid #333;padding-top:16px"><label class="text-danger">Danger
-              Zone</label>
-            <div class="row" style="flex-wrap:wrap">
-              <button id="data-delete-chat" class="cta danger"><i class="fas fa-trash"></i> Delete This Chat</button>
-              <button id="data-clear-all" class="cta danger"><i class="fas fa-bomb"></i> Clear All Chats</button>
+          <p class="muted">Manage your conversation data and privacy.</p>
+          <div class="card" style="margin-top:16px">
+            <div class="kv">
+              <label>Export Chat</label>
+              <button id="export-btn" class="cta secondary"><i class="fas fa-download"></i> Export JSON</button>
             </div>
+            <div class="kv">
+              <label>Delete Chat</label>
+              <button id="delete-btn" class="cta danger"><i class="fas fa-trash"></i> Delete This Chat</button>
+            </div>
+            <div class="kv">
+              <label>Clear All</label>
+              <button id="clear-all-btn" class="cta danger"><i class="fas fa-bomb"></i> Clear All Data</button>
+            </div>
+          </div>
+
+          <div class="section-title" style="margin-top:24px">Current Session Info</div>
+          <div class="card" id="session-info-card">
+            <div class="kv"><label>IP Address</label><span id="si-ip" class="muted">Loading...</span></div>
+            <div class="kv"><label>Location</label><span id="si-loc" class="muted">Loading...</span></div>
+            <div class="kv"><label>Device</label><span id="si-device" class="muted">Loading...</span></div>
+            <div class="kv"><label>Browser</label><span id="si-browser" class="muted">Loading...</span></div>
+            <div class="kv"><label>Resolution</label><span id="si-res" class="muted">Loading...</span></div>
+            <div class="kv"><label>Language</label><span id="si-lang" class="muted">Loading...</span></div>
+          </div>
+
+          <div class="section-title" style="margin-top:24px">Browser Storage (Debug)</div>
+          <div class="card" style="background:rgba(0,0,0,0.3)">
+            <pre id="storage-dump"
+              style="margin:0;font-size:11px;color:#aaa;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto">Loading...</pre>
           </div>
         </section>
 
@@ -1680,6 +1699,48 @@
       if (selLang) selLang.value = langPref;
       if (selType) selType.value = typePref;
 
+      // Load Session Info (Telemetry) - Runs for everyone
+      try {
+        const sessionData = JSON.parse(localStorage.getItem('vedsaas_session_data') || '{}');
+        const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt || 'Unknown'; };
+
+        setTxt('si-ip', sessionData.ip);
+        setTxt('si-loc', `${sessionData.city || ''}, ${sessionData.region || ''}, ${sessionData.country_name || ''}`.replace(/^, /, '').replace(/, $/, ''));
+        setTxt('si-device', `${sessionData.type || 'Desktop'} (${sessionData.os || 'Unknown'})`);
+        setTxt('si-browser', sessionData.browser || 'Unknown');
+        setTxt('si-res', sessionData.screen_res || `${window.screen.width}x${window.screen.height}`);
+        setTxt('si-lang', sessionData.browser_lang || navigator.language);
+
+        // Populate Storage Dump
+        const dumpEl = document.getElementById('storage-dump');
+        if (dumpEl) {
+          let dumpText = '';
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            let val = localStorage.getItem(key);
+
+            // Summarize large JSONs
+            if (val.length > 100 && (val.startsWith('[') || val.startsWith('{'))) {
+              try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed)) val = `[Array(${parsed.length})]`;
+                else val = `[Object Keys: ${Object.keys(parsed).join(', ')}]`;
+              } catch (e) { val = val.substring(0, 50) + '...'; }
+            }
+            dumpText += `${key}: ${val}\n`;
+          }
+          // Add Navigator Info
+          dumpText += `\n--- Navigator ---\n`;
+          dumpText += `UserAgent: ${navigator.userAgent}\n`;
+          dumpText += `Platform: ${navigator.platform}\n`;
+          dumpText += `Cores: ${navigator.hardwareConcurrency || '?'}\n`;
+          dumpText += `Memory: ${navigator.deviceMemory || '?'} GB\n`;
+
+          dumpEl.innerText = dumpText;
+        }
+
+      } catch (e) { console.error('Session Info Load Error', e); }
+
       if (token) {
         try {
           const r = await authFetch('/api/user-profile');
@@ -1690,8 +1751,6 @@
             if (d.email) { if (acEmail) acEmail.value = d.email; localStorage.setItem('user_email', d.email); }
             if (d.mobile) { if (acMobile) acMobile.value = d.mobile; localStorage.setItem('user_mobile', d.mobile); }
             if (d.plan) {
-              if (planLbl) planLbl.innerHTML = `<i class="fas fa-crown"></i><span style="margin-left:6px">${d.plan}</span>`;
-              if (acPlanLbl) acPlanLbl.innerText = d.plan;
               localStorage.setItem('user_plan', d.plan);
             }
             if (d.avatar_url) { localStorage.setItem('user_avatar_url', d.avatar_url); setDisplayName(localStorage.getItem('user_name') || 'User'); }
