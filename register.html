@@ -3,505 +3,208 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Account | VedSAAS</title>
 
-  <!-- SEO Meta Tags -->
-  <title>Sign Up for VedSAAS - India's First Self-Evolving AI Platform</title>
-  <meta name="description"
-    content="Create your free VedSAAS account and access India's first AI platform supporting 22+ Indian languages. Start with our free plan today.">
-  <meta name="keywords" content="VedSAAS signup, AI registration, Indian AI platform, create AI account">
-  <meta name="robots" content="noindex, nofollow">
-
-  <link rel="icon" href="./favicon.ico" />
-
-  <!-- 🔐 Provide API key here (or put it in localStorage.VED_API_KEY) -->
-  <meta name="ved-api-key" content="super-long-random">
+  <!-- Design System -->
+  <link rel="stylesheet" href="/public/css/civilization.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    :root {
-      --bg: #1e1e2f;
-      --card: #2c2c3e;
-      --ip: #3a3a4d;
-      --ip-focus: #4a4a5f;
-      --text: #fff;
-      --muted: #b9bed1;
-      --brand: #0078d4;
-      --brand-2: #005ea2;
-      --ok: #b7ffb7;
-      --err: #ffd7d7;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0
-    }
-
-    html,
     body {
-      height: 100%
-    }
-
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg-void);
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
+      font-family: var(--font-ui);
+      padding: 20px;
     }
 
-    .auth-bg {
-      position: fixed;
-      inset: 0;
-      background: url('./images/logopic.png') center/520px no-repeat;
-      opacity: .06;
-      pointer-events: none;
+    /* Ambient Background Effect */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 150vw;
+      height: 150vh;
+      background: radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.15), transparent 60%);
       z-index: 0;
+      top: -25%;
+      left: -25%;
+      pointer-events: none;
     }
 
-    .card {
+    .auth-card {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       position: relative;
-      z-index: 1;
-      width: min(1100px, 98vw);
-      max-height: 92vh;
-      overflow: auto;
-      scrollbar-gutter: stable;
-      background: var(--card);
-      border-radius: 14px;
-      padding: 18px 20px 20px;
-      box-shadow: 0 10px 38px rgba(0, 0, 0, .45);
+      z-index: 10;
     }
 
-    h1 {
-      font-size: 26px;
+    .card-header {
       text-align: center;
-      margin-bottom: 4px
+      margin-bottom: 30px;
     }
 
-    .sub {
-      color: var(--muted);
+    .card-header h2 {
+      font-size: 24px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .card-header p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px 14px 12px 40px;
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+    }
+
+    .footer-text {
+      margin-top: 24px;
       text-align: center;
       font-size: 14px;
-      margin-bottom: 12px
+      color: var(--text-secondary);
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px 14px
+    .footer-text a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 500;
     }
 
-    .span2 {
-      grid-column: span 2
+    .back-link {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 20px;
+      transition: color 0.2s;
     }
 
-    .span3 {
-      grid-column: 1 / -1
+    .back-link:hover {
+      color: var(--text-primary);
     }
 
-    label {
-      display: block;
-      font-size: 13px;
-      color: #cfd2e2;
-      margin: 2px 0 6px
-    }
-
-    .ip {
-      width: 100%;
-      padding: 11px 12px;
-      border-radius: 10px;
-      border: none;
-      background: var(--ip);
-      color: #fff;
-      outline: none;
-      font-size: 15px;
-      transition: .15s background
-    }
-
-    .ip:focus {
-      background: var(--ip-focus)
-    }
-
-    input[type="date"] {
-      color-scheme: dark
-    }
-
-    .avatar-row {
-      display: grid;
-      grid-template-columns: 64px 1fr;
-      gap: 12px;
-      align-items: center
-    }
-
-    .avatar {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: #444 center/cover no-repeat
-    }
-
-    .hint {
-      font-size: 12px;
-      color: var(--muted)
-    }
-
-    .actions {
-      display: block;
-      margin-top: 6px
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px 14px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      color: #fff;
-      background: var(--brand)
-    }
-
-    .btn:hover {
-      background: var(--brand-2)
-    }
-
-    .msg {
-      min-height: 18px;
-      margin-top: 8px;
-      text-align: center;
-      font-size: 13px
-    }
-
-    .ok {
-      color: var(--ok)
-    }
-
-    .err {
-      color: var(--err)
-    }
-
-    .note {
-      margin-top: 8px;
-      text-align: center;
-      color: #b5bbcf;
-      font-size: 13px
-    }
-
-    .footer {
-      position: relative;
-      text-align: center;
-      color: #9aa0b6;
-      font-size: 12px;
-      padding: 8px 0 0
-    }
-
-    @media (max-height:700px) {
-      h1 {
-        font-size: 24px
-      }
-
-      .sub {
-        font-size: 13px
-      }
-
-      .ip {
-        padding: 10px
-      }
-    }
-
-    @media (max-width:1020px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr)
-      }
-
-      .span2,
-      .span3 {
-        grid-column: 1 / -1
-      }
-    }
-
-    @media (max-width:640px) {
-      .grid {
-        grid-template-columns: 1fr
+    /* Mobile Adjustments */
+    @media(max-width: 480px) {
+      .auth-card {
+        padding: 24px;
       }
     }
   </style>
 </head>
 
 <body>
-  <!-- Navbar (Loaded Dynamically) -->
-  <div id="navbar-placeholder"></div>
-  <div class="auth-bg"></div>
 
-  <div class="card" id="card">
-    <!-- Logo -->
-    <div style="text-align: center; margin-bottom: 16px;">
-      <img src="./public/image/logopic.png" alt="VedSAAS" style="height: 42px; width: auto;">
+  <div class="auth-card">
+    <a href="login.html" class="back-link"><i class="fas fa-arrow-left"></i></a>
+
+    <div class="card-header">
+      <img src="/public/image/logopic.png" alt="Logo" style="height: 48px; margin-bottom: 16px;">
+      <h2>Join Civilization</h2>
+      <p>Create your ID to explore the collaborative AI future.</p>
     </div>
 
-    <h1>Signup with VedSAAS</h1>
-    <p class="sub">Signup with VedSAAS India's First AI.</p>
-
-    <form id="register-form" class="grid" autocomplete="off" novalidate>
-      <div class="span3">
-        <label for="name">Full Name</label>
-        <input id="name" name="name" class="ip" placeholder="Your full name" required autocomplete="name" />
-      </div>
-
-      <div>
-        <label for="email">Email</label>
-        <input id="email" name="email" class="ip" type="email" placeholder="email@example.com" required
-          autocomplete="email" />
-      </div>
-      <div>
-        <label for="mobile">Mobile</label>
-        <input id="mobile" name="mobile" class="ip" type="tel" placeholder="+91XXXXXXXXXX" required
-          autocomplete="tel" />
-      </div>
-      <div>
-        <label for="dob">Date of Birth</label>
-        <input id="dob" name="dob" class="ip" type="date" required autocomplete="bday" />
-      </div>
-
-      <div>
-        <label for="pw">Password</label>
-        <input id="pw" name="password" class="ip" type="password" placeholder="Create password" required
-          autocomplete="new-password" />
-        <div id="pw-strength" style="margin-top:8px;font-size:0.85rem;display:none"></div>
-      </div>
-      <div>
-        <label for="cpw">Confirm</label>
-        <input id="cpw" class="ip" type="password" placeholder="Re-enter password" required
-          autocomplete="new-password" />
-      </div>
-
-      <div class="span3 avatar-row">
-        <div id="preview" class="avatar"></div>
-        <div>
-          <label for="avatar">Profile picture</label>
-          <input id="avatar" name="avatar" class="ip" type="file" accept="image/*" />
-          <div class="hint">Max 1 MB • Square image looks best</div>
+    <form class="form-grid" onsubmit="event.preventDefault(); alert('Registration Mockup');">
+      <div class="input-group">
+        <label>Full Name</label>
+        <div class="input-wrapper">
+          <input type="text" placeholder="John Doe">
+          <i class="fas fa-user"></i>
         </div>
       </div>
 
-      <div class="span3" style="display:flex;align-items:center;gap:8px;margin-top:8px">
-        <input type="checkbox" id="terms" required style="width:auto;margin:0">
-        <label for="terms" style="margin:0;font-size:0.9rem">I agree to the <a href="./terms.html" target="_blank"
-            style="color:#76b7ff">Terms of Service</a> and <a href="./privacy.html" target="_blank"
-            style="color:#76b7ff">Privacy Policy</a></label>
+      <div class="input-group">
+        <label>Email Address</label>
+        <div class="input-wrapper">
+          <input type="email" placeholder="john@example.com">
+          <i class="fas fa-envelope"></i>
+        </div>
       </div>
 
-      <div class="span3 actions">
-        <button class="btn" id="submit" type="submit">Register</button>
+      <div class="input-group">
+        <label>Set Password</label>
+        <div class="input-wrapper">
+          <input type="password" placeholder="••••••••">
+          <i class="fas fa-lock"></i>
+        </div>
       </div>
+
+      <button class="btn-primary">Create Account</button>
     </form>
 
-    <div id="msg" class="msg"></div>
-    <p class="note">Already have an account? <a href="./login.html" style="color:#76b7ff">Login</a></p>
-    <div class="footer">VedSAAS by Shashwatam Eco-Chic Creations LLP</div>
+    <div class="footer-text">
+      Already have an account? <a href="login.html">Login</a>
+    </div>
   </div>
 
-  <script>
-    // --------------------------------------------
-    // API base (pinned for prod)
-    // --------------------------------------------
-    window.API_BASE = 'https://api.vedsaas.com';
-
-    // --------------------------------------------
-    // API key source
-    // --------------------------------------------
-    (function primeKey() {
-      const metaKey = document.querySelector('meta[name="ved-api-key"]')?.content || '';
-      if (metaKey && !localStorage.getItem('VED_API_KEY')) {
-        localStorage.setItem('VED_API_KEY', metaKey);
-      }
-    })();
-    const getApiKey = () => localStorage.getItem('VED_API_KEY') || '';
-
-    // --------------------------------------------
-    // tiny helpers
-    // --------------------------------------------
-    const $ = (id) => document.getElementById(id);
-    const show = (t, ok = false) => { const m = $('msg'); m.className = 'msg ' + (ok ? 'ok' : 'err'); m.textContent = t || ''; };
-
-    // avatar preview
-    let avatarFile = null;
-    $('avatar').addEventListener('change', e => {
-      const f = e.target.files?.[0] || null;
-      avatarFile = null;
-      if (!f) { $('preview').style.backgroundImage = 'none'; return; }
-      if (f.size > 1024 * 1024) { show('Image too large (max 1 MB)'); e.target.value = ''; return; }
-      avatarFile = f;
-      const rd = new FileReader();
-      rd.onload = () => { $('preview').style.backgroundImage = `url('${rd.result}')`; };
-      rd.readAsDataURL(f);
-    });
-
-    // Password strength indicator
-    $('pw').addEventListener('input', e => {
-      const pw = e.target.value;
-      const strength = $('pw-strength');
-
-      if (!pw) {
-        strength.style.display = 'none';
-        return;
-      }
-
-      strength.style.display = 'block';
-      let score = 0;
-      let text = '';
-      let color = '';
-
-      if (pw.length >= 8) score++;
-      if (pw.length >= 12) score++;
-      if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-      if (/\d/.test(pw)) score++;
-      if (/[^a-zA-Z0-9]/.test(pw)) score++;
-
-      if (score <= 2) {
-        text = '🔴 Weak password';
-        color = '#ff6b6b';
-      } else if (score <= 3) {
-        text = '🟡 Medium password';
-        color = '#ffd93d';
-      } else {
-        text = '🟢 Strong password';
-        color = '#6bcf7f';
-      }
-
-      strength.textContent = text;
-      strength.style.color = color;
-    });
-
-    const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v || "");
-    const validPhone = v => /^\+?\d{10,15}$/.test((v || "").replace(/\s/g, ""));
-
-    async function parseResponse(r) {
-      const ct = r.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await r.json().catch(() => ({})) : await r.text().catch(() => '');
-      return { ct, data };
-    }
-    function friendlyError(r, dataStr) {
-      if (r.status === 403 && /cacheable requests|cloudfront/i.test(dataStr || '')) {
-        return 'Blocked by CDN: POST reached static S3 behavior. Check CloudFront /api/* behavior.';
-      }
-      return `HTTP ${r.status} ${r.statusText}${dataStr ? ': ' + dataStr : ''}`;
-    }
-
-    // --------------------------------------------
-    // API wrappers — now always send X-API-Key
-    // --------------------------------------------
-    async function apiJSON(url, body) {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-API-Key': getApiKey(),
-        },
-        body: JSON.stringify(body),
-        mode: 'cors', cache: 'no-store', credentials: 'omit'
-      });
-      const { data } = await parseResponse(r);
-      if (!r.ok) throw new Error(typeof data === 'string' ? friendlyError(r, data) : (data.error || data.message || friendlyError(r)));
-      return data;
-    }
-    async function apiForm(url, formData) {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'X-API-Key': getApiKey() },
-        body: formData,
-        mode: 'cors', cache: 'no-store', credentials: 'omit'
-      });
-      const { data } = await parseResponse(r);
-      if (!r.ok) throw new Error(typeof data === 'string' ? friendlyError(r, data) : (data.error || data.message || friendlyError(r)));
-      return data;
-    }
-
-    // --------------------------------------------
-    // Submit
-    // --------------------------------------------
-    $('register-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = ($('name').value || '').trim();
-      const email = ($('email').value || '').trim();
-      const mobile = ($('mobile').value || '').trim();
-      const dob = ($('dob').value || '').trim();
-      const pw = $('pw').value || '';
-      const cpw = $('cpw').value || '';
-
-      if (!name) return show('Name required');
-      if (!validEmail(email)) return show('Valid email required');
-      if (!validPhone(mobile)) return show('Valid mobile required (10–15 digits)');
-      if (!dob) return show('DOB required');
-      if (pw.length < 6) return show('Password must be at least 6 characters');
-      if (pw !== cpw) return show('Passwords do not match');
-
-      const haveKey = !!getApiKey();
-      if (!haveKey) {
-        // keep it obvious in UI when key missing
-        return show('API key missing. Please configure it.', false);
-      }
-
-      $('submit').disabled = true; show('');
-      const base = window.API_BASE || '';
-
-      // Build multipart (avatar-friendly)
-      const fd = new FormData();
-      fd.append('name', name);
-      fd.append('email', email);
-      fd.append('mobile', mobile);
-      fd.append('dob', dob);
-      fd.append('password', pw);
-      if (avatarFile) fd.append('avatar', avatarFile);
-
-      try {
-        // Primary route
-        try {
-          await apiForm(`${base}/api/auth/register`, fd);
-        } catch (e1) {
-          // JSON fallback same endpoint
-          try {
-            await apiJSON(`${base}/api/auth/register`, { name, email, mobile, dob, password: pw });
-          } catch (e2) {
-            // Alt paths
-            try {
-              await apiForm(`${base}/api/register`, fd);
-            } catch (e3) {
-              await apiJSON(`${base}/api/register`, { name, email, mobile, dob, password: pw });
-            }
-          }
-        }
-
-        // Send OTP
-        const identifier = email || mobile;
-        try {
-          await apiJSON(`${base}/api/auth/send-otp`, { identifier });
-        } catch {
-          await apiJSON(`${base}/api/send-otp`, { identifier });
-        }
-
-        // Stash a few bits for next screen
-        try {
-          localStorage.setItem('pendingIdentifier', identifier);
-          localStorage.setItem('pendingName', name);
-          localStorage.setItem('pendingDob', dob);
-        } catch { }
-
-        show('OTP sent. Redirecting…', true);
-        setTimeout(() => { location.href = `./verify.html?who=${encodeURIComponent(identifier)}&sent=1`; }, 600);
-      } catch (err) {
-        show('Registration failed: ' + (err?.message || err));
-        console.error('Register error:', err);
-        $('submit').disabled = false;
-      }
-    });
-  </script>
-  <!-- Component Loader -->
-  <script src="/public/js/components.js"></script>
 </body>
 
 </html>
