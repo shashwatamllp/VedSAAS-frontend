@@ -4,179 +4,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help Center - VedSAAS</title>
-    <!-- Common CSS -->
+    <title>VedSAAS Help Center</title>
     <link rel="stylesheet" href="../../public/css/civilization.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden
+            background: #000;
+            color: var(--text-primary);
+            font-family: var(--font-ui)
         }
 
-        .help-hero {
-            min-height: 50vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .help-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px
+        }
+
+        .header {
             text-align: center;
-            position: relative;
-            background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, .08), transparent 70%)
+            margin-bottom: 60px
         }
 
-        .search-container {
-            max-width: 700px;
+        .search-box {
+            max-width: 600px;
             margin: 0 auto 60px;
             position: relative
         }
 
         .search-input {
             width: 100%;
-            padding: 20px 60px 20px 24px;
-            background: rgba(0, 0, 0, .3);
-            border: 2px solid var(--border-subtle);
-            border-radius: 16px;
+            padding: 16px 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
             color: var(--text-primary);
-            font-size: 1.1rem;
-            transition: all .3s;
-            backdrop-filter: blur(10px)
+            font-size: 1rem
         }
 
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 40px rgba(0, 240, 255, .2)
-        }
-
-        .search-btn {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-            border: none;
-            color: #000;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 700
-        }
-
-        .category-grid {
+        .categories {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 24px;
-            margin-bottom: 80px
+            margin-bottom: 60px
         }
 
         .category-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
-            padding: 40px;
+            border-radius: 16px;
+            padding: 32px;
             text-align: center;
             cursor: pointer;
-            transition: all .3s;
-            position: relative;
-            overflow: hidden
-        }
-
-        .category-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(0, 240, 255, .1), rgba(112, 0, 255, .1));
-            opacity: 0;
-            transition: opacity .3s
+            transition: all .2s
         }
 
         .category-card:hover {
-            transform: translateY(-8px);
             border-color: var(--accent-cyan);
-            box-shadow: 0 20px 60px rgba(0, 240, 255, .15)
-        }
-
-        .category-card:hover::before {
-            opacity: 1
+            transform: translateY(-4px)
         }
 
         .category-icon {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px rgba(0, 240, 255, .3));
-            position: relative;
-            z-index: 1
+            font-size: 2.5rem;
+            margin-bottom: 16px
         }
 
-        .faq-container {
-            max-width: 900px;
+        .faq-section {
+            max-width: 800px;
             margin: 0 auto
         }
 
         .faq-item {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 28px;
+            border-radius: 12px;
+            padding: 24px;
             margin-bottom: 16px;
-            cursor: pointer;
-            transition: all .3s
-        }
-
-        .faq-item:hover {
-            border-color: var(--accent-cyan);
-            transform: translateX(8px)
+            cursor: pointer
         }
 
         .faq-question {
-            font-weight: 700;
-            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0;
-            transition: all .3s
+            align-items: center
         }
 
         .faq-answer {
             color: var(--text-secondary);
-            line-height: 1.8;
-            margin-top: 16px;
-            display: none;
-            padding-top: 16px;
-            border-top: 1px solid var(--border-subtle)
+            display: none
         }
 
         .faq-item.active .faq-answer {
             display: block
-        }
-
-        .faq-item.active .faq-question i {
-            transform: rotate(180deg)
-        }
-
-        .faq-icon {
-            transition: transform .3s;
-            color: var(--accent-cyan)
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0)
-            }
-
-            50% {
-                transform: translateY(-15px)
-            }
-        }
-
-        .floating {
-            animation: float 4s ease-in-out infinite
         }
     </style>
 </head>
@@ -185,168 +106,97 @@
     <!-- Navigation Bar -->
     <!-- Navbar (Loaded Dynamically) -->
     <div id="navbar-placeholder"></div>
-
-
-    <section class="help-hero">
-        <div style="max-width:900px;padding:60px 24px">
-            <div class="floating" style="margin-bottom:32px">
-                <img src="../../public/image/logopic.png" alt="VedSAAS"
-                    style="height:70px;filter:drop-shadow(0 0 40px rgba(0,240,255,.6))">
-            </div>
-            <h1 style="font-size:3.5rem;margin-bottom:24px;text-shadow:0 0 40px rgba(0,240,255,.3)">Help Center</h1>
-            <p style="font-size:1.3rem;color:var(--text-secondary);margin-bottom:48px">How can we help you today?</p>
-
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="Search for help articles, guides, tutorials..."
-                    id="search">
-                <button class="search-btn"><i class="fas fa-search"></i></button>
-            </div>
+    <div class="help-container">
+        <div class="header">
+            <img src="../../public/image/logopic.png" alt="VedSAAS" style="height:40px;margin-bottom:20px">
+            <h1 style="font-size:2.5rem;margin-bottom:16px">Help Center</h1>
+            <p style="color:var(--text-secondary);font-size:1.1rem">How can we help you today?</p>
         </div>
-    </section>
 
-    <div style="max-width:1400px;margin:0 auto;padding:60px 24px">
-        <div class="category-grid">
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="Search for help...">
+        </div>
+
+        <div class="categories">
             <div class="category-card">
                 <div class="category-icon">🚀</div>
-                <h3 style="font-size:1.3rem;margin-bottom:12px">Getting Started</h3>
-                <p style="color:var(--text-secondary);line-height:1.6">Quick start guides, tutorials, and onboarding
-                    resources</p>
+                <h3>Getting Started</h3>
+                <p style="color:var(--text-secondary);margin-top:12px">Learn the basics of VedSAAS</p>
             </div>
             <div class="category-card">
                 <div class="category-icon">🔐</div>
-                <h3 style="font-size:1.3rem;margin-bottom:12px">Account & Billing</h3>
-                <p style="color:var(--text-secondary);line-height:1.6">Manage subscriptions, payments, and account
-                    settings</p>
+                <h3>Account & Billing</h3>
+                <p style="color:var(--text-secondary);margin-top:12px">Manage your account and subscription</p>
             </div>
             <div class="category-card">
                 <div class="category-icon">🤖</div>
-                <h3 style="font-size:1.3rem;margin-bottom:12px">AI Modes</h3>
-                <p style="color:var(--text-secondary);line-height:1.6">Learn about 57 specialized AI modes and features
-                </p>
+                <h3>AI Modes</h3>
+                <p style="color:var(--text-secondary);margin-top:12px">Understand different AI modes</p>
             </div>
             <div class="category-card">
                 <div class="category-icon">⚙️</div>
-                <h3 style="font-size:1.3rem;margin-bottom:12px">API & Integration</h3>
-                <p style="color:var(--text-secondary);line-height:1.6">Developer guides, API docs, and integration help
-                </p>
-            </div>
-            <div class="category-card">
-                <div class="category-icon">🌐</div>
-                <h3 style="font-size:1.3rem;margin-bottom:12px">Languages</h3>
-                <p style="color:var(--text-secondary);line-height:1.6">Support for 22+ Indian languages and dialects</p>
-            </div>
-            <div class="category-card">
-                <div class="category-icon">🛡️</div>
-                <h3 style="font-size:1.3rem;margin-bottom:12px">Security & Privacy</h3>
-                <p style="color:var(--text-secondary);line-height:1.6">Data protection, encryption, and privacy policies
-                </p>
+                <h3>API & Integration</h3>
+                <p style="color:var(--text-secondary);margin-top:12px">Integrate VedSAAS into your app</p>
             </div>
         </div>
 
-        <div class="faq-container">
-            <h2 style="text-align:center;font-size:2.5rem;margin-bottom:48px">Frequently Asked Questions</h2>
+        <div class="faq-section">
+            <h2 style="text-align:center;margin-bottom:32px">Frequently Asked Questions</h2>
 
             <div class="faq-item" onclick="this.classList.toggle('active')">
                 <div class="faq-question">
                     How do I get started with VedSAAS?
-                    <i class="fas fa-chevron-down faq-icon"></i>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Getting started is simple! Sign up for a free account, choose your preferred AI mode, and start
-                    chatting. No credit card required for the free plan. Check our <a href="../docs/docs.html"
-                        style="color:var(--accent-cyan)">documentation</a> for detailed guides.
+                    Simply sign up for a free account, choose your preferred AI mode, and start chatting! No credit card
+                    required for the free plan.
                 </div>
             </div>
 
             <div class="faq-item" onclick="this.classList.toggle('active')">
                 <div class="faq-question">
                     Which languages are supported?
-                    <i class="fas fa-chevron-down faq-icon"></i>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
                     VedSAAS supports 22+ Indian languages including Hindi, Tamil, Telugu, Bengali, Marathi, Gujarati,
-                    Kannada, Malayalam, Punjabi, Odia, Assamese, and more. We're constantly adding new languages based
-                    on user demand.
+                    Kannada, Malayalam, Punjabi, and more.
                 </div>
             </div>
 
             <div class="faq-item" onclick="this.classList.toggle('active')">
                 <div class="faq-question">
                     How do I upgrade my plan?
-                    <i class="fas fa-chevron-down faq-icon"></i>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Navigate to your account settings and click "Upgrade Plan". Choose between Pro (₹499/month) for
-                    unlimited access or Enterprise for custom solutions. You can cancel anytime with no questions asked.
+                    Go to your account settings and click on "Upgrade Plan". You can choose between Pro and Enterprise
+                    plans based on your needs.
                 </div>
             </div>
 
             <div class="faq-item" onclick="this.classList.toggle('active')">
                 <div class="faq-question">
-                    Is my data secure and private?
-                    <i class="fas fa-chevron-down faq-icon"></i>
+                    Is my data secure?
+                    <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Absolutely! We use end-to-end encryption for all conversations. Your data is never shared with third
-                    parties, and we comply with Indian data protection regulations. All data is stored securely in
-                    Indian data centers.
-                </div>
-            </div>
-
-            <div class="faq-item" onclick="this.classList.toggle('active')">
-                <div class="faq-question">
-                    Can I use VedSAAS for commercial projects?
-                    <i class="fas fa-chevron-down faq-icon"></i>
-                </div>
-                <div class="faq-answer">
-                    Yes! Pro and Enterprise plans include commercial usage rights. For high-volume applications, we
-                    recommend our Enterprise plan with dedicated support and custom SLAs.
-                </div>
-            </div>
-
-            <div class="faq-item" onclick="this.classList.toggle('active')">
-                <div class="faq-question">
-                    Do you offer API access?
-                    <i class="fas fa-chevron-down faq-icon"></i>
-                </div>
-                <div class="faq-answer">
-                    Yes! API access is available for Enterprise customers. Check our <a href="../api/api.html"
-                        style="color:var(--accent-cyan)">API documentation</a> for details or contact our sales team for
-                    custom API plans.
-                </div>
-            </div>
-
-            <div class="faq-item" onclick="this.classList.toggle('active')">
-                <div class="faq-question">
-                    What makes VedSAAS different from other AI platforms?
-                    <i class="fas fa-chevron-down faq-icon"></i>
-                </div>
-                <div class="faq-answer">
-                    VedSAAS is India's first AI trained specifically on Indian languages, culture, and context. We
-                    understand local idioms, cultural references, and regional nuances that global AI platforms miss.
-                    Plus, we offer 57 specialized modes for different use cases.
+                    Yes! We use end-to-end encryption and never share your data with third parties. Your conversations
+                    are completely private.
                 </div>
             </div>
         </div>
 
-        <div
-            style="text-align:center;margin-top:80px;padding:60px 40px;background:linear-gradient(135deg,rgba(0,240,255,.05),rgba(112,0,255,.05));border-radius:24px;border:1px solid var(--border-subtle)">
-            <h3 style="font-size:2rem;margin-bottom:16px">Still need help?</h3>
-            <p style="color:var(--text-secondary);font-size:1.1rem;margin-bottom:32px">Our support team is here to
-                assist you</p>
-            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
-                <a href="mailto:support@vedsaas.com" class="btn btn-primary" style="padding:16px 32px">
-                    <i class="fas fa-envelope"></i> Email Support
-                </a>
-                <a href="../docs/docs.html" class="btn btn-secondary" style="padding:16px 32px">
-                    <i class="fas fa-book"></i> View Documentation
-                </a>
-            </div>
+        <div style="text-align:center;margin-top:60px;padding:40px;background:var(--bg-card);border-radius:16px">
+            <h3>Still need help?</h3>
+            <p style="color:var(--text-secondary);margin:16px 0">Contact our support team</p>
+            <a href="mailto:support@vedsaas.com"
+                style="display:inline-block;padding:12px 32px;background:var(--accent-cyan);color:#000;border-radius:8px;text-decoration:none;font-weight:600;margin-top:16px">Email
+                Support</a>
         </div>
     </div>
     <!-- Component Loader -->
-    <!-- Footer (Loaded Dynamically) -->
-    <div id="footer-placeholder"></div>
     <script src="/public/js/components.js"></script>
 </body>
 
