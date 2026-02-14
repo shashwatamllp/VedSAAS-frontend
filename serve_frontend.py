@@ -91,7 +91,52 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         return None
 
     def do_POST(self):
-        self.send_error(405, "POST method not allowed.")
+        try:
+            # Telemetry Endpoint (Junction Simulation)
+            if self.path == '/api/telemetry':
+                content_length = int(self.headers.get('Content-Length', 0))
+                post_data = self.rfile.read(content_length)
+                
+                try:
+                    data = json.loads(post_data.decode('utf-8'))
+                    
+                    # Add timestamp server-side
+                    data['server_timestamp'] = time.strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    # Append to visitor_logs.json
+                    log_file = os.path.join(FRONTEND_DIR, 'visitor_logs.json')
+                    if os.path.exists(log_file):
+                        with open(log_file, 'r', encoding='utf-8') as f:
+                            try:
+                                logs = json.load(f)
+                            except json.JSONDecodeError:
+                                logs = []
+                    else:
+                        logs = []
+                    
+                    logs.append(data)
+                    
+                    # Limit logs to last 100 entries
+                    if len(logs) > 100:
+                        logs = logs[-100:]
+                        
+                    with open(log_file, 'w', encoding='utf-8') as f:
+                        json.dump(logs, f, indent=2)
+                        
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "success"}).encode())
+                    
+                except Exception as e:
+                    print(f"Error saving telemetry: {e}")
+                    self.send_error(500, f"Internal Server Error: {e}")
+                return
+
+            self.send_error(405, "POST method not allowed.")
+        except Exception as e:
+            print(f"Critical Error in do_POST: {e}")
+            self.send_error(500, "Critical Server Error")
 
     def log_message(self, format, *args):
         return

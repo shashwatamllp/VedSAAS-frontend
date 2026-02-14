@@ -1625,7 +1625,7 @@
     /* --- Section Actions --- */
 
     // Data & Export Page Actions
-    document.getElementById('data-export-btn').addEventListener('click', () => {
+    document.getElementById('export-btn').addEventListener('click', () => {
       const t = topics.find(x => x.id === currentTopicId);
       if (!t) return banner('No conversation to export.');
       let out = '';
@@ -1640,8 +1640,8 @@
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     });
 
-    document.getElementById('data-delete-chat').addEventListener('click', deleteCurrentChat);
-    document.getElementById('data-clear-all').addEventListener('click', clearAllChats);
+    document.getElementById('delete-btn').addEventListener('click', deleteCurrentChat);
+    document.getElementById('clear-all-btn').addEventListener('click', clearAllChats);
 
     // Appearance Save
     document.getElementById('app-save').addEventListener('click', async () => {

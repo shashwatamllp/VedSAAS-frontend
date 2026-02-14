@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vedsaas-v8';
+const CACHE_NAME = 'vedsaas-v16';
 const urlsToCache = [
     '/',
     '/index.html',

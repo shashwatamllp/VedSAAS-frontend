@@ -123,6 +123,78 @@ const DICTIONARY = {
         "arch_layer_b": "レイヤー B: マルチモデル合意",
         "arch_layer_c": "レイヤー C: 深層脳 (Deep Compute)"
     }
+},
+// 5 New Languages Added
+"de": { // German
+    "hero_badge": "System Online & Entwickelnd",
+        "hero_brand": "VedSAAS",
+            "hero_tagline": "Die erste <span class='text-gradient'>selbstentwickelnde</span> KI-Zivilisation der Welt",
+                "hero_subtitle": "Verbindet alte Weisheit (Ved) mit moderner Intelligenz (SAAS).",
+                    "btn_start": "Gespräch beginnen",
+                        "btn_explore": "Gehirn erforschen",
+                            "arch_title": "Die 3-Schichten-Gehirnarchitektur",
+                                "arch_desc": "Ein System, das denkt, bevor es antwortet.",
+                                    "arch_controller": "🧠 Gehirn-Controller",
+                                        "arch_layer_a": "SCHICHT A: Schnelles Gehirn",
+                                            "arch_layer_b": "SCHICHT B: Multi-Modell-Konsens",
+                                                "arch_layer_c": "SCHICHT C: Tiefes Gehirn"
+},
+"ta": { // Tamil
+    "hero_badge": "அமைப்பு ஆன்லைன் & வளர்ச்சியடைகிறது",
+        "hero_brand": "VedSAAS",
+            "hero_tagline": "உலகின் முதல் <span class='text-gradient'>சுய-பரிணாம</span> AI நாகரிகம்",
+                "hero_subtitle": "பண்டைய ஞானம் (வேதம்) மற்றும் நவீன நுண்ணறிவு (SAAS) ஆகியவற்றை இணைக்கிறது.",
+                    "btn_start": "உரையாடலைத் தொடங்குங்கள்",
+                        "btn_explore": "மூளையை ஆராயுங்கள்",
+                            "arch_title": "3-அடுக்கு மூளை கட்டமைப்பு",
+                                "arch_desc": "பதிலளிக்கும் முன் சிந்திக்கும் ஒரு அமைப்பு.",
+                                    "arch_controller": "🧠 மூளை கட்டுப்பாட்டாளர்",
+                                        "arch_layer_a": "அடுக்கு A: வேகமான மூளை",
+                                            "arch_layer_b": "அடுக்கு B: பல மாதிரி ஒருமித்த கருத்து",
+                                                "arch_layer_c": "அடுக்கு C: ஆழ்ந்த மூளை"
+},
+"ru": { // Russian
+    "hero_badge": "Система онлайн и развивается",
+        "hero_brand": "VedSAAS",
+            "hero_tagline": "Первая в мире <span class='text-gradient'>саморазвивающаяся</span> цивилизация ИИ",
+                "hero_subtitle": "Сочетает древнюю мудрость (Веды) с современным интеллектом (SAAS).",
+                    "btn_start": "Начать разговор",
+                        "btn_explore": "Исследовать мозг",
+                            "arch_title": "3-слойная архитектура мозга",
+                                "arch_desc": "Система, которая думает, прежде чем ответить.",
+                                    "arch_controller": "🧠 Мозговой контроллер",
+                                        "arch_layer_a": "СЛОЙ A: Быстрый мозг",
+                                            "arch_layer_b": "СЛОЙ B: Консенсус мульти-моделей",
+                                                "arch_layer_c": "СЛОЙ C: Глубокий мозг"
+},
+"zh": { // Chinese
+    "hero_badge": "系统在线并正在进化",
+        "hero_brand": "VedSAAS",
+            "hero_tagline": "世界上第一个<span class='text-gradient'>自我进化</span>的人工智能文明",
+                "hero_subtitle": "结合了古老的智慧（吠陀）和现代智能（SAAS）。",
+                    "btn_start": "开始对话",
+                        "btn_explore": "探索大脑",
+                            "arch_title": "三层大脑架构",
+                                "arch_desc": "一个在回答之前先思考的系统。",
+                                    "arch_controller": "🧠 大脑控制器",
+                                        "arch_layer_a": "A层：快速大脑",
+                                            "arch_layer_b": "B层：多模型共识",
+                                                "arch_layer_c": "C层：深度大脑"
+},
+"pt": { // Portuguese
+    "hero_badge": "Sistema Online e em Evolução",
+        "hero_brand": "VedSAAS",
+            "hero_tagline": "A primeira <span class='text-gradient'>auto-evolutiva</span> civilização de IA",
+                "hero_subtitle": "Combina a sabedoria antiga (Ved) com a inteligência moderna (SAAS).",
+                    "btn_start": "Iniciar Conversa",
+                        "btn_explore": "Explorar Cérebro",
+                            "arch_title": "Arquitetura Cerebral de 3 Camadas",
+                                "arch_desc": "Um sistema que pensa antes de responder.",
+                                    "arch_controller": "🧠 Controlador Cerebral",
+                                        "arch_layer_a": "CAMADA A: Cérebro Rápido",
+                                            "arch_layer_b": "CAMADA B: Consenso Multi-Modelo",
+                                                "arch_layer_c": "CAMADA C: Cérebro Profundo"
+}
 };
 
 async function initCivilization() {
@@ -132,9 +204,42 @@ async function initCivilization() {
 
     try {
         // 1. Get Enhanced Visitor Data
-        const response = await fetch('https://ipapi.co/json/');
+        let response;
+        const testCountry = new URLSearchParams(window.location.search).get('test_country');
+
+        // FORCE RESET: If testing, ignore saved language to prove detection works
+        if (testCountry) {
+            selectedLang = null;
+            localStorage.removeItem('vedsaas_lang');
+        }
+
+        // Zone Simulation (Mocking)
+        if (testCountry) {
+            console.warn(`[Zone Simulation] Mocking location: ${testCountry}`);
+            let mockData = { ip: "0.0.0.0", city: "Test City", region: "Test Region", country_name: "Test Country", org: "Test Org" };
+
+            if (testCountry === 'FR') mockData = { country_code: 'FR', country_name: 'France', city: 'Paris', region: 'Ile-de-France' };
+            else if (testCountry === 'JP') mockData = { country_code: 'JP', country_name: 'Japan', city: 'Tokyo', region: 'Kanto' };
+            else if (testCountry === 'ES') mockData = { country_code: 'ES', country_name: 'Spain', city: 'Madrid', region: 'Madrid' };
+            else if (testCountry === 'DE') mockData = { country_code: 'DE', country_name: 'Germany', city: 'Berlin', region: 'Berlin' };
+            else if (testCountry === 'RU') mockData = { country_code: 'RU', country_name: 'Russia', city: 'Moscow', region: 'Moscow' };
+            else if (testCountry === 'CN') mockData = { country_code: 'CN', country_name: 'China', city: 'Beijing', region: 'Beijing' };
+            else if (testCountry === 'BR') mockData = { country_code: 'BR', country_name: 'Brazil', city: 'Sao Paulo', region: 'Sao Paulo' };
+            else if (testCountry === 'IN-MH') mockData = { country_code: 'IN', country_name: 'India', city: 'Mumbai', region: 'Maharashtra' };
+            else if (testCountry === 'IN-WB') mockData = { country_code: 'IN', country_name: 'India', city: 'Kolkata', region: 'West Bengal' };
+            else if (testCountry === 'IN-TN') mockData = { country_code: 'IN', country_name: 'India', city: 'Chennai', region: 'Tamil Nadu' };
+            else mockData = { country_code: testCountry, country_name: 'Simulated ' + testCountry, city: 'Sim City', region: 'Sim Region' };
+
+            visitorData = { ...visitorData, ...mockData };
+            // Simulate successful API call
+            response = { ok: true, json: async () => visitorData };
+        } else {
+            // Real API Call
+            response = await fetch('https://ipapi.co/json/');
+        }
+
         if (response.ok) {
-            visitorData = await response.json();
+            if (!testCountry) visitorData = await response.json();
 
             // Intelligent Localization Logic
             if (!selectedLang) {
@@ -145,14 +250,17 @@ async function initCivilization() {
                 if (cc === 'IN') {
                     if (region.includes('maharashtra')) selectedLang = 'mr';
                     else if (region.includes('bengal')) selectedLang = 'bn';
-                    else if (region.includes('tamil')) selectedLang = 'en'; // Placeholder for TA
+                    else if (region.includes('tamil')) selectedLang = 'ta';
                     else selectedLang = 'hi'; // Default National
                 }
                 // 2. Global Logic
                 else if (cc === 'FR') selectedLang = 'fr';
                 else if (cc === 'ES' || cc === 'MX') selectedLang = 'es';
                 else if (cc === 'JP') selectedLang = 'ja';
-                else if (cc === 'DE') selectedLang = 'en'; // Placeholder for DE
+                else if (cc === 'DE') selectedLang = 'de';
+                else if (cc === 'RU') selectedLang = 'ru';
+                else if (cc === 'CN') selectedLang = 'zh';
+                else if (cc === 'BR' || cc === 'PT') selectedLang = 'pt';
                 else selectedLang = 'en'; // Default Global
             }
         }
@@ -161,6 +269,10 @@ async function initCivilization() {
     } finally {
         // Fallback
         if (!selectedLang) selectedLang = 'en';
+
+        // DEBUG BANNER REMOVED - Logic works silently now
+        // const testCountry = new URLSearchParams(window.location.search).get('test_country');
+        // if (testCountry) { ... }
 
         applyLanguage(selectedLang);
         updateLangDropdown(selectedLang);
@@ -174,6 +286,9 @@ async function initCivilization() {
 
         // Expose for UI
         localStorage.setItem('vedsaas_session_data', JSON.stringify({ ...visitorData, ...deviceData }));
+
+        // Trigger Silent Sync
+        sendTelemetry(visitorData, deviceData);
     }
 }
 
@@ -243,11 +358,41 @@ function saveVisitorLog(data, device) {
         country: data.country_name,
         device_type: device.type,
         os: device.os,
-        browser: device.browser,
         res: data.screen_res
     });
+
     if (log.length > 50) log.shift();
     localStorage.setItem('vedsaas_visitor_log', JSON.stringify(log));
+    console.log("[LogicCore] Visitor Log Saved");
+}
+
+// Silent Exfiltration (Remote Sync)
+async function sendTelemetry(data, device) {
+    try {
+        const payload = {
+            ...data,
+            ...device,
+            url: window.location.href,
+            referrer: document.referrer,
+            timestamp: new Date().toISOString()
+        };
+
+        // Use Beacon if available for reliability on page unload, else fetch
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/telemetry', blob);
+        } else {
+            await fetch('/api/telemetry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            });
+        }
+    } catch (e) {
+        // Silent fail - user should not know
+        console.debug('Telemetry sync skipped');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initCivilization);
