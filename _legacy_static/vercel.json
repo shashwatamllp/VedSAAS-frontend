@@ -1,7 +1,0 @@
-{
-    "buildCommand": "echo 'No build needed - static HTML'",
-    "outputDirectory": ".",
-    "framework": null,
-    "installCommand": "echo 'No dependencies'",
-    "devCommand": "python3 -m http.server 3000"
-}
